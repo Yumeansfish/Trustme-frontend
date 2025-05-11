@@ -75,6 +75,7 @@ div
 <script lang="ts">
 import moment from 'moment';
 import 'vue-awesome/icons/sync';
+
 export default {
   name: 'input-timeinterval',
   props: {
@@ -93,55 +94,66 @@ export default {
   },
   data() {
     return {
-      duration: null,
-      mode: 'last_duration',
-      start: null,
-      end: null,
-      lastUpdate: null,
+      duration: null as number | null,
+      mode: 'last_duration' as 'last_duration' | 'range',
+      start: null as string | null,
+      end: null as string | null,
+      lastUpdate: null as moment.Moment | null,
       durations: [
         { seconds: 0.25 * 60 * 60, label: '&frac14;h' },
-        { seconds: 0.5 * 60 * 60, label: '&frac12;h' },
-        { seconds: 60 * 60, label: '1h' },
-        { seconds: 2 * 60 * 60, label: '2h' },
-        { seconds: 3 * 60 * 60, label: '3h' },
-        { seconds: 4 * 60 * 60, label: '4h' },
-        { seconds: 6 * 60 * 60, label: '6h' },
-        { seconds: 12 * 60 * 60, label: '12h' },
-        { seconds: 24 * 60 * 60, label: '24h' },
-        { seconds: 48 * 60 * 60, label: '48h' },
+        { seconds: 0.5 * 60 * 60,  label: '&frac12;h' },
+        { seconds: 60 * 60,       label: '1h' },
+        { seconds: 2 * 60 * 60,   label: '2h' },
+        { seconds: 3 * 60 * 60,   label: '3h' },
+        { seconds: 4 * 60 * 60,   label: '4h' },
+        { seconds: 6 * 60 * 60,   label: '6h' },
+        { seconds: 12 * 60 * 60,  label: '12h' },
+        { seconds: 24 * 60 * 60,  label: '24h' },
+        { seconds: 48 * 60 * 60,  label: '48h' },
       ],
     };
   },
   computed: {
     value: {
-      get() {
-        if (this.mode == 'range' && this.start && this.end) {
+      get(): [moment.Moment, moment.Moment] {
+        if (this.mode === 'range' && this.start && this.end) {
           return [moment(this.start), moment(this.end).add(1, 'day')];
         } else {
-          return [moment().subtract(this.duration, 'seconds'), moment()];
+          return [moment().subtract(this.duration!, 'seconds'), moment()];
         }
       },
     },
-    emptyDaterange() {
+    emptyDaterange(): boolean {
       return !(this.start && this.end);
     },
-    invalidDaterange() {
-      return moment(this.start) > moment(this.end);
+    invalidDaterange(): boolean {
+      return moment(this.start!).isAfter(moment(this.end!));
     },
-    daterangeTooLong() {
-      return moment(this.start).add(this.maxDuration, 'seconds').isBefore(moment(this.end));
+    daterangeTooLong(): boolean {
+      return moment(this.start!)
+        .add(this.maxDuration!, 'seconds')
+        .isBefore(moment(this.end!));
     },
   },
   mounted() {
-    this.duration = this.defaultDuration;
-    this.valueChanged();
+    if (
+      Array.isArray(this.value) &&
+      this.value[0].isValid() &&
+      this.value[1].isValid()
+    ) {
+      this.mode = 'range';
+      this.start = this.value[0].format('YYYY-MM-DD');
+      this.end   = this.value[1].format('YYYY-MM-DD');
+      this.lastUpdate = moment();
+    } else {
+      this.duration = this.defaultDuration;
+      this.valueChanged();
+    }
 
-    // We want our lastUpdated text to update every ~500ms
-    // We can do this by setting it to null and then the previous value.
     this.lastUpdateTimer = setInterval(() => {
-      const _lastUpdate = this.lastUpdate;
+      const tmp = this.lastUpdate;
       this.lastUpdate = null;
-      this.lastUpdate = _lastUpdate;
+      this.lastUpdate = tmp;
     }, 500);
   },
   beforeDestroy() {
@@ -150,7 +162,7 @@ export default {
   methods: {
     valueChanged() {
       if (
-        this.mode == 'last_duration' ||
+        this.mode === 'last_duration' ||
         (!this.emptyDaterange && !this.invalidDaterange && !this.daterangeTooLong)
       ) {
         this.lastUpdate = moment();
@@ -158,9 +170,9 @@ export default {
       }
     },
     refresh() {
-      const tmpMode = this.mode;
+      const m = this.mode;
       this.mode = '';
-      this.mode = tmpMode;
+      this.mode = m;
       this.valueChanged();
     },
     applyRange() {
@@ -175,3 +187,6 @@ export default {
   },
 };
 </script>
+
+
+
