@@ -26,3 +26,7 @@ test/e2e/reports
 
 # python
 __pycache__
+
+# AI generated dev notes
+claude.md
+problemlist.md

@@ -5,19 +5,25 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
   const PRODUCTION = mode === 'production';
-  const CSP = PRODUCTION ? '' : '*:5600 *:5666 ws://*:27180';
+  const CSP = PRODUCTION ? '' : "*:5600 *:5666 ws://*:27180 'unsafe-inline' 'unsafe-eval'";
 
   // Sets the CSP
   const setCsp = () => {
     return {
       name: 'html-transform',
       transformIndexHtml(html) {
-        const pattern = '<%= htmlWebpackPlugin.options.templateParameters.cspDefaultSrc %>';
-        // check if the pattern exists in the html, if not, throw error
-        if (!html.includes(pattern)) {
-          throw new Error(`Could not find pattern ${pattern} in the html file`);
+        const placeholder = '<!-- CSP_PLACEHOLDER -->';
+        if (!html.includes(placeholder)) {
+          throw new Error(`Could not find CSP_PLACEHOLDER in the html file`);
         }
-        return html.replace(pattern, CSP);
+        if (!PRODUCTION) {
+          return html.replace(placeholder, '');
+        }
+        const cspContent = `default-src 'self' ${CSP} https://api.github.com/repos/ActivityWatch/activitywatch/releases/latest; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; script-src 'self' 'unsafe-eval'`;
+        return html.replace(
+          placeholder,
+          `<!-- Verify with https://csp-evaluator.withgoogle.com/ -->\n    <meta http-equiv="Content-Security-Policy" content="${cspContent}">`
+        );
       },
     };
   };
@@ -51,7 +57,7 @@ export default defineConfig(({ mode }) => {
       vue(),
       VitePWA({
         devOptions: {
-          enabled: true,
+          enabled: false,
         },
         manifest: {
           name: 'ActivityWatch',
@@ -70,6 +76,9 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       port: 27180,
+      proxy: {
+        '/api': 'http://127.0.0.1:5600',
+      },
       // TODO: Fix this.
       // Breaks a bunch of style-related stuff etc.
       // We'd need to move in the entire CSP config in here (not just the default-src) if we want to use this.
@@ -83,7 +92,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       PRODUCTION,
-      AW_SERVER_URL: process.env.AW_SERVER_URL,
+      AW_SERVER_URL: JSON.stringify(process.env.AW_SERVER_URL || ''),
       COMMIT_HASH: process.env.COMMIT_HASH,
       'process.env.VUE_APP_ON_ANDROID': process.env.VUE_APP_ON_ANDROID,
     },
