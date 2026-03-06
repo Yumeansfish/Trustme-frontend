@@ -1,52 +1,47 @@
 <template lang="pug">
 div
-  h3.mb-0 Activity #[span.d-sm-inline.d-none for ]
-    span.text-muted.d-sm-inline-block.d-block
-      span(v-if="periodIsBrowseable") {{ timeperiod | friendlyperiod }}
-      span(v-else) {{ {"last7d": "last 7 days", "last30d": "last 30 days"}[periodLength] }}
+  div.d-flex.align-items-center.justify-content-between.mb-4.mt-3.rize-header
+    div.rize-title
+      span {{ customFormattedDate }}
 
-  div.mb-3.text-muted(style="font-size: 0.9em;")
-    ul.list-group.list-group-horizontal-md
-      li.list-group-item.pl-0.pr-3.py-0.border-0
-        b.mr-1 Host:
-        span {{ host }}
-      li.list-group-item.pl-0.pr-3.py-0.border-0
-        b.mr-1 Time active:
-        span {{ activityStore.active.duration | friendlyduration }}
-    ul.list-group.list-group-horizontal-md(v-if="periodLength != 'day'")
-      li.list-group-item.pl-0.pr-3.py-0.border-0
-        b.mr-1 Query range:
-        span {{ periodReadableRange }}
+    div.d-flex.align-items-center.rize-controls
+      button.rize-icon-btn.mr-3(@click="refresh(true)" title="Refresh")
+        icon(name="sync")
 
-  div.mb-2.d-flex
-    div
-      b-input-group
-        b-input-group-prepend
-          b-button.px-2(:to="link_prefix + '/' + previousPeriod() + '/' + subview + '/' + currentViewId",
-                   variant="outline-dark")
-            icon(name="arrow-left")
-        b-select.pl-2.pr-3(:value="periodLength", :options="periodLengths",
-                 @change="(periodLength) => setDate(_date, periodLength)")
-        b-input-group-append
-          b-button.px-2(:to="link_prefix + '/' + nextPeriod() + '/' + subview + '/' + currentViewId",
-                        :disabled="nextPeriod() > today", variant="outline-dark")
-            icon(name="arrow-right")
+      div.rize-segmented-control.mr-3.d-none.d-md-flex
+        button(
+          v-for="(label, value) in periodLengths"
+          :key="value"
+          :class="{ active: periodLength === value }"
+          @click="setDate(_date, value)"
+        ) {{ label.charAt(0).toUpperCase() + label.slice(1) }}
 
-    div.mx-2(v-if="periodLength === 'day'")
-      input.form-control.px-2(id="date" type="date" :value="_date" :max="today"
-                         @change="setDate($event.target.value, periodLength)")
+      div.rize-nav-pill.mr-3
+        router-link.rize-nav-btn(
+          :to="link_prefix + '/' + previousPeriod() + '/' + subview + '/' + currentViewId"
+          tag="button"
+        )
+          icon(name="arrow-left")
 
-    div.ml-auto
-      b-button-group
-        b-button.px-2(:pressed.sync="showOptions", variant="outline-dark")
-          icon(name="filter")
-          span.d-none.d-md-inline
-            |  Filters
-            b-badge(pill, variant="secondary" v-if="filters_set > 0").ml-2 {{ filters_set }}
-        b-button.px-2(@click="refresh(true)", variant="outline-dark")
-          icon(name="sync")
-          span.d-none.d-md-inline
-            |  Refresh
+        div.rize-nav-date
+          icon(name="calendar")
+          input(
+            type="date"
+            :value="_date"
+            :max="today"
+            @change="setDate($event.target.value, periodLength)"
+          )
+
+        router-link.rize-nav-btn(
+          :to="link_prefix + '/' + nextPeriod() + '/' + subview + '/' + currentViewId"
+          tag="button"
+          :disabled="nextPeriod() > today"
+        )
+          icon(name="arrow-right")
+
+      button.rize-icon-btn(:class="{ active: showOptions }" @click="showOptions = !showOptions" title="Filters")
+        icon(name="filter")
+        span.rize-badge(v-if="filters_set > 0") {{ filters_set }}
 
   div.row(v-if="showOptions" style="background-color: #EEE;").my-3.py-3
     div.col-md-12
@@ -72,9 +67,7 @@ div
         b-form-select(v-model="filter_category", :options="categoryStore.category_select(true)" size="sm")
 
 
-  aw-periodusage.mt-2(:periodusage_arr="periodusage", @update="setDate")
 
-  aw-uncategorized-notification(:periodLength="periodLength")
 
   ul.row.nav.nav-tabs.mt-4
     li.nav-item(v-for="view in views")
@@ -106,37 +99,215 @@ div
 <style lang="scss" scoped>
 @import '../../style/globals';
 
+// Rize-style Header
+.rize-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: -0.01em;
+
+  .rize-subtitle {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #888;
+  }
+}
+
+.rize-controls {
+  display: flex;
+  align-items: center;
+}
+
+.rize-icon-btn {
+  background: transparent;
+  border: none;
+  color: #a0a0ba;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+
+  &:hover {
+    color: #1a1a2e;
+    background: #f3f3f8;
+  }
+
+  &.active {
+    color: #6c63ff;
+    background: #edeaff;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .rize-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #6c63ff;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 2px 5px;
+    line-height: 1;
+  }
+}
+
+.rize-segmented-control {
+  display: flex;
+  background: #edeaff;
+  border-radius: 20px;
+  padding: 4px;
+
+  button {
+    background: transparent;
+    border: none;
+    border-radius: 16px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c63ff;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #1a1a2e;
+    }
+
+    &.active {
+      background: #fff;
+      color: #1a1a2e;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.rize-nav-pill {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e2ec;
+  border-radius: 20px;
+  height: 34px;
+  padding: 0 4px;
+
+  .rize-nav-btn {
+    background: transparent;
+    border: none;
+    color: #6c7a89;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: #f3f3f8;
+      color: #1a1a2e;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  .rize-nav-date {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 26px;
+    color: #6c7a89;
+    cursor: pointer;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #1a1a2e;
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    input[type='date'] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+
+      &::-webkit-calendar-picker-indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+// Filters 展开区
+.row[style*='background-color'] {
+  background-color: #f8f8fc !important;
+  border-radius: $card-radius;
+  border: $card-border;
+}
+
+// 子视图 Tab 导航
 .nav {
   border-bottom: 1px solid $lightBorderColor;
+  margin-top: 20px;
 
   .nav-item {
-    margin-bottom: 0px;
+    margin-bottom: 0;
 
     &:first-child {
       margin-left: 0;
     }
 
     .nav-link {
-      // default bootstrap vertical padding was too high
-      padding: 0.25rem 1rem;
-
-      color: lighten(black, 40%);
+      padding: 0.35rem 1rem;
+      color: #888;
       cursor: pointer;
       border: none;
+      font-size: 0.9rem;
+      border-bottom: 3px solid transparent;
 
       &:hover {
-        color: black !important;
-        border-bottom: 3px solid lighten(black, 70%);
+        color: #333 !important;
+        border-bottom-color: #ddd;
         border-radius: 0;
       }
 
       &.router-link-exact-active {
-        color: $activeHighlightColor !important;
-        border-bottom: 3px solid lighten($activeHighlightColor, 15%);
+        color: $primary !important;
+        border-bottom: 3px solid $primary;
         border-radius: 0;
-
-        // Does nothing for Verala Round
-        font-weight: bold;
+        font-weight: 600;
 
         &:hover {
           background-color: #fff;
@@ -163,6 +334,7 @@ import 'vue-awesome/icons/times';
 import 'vue-awesome/icons/save';
 import 'vue-awesome/icons/question-circle';
 import 'vue-awesome/icons/filter';
+import 'vue-awesome/icons/calendar';
 
 import { useSettingsStore } from '~/stores/settings';
 import { useCategoryStore } from '~/stores/categories';
@@ -229,21 +401,28 @@ export default {
         }
       },
     },
+    customFormattedDate: function () {
+      const periodStart = moment(this.timeperiod.start);
+      if (this.periodLength === 'day') {
+        return periodStart.format('dddd, MMMM D, YYYY');
+      } else if (this.periodLength === 'week') {
+        return `Week ${periodStart.format('w')} - ${periodStart.format('MMMM D, YYYY')}`;
+      } else if (this.periodLength === 'month') {
+        return periodStart.format('MMMM YYYY');
+      } else if (this.periodLength === 'year') {
+        return periodStart.format('YYYY');
+      }
+      return `${periodStart.format('YYYY-MM-DD')} — ${moment(this.timeperiod.start)
+        .add(...this.timeperiod.length)
+        .format('YYYY-MM-DD')}`;
+    },
 
     periodLengths: function () {
-      const settingsStore = useSettingsStore();
-      let periods: Record<string, string> = {
+      const periods: Record<string, string> = {
         day: 'day',
         week: 'week',
         month: 'month',
-      };
-      if (settingsStore.showYearly) {
-        periods['year'] = 'year';
-      }
-      periods = {
-        ...periods,
-        last7d: '7 days',
-        last30d: '30 days',
+        year: 'year',
       };
       return periods;
     },

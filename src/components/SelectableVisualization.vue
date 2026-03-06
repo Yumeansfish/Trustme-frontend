@@ -71,12 +71,14 @@ div
                  :colorfunc="e => e.data['$category']",
                  :linkfunc="e => '#' + $route.path + '?category=' + encodeURIComponent(e.data['$category'].join('>'))",
                  with_limit)
+    div(v-if="type == 'category_donut'")
+      aw-category-donut
     div(v-if="type == 'category_tree'")
       aw-categorytree(:events="activityStore.category.top")
     div(v-if="type == 'category_sunburst'")
-      aw-sunburst-categories(:data="top_categories_hierarchy", style="height: 20em")
+      aw-sunburst-categories(:data="top_categories_hierarchy", style="min-height: 450px")
     div(v-if="type == 'timeline_barchart'")
-      aw-timeline-barchart(:datasets="datasets", :timeperiod_start="activityStore.query_options.timeperiod.start", :timeperiod_length="activityStore.query_options.timeperiod.length", style="height: 100")
+      aw-timeline-barchart(:datasets="datasets", :timeperiod_start="activityStore.query_options.timeperiod.start", :timeperiod_length="activityStore.query_options.timeperiod.length")
     div(v-if="type == 'sunburst_clock'")
       aw-sunburst-clock(:date="date", :afkBucketId="activityStore.buckets.afk[0]", :windowBucketId="activityStore.buckets.window[0]")
     div(v-if="type == 'custom_vis'")
@@ -156,6 +158,7 @@ export default {
         'top_urls',
         'top_browser_titles',
         'top_categories',
+        'category_donut',
         'category_tree',
         'category_sunburst',
         'top_editor_files',
@@ -227,6 +230,10 @@ export default {
         },
         top_categories: {
           title: 'Top Categories',
+          available: this.activityStore.category.available,
+        },
+        category_donut: {
+          title: 'Pie Chart',
           available: this.activityStore.category.available,
         },
         category_tree: {
@@ -305,6 +312,7 @@ export default {
       else return null;
     },
     date: function () {
+      if (!this.activityStore.query_options?.timeperiod) return null;
       let date = this.activityStore.query_options.date;
       if (!date) {
         date = this.activityStore.query_options.timeperiod.start;
@@ -312,7 +320,7 @@ export default {
       return date;
     },
     timeline_daterange: function () {
-      if (this.activityStore.query_options === null) return null;
+      if (!this.activityStore.query_options?.timeperiod) return null;
 
       let date = this.activityStore.query_options.date;
       if (!date) {
@@ -322,7 +330,7 @@ export default {
       return [moment(date), moment(date).add(1, 'day')];
     },
     isSingleDay: function () {
-      return _.isEqual(this.activityStore.query_options.timeperiod.length, [1, 'day']);
+      return _.isEqual(this.activityStore.query_options?.timeperiod?.length, [1, 'day']);
     },
   },
   watch: {

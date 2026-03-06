@@ -84,7 +84,7 @@ div
 
 <script lang="ts">
 import _ from 'lodash';
-import moment from 'moment';                      
+import moment from 'moment';
 import { useSettingsStore } from '~/stores/settings';
 import { useBucketsStore } from '~/stores/buckets';
 import { seconds_to_duration } from '~/util/time';
@@ -106,23 +106,6 @@ export default {
       updateTimelineWindow: true,
     };
   },
-  created() {
-
-    let query = window.location.search;  
-    if (!query) {
-      const hash = window.location.hash; 
-      const idx  = hash.indexOf('?');
-      if (idx !== -1) {
-        query = hash.slice(idx);         
-      }
-    }
-    const params = new URLSearchParams(query);
-    const start  = params.get('start');
-    const end    = params.get('end');
-    if (start && end) {
-      this.daterange = [ moment(start), moment(end) ];
-    }
-  },
   computed: {
     timeintervalDefaultDuration() {
       const settingsStore = useSettingsStore();
@@ -133,8 +116,8 @@ export default {
     },
     filter_summary() {
       const desc: string[] = [];
-      if (this.filter_hostname)  desc.push(this.filter_hostname);
-      if (this.filter_client)    desc.push(this.filter_client);
+      if (this.filter_hostname) desc.push(this.filter_hostname);
+      if (this.filter_client) desc.push(this.filter_client);
       if (this.filter_duration! > 0) desc.push(seconds_to_duration(this.filter_duration!));
       return desc.length > 0 ? desc.join(', ') : 'none';
     },
@@ -161,20 +144,36 @@ export default {
       this.getBuckets();
     },
   },
+  created() {
+    let query = window.location.search;
+    if (!query) {
+      const hash = window.location.hash;
+      const idx = hash.indexOf('?');
+      if (idx !== -1) {
+        query = hash.slice(idx);
+      }
+    }
+    const params = new URLSearchParams(query);
+    const start = params.get('start');
+    const end = params.get('end');
+    if (start && end) {
+      this.daterange = [moment(start), moment(end)];
+    }
+  },
   methods: {
     async getBuckets() {
       if (!this.daterange) return;
       this.all_buckets = Object.freeze(
         await useBucketsStore().getBucketsWithEvents({
           start: this.daterange[0].format(),
-          end:   this.daterange[1].format(),
+          end: this.daterange[1].format(),
         })
       );
       this.hosts = Array.from(new Set(this.all_buckets.map((b: any) => b.hostname)));
       this.clients = Array.from(new Set(this.all_buckets.map((b: any) => b.client)));
       let bs = this.all_buckets;
       if (this.filter_hostname) bs = bs.filter((b: any) => b.hostname === this.filter_hostname);
-      if (this.filter_client)   bs = bs.filter((b: any) => b.client   === this.filter_client);
+      if (this.filter_client) bs = bs.filter((b: any) => b.client === this.filter_client);
       if (this.filter_duration! > 0) {
         bs.forEach((b: any) => {
           b.events = b.events.filter((e: any) => e.duration >= this.filter_duration!);
@@ -201,4 +200,3 @@ details[open] summary ~ * {
   z-index: 100;
 }
 </style>
-

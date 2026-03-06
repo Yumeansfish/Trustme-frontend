@@ -2,8 +2,9 @@
 div(v-if="view")
   draggable.row(v-model="elements" handle=".handle")
     // TODO: Handle large/variable sized visualizations better
-    div.col-md-6.col-lg-4.p-3(v-for="el, index in elements", :key="index", :class="{'col-md-12': isVisLarge(el), 'col-lg-12': isVisLarge(el)}")
-      aw-selectable-vis(:id="index" :type="el.type" :props="el.props" :view-id="view.id" @onTypeChange="onTypeChange" @onRemove="onRemove" :editable="editing")
+    div.p-2(v-for="el, index in elements", :key="index", :class="{'col-12': isVisFullWidth(el), 'col-12 col-md-4': !isVisFullWidth(el)}")
+      div.ui-card
+        aw-selectable-vis(:id="index" :type="el.type" :props="el.props" :view-id="view.id" @onTypeChange="onTypeChange" @onRemove="onRemove" :editable="editing")
 
     div.col-md-6.col-lg-4.p-3(v-if="editing")
       b-button(@click="addVisualization" variant="outline-dark" block size="lg")
@@ -30,6 +31,17 @@ div(v-if="view")
       icon(name="edit")
       span Edit view
 </template>
+
+<style lang="scss" scoped>
+.ui-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  height: 100%;
+  position: relative;
+}
+</style>
 
 <script lang="ts">
 import 'vue-awesome/icons/save';
@@ -121,6 +133,9 @@ export default {
     },
     isVisLarge(el) {
       return el.type == 'sunburst_clock' || el.type == 'vis_timeline';
+    },
+    isVisFullWidth(el) {
+      return el.type == 'timeline_barchart' || this.isVisLarge(el);
     },
   },
 };
