@@ -18,12 +18,10 @@ const desktopViews: View[] = [
     id: 'summary',
     name: 'Summary',
     elements: [
-      { type: 'top_apps', size: 3 },
-      { type: 'top_titles', size: 3 },
       { type: 'timeline_barchart', size: 3 },
+      { type: 'category_donut', size: 3 },
       { type: 'top_categories', size: 3 },
-      { type: 'category_tree', size: 3 },
-      { type: 'category_sunburst', size: 3 },
+      { type: 'top_apps', size: 3 },
     ],
   },
   {
@@ -59,11 +57,9 @@ const androidViews = [
     id: 'summary',
     name: 'Summary',
     elements: [
-      { type: 'top_apps', size: 3 },
-      { type: 'top_categories', size: 3 },
       { type: 'timeline_barchart', size: 3 },
-      { type: 'category_tree', size: 3 },
-      { type: 'category_sunburst', size: 3 },
+      { type: 'top_categories', size: 3 },
+      { type: 'top_apps', size: 3 },
     ],
   },
 ];

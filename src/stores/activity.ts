@@ -512,12 +512,12 @@ export const useActivityStore = defineStore('activity', {
           always_active_pattern,
           ...(isAndroid
             ? {
-                bid_android: this.buckets.android[0],
-              }
+              bid_android: this.buckets.android[0],
+            }
             : {
-                bid_afk: this.buckets.afk[0],
-                bid_window: this.buckets.window[0],
-              }),
+              bid_afk: this.buckets.afk[0],
+              bid_window: this.buckets.window[0],
+            }),
         });
         const result = await getClient().query([period], query, {
           verbose: true,
@@ -664,6 +664,34 @@ export const useActivityStore = defineStore('activity', {
         return active_history;
       }
       this.query_active_history_completed({ active_history: build_active_history() });
+
+      function build_by_period() {
+        const by_period: any = {};
+        let current_hour = moment(get_day_start_with_offset(null, startOfDay)).startOf('hour');
+        for (let i = 0; i < 24; i++) {
+          const next_hour = moment(current_hour).add(1, 'hour');
+          const key = `${current_hour.format()}/${next_hour.format()}`;
+          const cat_events = [];
+
+          // Create a nice distribution of activities for a vivid chart
+          if (i >= 9 && i <= 17) { // Work hours
+            cat_events.push({ duration: Math.random() * 2000 + 1000, data: { $category: ['Work', 'Programming', 'ActivityWatch'] } });
+            if (Math.random() > 0.4) cat_events.push({ duration: Math.random() * 800, data: { $category: ['Comms', 'Video Conferencing'] } });
+          } else if (i >= 18 && i <= 22) { // Evening
+            if (Math.random() > 0.2) cat_events.push({ duration: Math.random() * 1500 + 1000, data: { $category: ['Media', 'Games'] } });
+            cat_events.push({ duration: Math.random() * 1000 + 200, data: { $category: ['Media', 'Social Media'] } });
+          } else if (i >= 8 && i <= 9) { // Morning
+            cat_events.push({ duration: Math.random() * 800 + 400, data: { $category: ['Comms', 'Email'] } });
+          } else if (i < 2 || (i >= 23)) { // Late night
+            cat_events.push({ duration: Math.random() * 600, data: { $category: ['Media', 'Social Media'] } });
+          }
+
+          by_period[key] = { cat_events };
+          current_hour = next_hour;
+        }
+        return by_period;
+      }
+      this.query_category_time_by_period_completed({ by_period: build_by_period() });
     },
 
     // mutations

@@ -28,6 +28,7 @@ body {
 
 .aw-container {
   background-color: #fff;
-  border: 1px solid $lightBorderColor;
-  border-radius: 5px;
+  border: $card-border;
+  border-radius: $card-radius;
+  box-shadow: $card-shadow;
 }

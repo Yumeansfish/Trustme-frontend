@@ -3,3 +3,11 @@ $backgroundColor: rgb(247, 250, 252);
 
 $lightBorderColor: darken(white, 12%);
 $activeHighlightColor: rgb(10, 120, 255);
+
+// Rize-inspired design tokens
+$primary: #9A95BD;
+$primary-light: rgba(154, 149, 189, 0.15);
+$primary-mid: rgba(154, 149, 189, 0.5);
+$card-radius: 12px;
+$card-border: 1px solid rgba(0, 0, 0, 0.06);
+$card-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);

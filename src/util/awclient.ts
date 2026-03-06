@@ -9,11 +9,13 @@ export function createClient(force?: boolean): AWClient {
 
   const production = typeof PRODUCTION !== 'undefined' && PRODUCTION;
 
-  // If running with `npm node dev`, use testing server as origin.
-  // Works since CORS is enabled by default when running `aw-server --testing`.
+  // If running with `npx vite` (dev mode), use empty baseURL so requests go
+  // to the same origin (localhost:27180), then Vite proxy forwards /api to
+  // the real AW server at http://127.0.0.1:5600 — no CORS needed.
+  // AW_SERVER_URL can override this (e.g. point to a remote server).
   if (!production) {
-    const aw_server_url = typeof AW_SERVER_URL !== 'undefined' && AW_SERVER_URL;
-    baseURL = aw_server_url || 'http://127.0.0.1:5666';
+    const aw_server_url = typeof AW_SERVER_URL !== 'undefined' ? AW_SERVER_URL : '';
+    baseURL = aw_server_url;
   }
 
   if (!_client || force) {

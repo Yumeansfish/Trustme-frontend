@@ -42,7 +42,9 @@ export function buildBarchartDataset(data_by_hour: HourlyData[], classes: Catego
             label: c.name.join(' > '),
             backgroundColor: getColorFromCategory(c, classes),
             data: values,
-          } as Dataset;
+            borderRadius: 4,
+            borderSkipped: false,
+          } as any;
         } else {
           // FIXME: This shouldn't happen
           // This may for example happen if one doesn't have an 'Uncategorized' category,
