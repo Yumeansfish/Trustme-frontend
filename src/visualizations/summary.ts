@@ -1,39 +1,22 @@
 'use strict';
 
-import * as d3 from 'd3';
-import Color from 'color';
 import _ from 'lodash';
 
 import { useCategoryStore } from '~/stores/categories';
 import { getCategoryColorFromString } from '~/util/color';
-import { seconds_to_duration } from '~/util/time';
 import { IEvent } from '~/util/interfaces';
 
-const textColor = '#333';
-
 function create(container: HTMLElement) {
-  // Clear element
   container.innerHTML = '';
-
-  // Create svg canvas
-  const svg = d3.select(container).append('svg');
-  svg.attr('width', '100%').attr('height', '100px').attr('class', 'appsummary');
+  const list = document.createElement('div');
+  list.className = 'aw-summary-list';
+  container.appendChild(list);
 }
 
 function set_status(container: HTMLElement, msg: string) {
-  // Select svg canvas
-  const svg_elem = container.querySelector('.appsummary');
-  const svg = d3.select(svg_elem);
-  svg_elem.innerHTML = '';
-
-  svg
-    .append('text')
-    .attr('x', '0px')
-    .attr('y', '25px')
-    .text(msg)
-    .attr('font-family', 'sans-serif')
-    .attr('font-size', '20px')
-    .attr('fill', '#999');
+  const list = container.querySelector('.aw-summary-list') as HTMLElement;
+  if (!list) return;
+  list.innerHTML = `<div class="aw-summary-empty">${msg}</div>`;
 }
 
 interface Entry {
@@ -46,90 +29,89 @@ interface Entry {
   category?: string;
 }
 
+function formatMinutes(seconds: number): string {
+  const mins = Math.round(seconds / 60);
+  if (mins < 1) return '< 1 min';
+  return `${mins} min`;
+}
+
 function update(container: HTMLElement, apps: Entry[]) {
-  // No apps, sets status to "No data"
+  const list = container.querySelector('.aw-summary-list') as HTMLElement;
+  if (!list) return container;
+
   if (apps.length <= 0) {
-    set_status(container, 'No data');
+    list.innerHTML = `<div class="aw-summary-empty">No data</div>`;
     return container;
   }
 
-  const svg_elem = container.querySelector('.appsummary');
-  svg_elem.innerHTML = '';
-  const svg = d3.select(svg_elem);
+  apps = apps.filter(app => app.duration !== undefined);
 
-  // Remove apps without a duration from list
-  apps = apps.filter(function (app) {
-    return app.duration !== undefined;
-  });
+  if (apps.length === 0) {
+    list.innerHTML = `<div class="aw-summary-empty">No data with duration</div>`;
+    return container;
+  }
 
-  let curr_y = 0;
   const longest_duration = apps[0].duration;
-  _.each(apps, function (app, i) {
-    // TODO: Expand on click and list titles
+  const total_duration = apps.reduce((sum, app) => sum + app.duration, 0);
 
-    // Variables
-    const width = (app.duration / longest_duration) * 100 + '%';
-    const barHeight = 46;
-    const textSize = 14;
+  list.innerHTML = '';
 
-    let appcolor: string;
-    if (Array.isArray(app.colorKey)) {
-      const categoryStore = useCategoryStore();
-      appcolor = categoryStore.get_category_color(app.colorKey);
-    } else {
-      appcolor = app.color || getCategoryColorFromString(app.colorKey || app.name);
+  _.each(apps, (app) => {
+    const pct = total_duration > 0 ? Math.round((app.duration / total_duration) * 100) : 0;
+    const barWidth = longest_duration > 0 ? (app.duration / longest_duration) * 100 : 0;
+
+    // Rize indigo color
+    const barColor = '#5e5ce6';
+    const barBgColor = '#eae9fc';
+
+    // Row wrapper
+    const row = app.link ? document.createElement('a') : document.createElement('div');
+    if (app.link && row instanceof HTMLAnchorElement) {
+      row.href = app.link;
     }
+    row.className = 'aw-row';
+    row.title = app.hovertext;
 
-    const hovercolor = Color(appcolor).darken(0.1).hex();
+    // 1. Percentage
+    const pctEl = document.createElement('span');
+    pctEl.className = 'aw-row-pct';
+    pctEl.textContent = `${pct}%`;
 
-    // Add a parent <a> element if link is set
-    const a = app.link ? svg.append('a').attr('href', app.link) : svg;
+    // 2. Mini progress bar
+    const barWrap = document.createElement('div');
+    barWrap.className = 'aw-row-bar-wrap';
+    barWrap.style.backgroundColor = barBgColor;
 
-    // The group representing an entry in the barchart
-    const eg = a.append('g');
-    eg.attr('id', 'summary_' + i)
-      .on('mouseover', function () {
-        eg.select('rect').style('fill', hovercolor);
-      })
-      .on('mouseout', function () {
-        eg.select('rect').style('fill', appcolor);
-      });
+    const barFill = document.createElement('div');
+    barFill.className = 'aw-row-bar-fill';
+    barFill.style.width = `${barWidth}%`;
+    barFill.style.backgroundColor = barColor;
+    barWrap.appendChild(barFill);
 
-    eg.append('title').text(app.hovertext + '\n' + seconds_to_duration(app.duration));
+    // 3. Name
+    const nameEl = document.createElement('span');
+    nameEl.className = 'aw-row-name';
+    nameEl.textContent = app.name;
+    nameEl.title = app.name;
 
-    // Color box background
-    eg.append('rect')
-      .attr('x', 0)
-      .attr('y', curr_y)
-      .attr('rx', 5)
-      .attr('ry', 5)
-      .attr('width', width)
-      .attr('height', barHeight)
-      .style('fill', appcolor);
+    // 4. Duration (min format)
+    const durEl = document.createElement('span');
+    durEl.className = 'aw-row-duration';
+    durEl.textContent = formatMinutes(app.duration);
 
-    // App name
-    eg.append('text')
-      .attr('x', 5)
-      .attr('y', curr_y + 1.4 * textSize)
-      .text(app.name)
-      .attr('font-family', 'sans-serif')
-      .attr('font-size', textSize + 'px')
-      .attr('fill', textColor);
+    // 5. Edit icon (SVG pencil)
+    const editEl = document.createElement('span');
+    editEl.className = 'aw-row-edit';
+    editEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 
-    // Duration
-    eg.append('text')
-      .attr('x', 5)
-      .attr('y', curr_y + 2.6 * textSize)
-      .text(seconds_to_duration(app.duration))
-      .attr('font-family', 'sans-serif')
-      .attr('font-size', textSize - 3 + 'px')
-      .attr('fill', '#444');
+    row.appendChild(pctEl);
+    row.appendChild(barWrap);
+    row.appendChild(nameEl);
+    row.appendChild(durEl);
+    row.appendChild(editEl);
 
-    curr_y += barHeight + 5;
+    list.appendChild(row);
   });
-  curr_y -= 5;
-
-  svg.attr('height', curr_y);
 
   return container;
 }

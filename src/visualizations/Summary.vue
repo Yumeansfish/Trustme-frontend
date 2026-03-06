@@ -1,19 +1,139 @@
 <template lang="pug">
 div
   div.aw-summary-container
-  // Use visibility to make sure elements don't skip when data finishes loading
-  div(:style='{"visibility": visible_more ? "visible" : "hidden"}')
-    b-button.mt-1.mr-2(v-if="fields && (limit_ < fields.length)", size="sm", variant="outline-secondary", @click="limit_ += 5")
-      icon(name="angle-double-down")
-      | Show more
-    b-button.mt-1(v-if="limit_ != limit" size="sm", variant="outline-secondary", @click="limit_ = limit")
-      icon(name="angle-double-up")
 </template>
 
 <style scoped lang="scss">
-.aw-summary-container > svg {
-  border: 1px solid #999;
-  border-radius: 0.5em;
+.aw-summary-container {
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  /* Custom scrollbar — Indigo theme */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #c5c4e8;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #9897f3;
+  }
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #c5c4e8 transparent;
+}
+</style>
+
+<style lang="scss">
+.aw-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.aw-summary-empty {
+  color: #aaa;
+  font-size: 0.9rem;
+  padding: 8px 0;
+  text-align: center;
+}
+
+/* Rize-style compact horizontal row */
+.aw-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 10px 4px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid #f3f3f8;
+  transition: background-color 0.15s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: #fafaff;
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+/* 1. Percentage */
+.aw-row-pct {
+  width: 42px;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #6c7a89;
+  text-align: right;
+  margin-right: 12px;
+}
+
+/* 2. Mini progress bar */
+.aw-row-bar-wrap {
+  width: 80px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-right: 14px;
+}
+
+.aw-row-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+/* 3. Name */
+.aw-row-name {
+  flex: 1;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* 4. Duration */
+.aw-row-duration {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: #95a5a6;
+  white-space: nowrap;
+  margin-left: 12px;
+  min-width: 55px;
+  text-align: right;
+}
+
+/* 5. Edit icon */
+.aw-row-edit {
+  flex-shrink: 0;
+  margin-left: 10px;
+  color: #c0c4cc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: #5e5ce6;
+  }
+
+  svg {
+    display: block;
+  }
 }
 </style>
 
@@ -22,8 +142,6 @@ div
 //       Code should generally go in the framework-independent file.
 
 import summary from './summary';
-import 'vue-awesome/icons/angle-double-down';
-import 'vue-awesome/icons/angle-double-up';
 
 export default {
   name: 'aw-summary',
@@ -32,16 +150,12 @@ export default {
     namefunc: Function,
     hoverfunc: {
       type: Function,
-      default: null, // If not set we will default to namefunc
+      default: null,
     },
     colorfunc: Function,
     linkfunc: {
       type: Function,
       default: () => null,
-    },
-    limit: {
-      type: Number,
-      default: 5,
     },
     with_limit: {
       type: Boolean,
@@ -49,18 +163,11 @@ export default {
     },
   },
   data: function () {
-    return { limit_: this.limit };
+    return {};
   },
-  computed: {
-    visible_more() {
-      return this.fields && this.fields.length > 0 && this.with_limit;
-    },
-  },
+  computed: {},
   watch: {
     fields: function () {
-      this.update();
-    },
-    limit_: function () {
       this.update();
     },
   },
@@ -75,7 +182,7 @@ export default {
       if (this.fields) {
         summary.updateSummedEvents(
           el,
-          this.fields.slice(0, this.limit_),
+          this.fields,
           this.namefunc,
           this.hoverfunc,
           this.colorfunc,

@@ -7,9 +7,11 @@ svg
 
 svg {
   width: 100%;
-  height: 40pt;
-  border: 1px solid $lightBorderColor;
-  border-radius: 0.5em;
+  height: 80px;
+  border: none;
+  border-radius: $card-radius;
+  background: #f8f8fc;
+  display: block;
 }
 </style>
 

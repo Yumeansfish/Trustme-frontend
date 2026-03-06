@@ -25,9 +25,9 @@ function set_status(svg_elem: SVGElement, msg: string) {
     .attr('fill', '#AAA');
 }
 
-const diagramcolor = '#aaa';
-const diagramcolor_selected = '#fc5';
-const diagramcolor_focused = '#adf';
+const diagramcolor = 'rgba(154, 149, 189, 0.35)';
+const diagramcolor_selected = '#9A95BD';
+const diagramcolor_focused = 'rgba(154, 149, 189, 0.7)';
 
 function update(svg_elem: SVGElement, usage_arr, onPeriodClicked) {
   const dateformat = 'YYYY-MM-DD';
@@ -90,15 +90,12 @@ function update(svg_elem: SVGElement, usage_arr, onPeriodClicked) {
     const rect = svg
       .append('rect')
       .attr('x', x + '%')
-      .attr('y', 101 - height + '%') // Draw rect bottom-up
+      .attr('y', 100 - height + '%') // Draw rect bottom-up
       .attr('rx', 3)
       .attr('ry', 3)
-      .attr(
-        'style',
-        i === center_elem ? 'stroke: black; stroke-width: 1;' : 'stroke: #222; stroke-width: 1;'
-      )
+      .attr('style', 'stroke: none;')
       .attr('width', width + '%')
-      .attr('height', height + offset + '%')
+      .attr('height', height + '%')
       .attr('color', color)
       .attr('date', date)
       .style('fill', color)
