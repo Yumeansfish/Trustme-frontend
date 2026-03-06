@@ -1,5 +1,5 @@
 <template lang="pug">
-div(v-if="datasets && datasets.length > 0")
+div.timeline-chart-container(v-if="datasets && datasets.length > 0")
   // Height set here to avoid elements jumping when loading Activity view
   bar(:chart-data="chartData" :chart-options="chartOptions" :height="330")
 div.small(v-else-if="datasets === null", style="font-size: 16pt; color: #aaa;")
@@ -10,10 +10,13 @@ div.small(v-else, style="font-size: 16pt; color: #aaa;")
 
 <script lang="ts">
 import _ from 'lodash';
-import { ChartOptions } from 'chart.js';
+import { Chart, ChartOptions } from 'chart.js';
 import 'chart.js/auto';
 import { Bar } from 'vue-chartjs/legacy';
 import { get_hour_offset } from '~/util/time';
+
+// Force Chart.js to respect container height globally
+Chart.defaults.maintainAspectRatio = false;
 
 function hourToTick(hours: number): string {
   if (hours > 1) {
@@ -101,13 +104,19 @@ export default {
           display: true,
           text: 'Timeline',
         },
-        responsive: true,
-        maintainAspectRatio: false,
       };
     },
     chartOptions(): ChartOptions {
       const resolution = this.timeperiod_length[1];
       return {
+        responsive: true,
+        maintainAspectRatio: false,
+        elements: {
+          bar: {
+            borderWidth: 0,
+            borderSkipped: 'bottom',
+          },
+        },
         plugins: {
           tooltip: {
             mode: 'point',
@@ -132,15 +141,32 @@ export default {
         },
         scales: {
           x: {
+            display: true,
             stacked: true,
+            grid: {
+              display: false,
+              drawBorder: false,
+            },
+            ticks: {
+              display: true,
+              color: '#a0aab2',
+              font: {
+                size: 11,
+              },
+            },
           },
           y: {
             stacked: true,
             min: 0,
             suggestedMax: resolution.startsWith('day') ? 1 : undefined,
+            grid: {
+              color: '#f0f0f0',
+              drawBorder: false,
+            },
             ticks: {
               callback: hourToTick,
               stepSize: resolution.startsWith('day') ? 0.25 : 1,
+              color: '#a0aab2',
             },
           },
         },
@@ -150,4 +176,10 @@ export default {
 };
 </script>
 
-<style></style>
+<style scoped>
+.timeline-chart-container {
+  position: relative;
+  height: 330px;
+  width: 100%;
+}
+</style>

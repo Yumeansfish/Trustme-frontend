@@ -4,8 +4,10 @@ svg
 
 <style scoped lang="scss">
 svg {
-  border: 1px solid #999;
-  border-radius: 0.5em;
+  border: none;
+  width: 100%;
+  height: 20px;
+  display: block;
 }
 </style>
 

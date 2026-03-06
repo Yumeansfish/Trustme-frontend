@@ -13,10 +13,15 @@
 div#visualization {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
-  overflow: visible;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
 
   .vis-timeline {
-    overflow: visible;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .timeline-timeline {
