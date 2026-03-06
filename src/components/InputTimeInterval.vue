@@ -101,15 +101,15 @@ export default {
       lastUpdate: null as moment.Moment | null,
       durations: [
         { seconds: 0.25 * 60 * 60, label: '&frac14;h' },
-        { seconds: 0.5 * 60 * 60,  label: '&frac12;h' },
-        { seconds: 60 * 60,       label: '1h' },
-        { seconds: 2 * 60 * 60,   label: '2h' },
-        { seconds: 3 * 60 * 60,   label: '3h' },
-        { seconds: 4 * 60 * 60,   label: '4h' },
-        { seconds: 6 * 60 * 60,   label: '6h' },
-        { seconds: 12 * 60 * 60,  label: '12h' },
-        { seconds: 24 * 60 * 60,  label: '24h' },
-        { seconds: 48 * 60 * 60,  label: '48h' },
+        { seconds: 0.5 * 60 * 60, label: '&frac12;h' },
+        { seconds: 60 * 60, label: '1h' },
+        { seconds: 2 * 60 * 60, label: '2h' },
+        { seconds: 3 * 60 * 60, label: '3h' },
+        { seconds: 4 * 60 * 60, label: '4h' },
+        { seconds: 6 * 60 * 60, label: '6h' },
+        { seconds: 12 * 60 * 60, label: '12h' },
+        { seconds: 24 * 60 * 60, label: '24h' },
+        { seconds: 48 * 60 * 60, label: '48h' },
       ],
     };
   },
@@ -130,21 +130,24 @@ export default {
       return moment(this.start!).isAfter(moment(this.end!));
     },
     daterangeTooLong(): boolean {
-      return moment(this.start!)
-        .add(this.maxDuration!, 'seconds')
-        .isBefore(moment(this.end!));
+      return moment(this.start!).add(this.maxDuration!, 'seconds').isBefore(moment(this.end!));
     },
   },
   mounted() {
+    // Check if parent passed a valid daterange via v-model
+    const modelValue = this.$vnode?.data?.model?.value;
     if (
-      Array.isArray(this.value) &&
-      this.value[0].isValid() &&
-      this.value[1].isValid()
+      Array.isArray(modelValue) &&
+      moment.isMoment(modelValue[0]) &&
+      modelValue[0].isValid() &&
+      moment.isMoment(modelValue[1]) &&
+      modelValue[1].isValid()
     ) {
       this.mode = 'range';
-      this.start = this.value[0].format('YYYY-MM-DD');
-      this.end   = this.value[1].format('YYYY-MM-DD');
+      this.start = modelValue[0].format('YYYY-MM-DD');
+      this.end = modelValue[1].subtract(1, 'day').format('YYYY-MM-DD');
       this.lastUpdate = moment();
+      this.valueChanged();
     } else {
       this.duration = this.defaultDuration;
       this.valueChanged();
@@ -187,6 +190,3 @@ export default {
   },
 };
 </script>
-
-
-

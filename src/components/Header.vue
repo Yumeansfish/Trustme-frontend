@@ -1,99 +1,91 @@
 <template lang="pug">
-div(:class="{'fixed-top-padding': fixedTopMenu}")
-  b-navbar.aw-navbar(toggleable="lg" :fixed="fixedTopMenu ? 'top' : null")
-    // Brand on mobile
-    b-navbar-nav.d-block.d-lg-none
-      b-navbar-brand(to="/" style="background-color: transparent;")
-        img.aligh-middle(src="/logo.png" style="height: 1.5em;")
-        span.ml-2.align-middle(style="font-size: 1em; color: #000;") ActivityWatch
+div.aw-sidebar
+  nav.sidebar-nav
+    // Logo
+    router-link.sidebar-logo(to="/")
+      img(src="/logo.png")
+      span.sidebar-label trust-me
 
-    b-navbar-toggle(target="nav-collapse")
+    // 主导航
+    div.sidebar-main
 
-    b-collapse#nav-collapse(is-nav)
-      b-navbar-nav
-        // If only a single view (the default) is available
-        b-nav-item(v-if="activityViews && activityViews.length === 1", v-for="view in activityViews", :key="view.name", :to="view.pathUrl")
-          div.px-2.px-lg-1
-            icon(name="calendar-day")
-            | Activity
+      // Activity - single host
+      router-link.sidebar-item(
+        v-if="activityViews && activityViews.length === 1"
+        v-for="view in activityViews"
+        :key="view.name"
+        :to="view.pathUrl"
+      )
+        icon(name="calendar-day")
+        span.sidebar-label Activity
 
-        // If multiple (or no) activity views are available
-        b-nav-item-dropdown(v-if="!activityViews || activityViews.length !== 1")
-          template(slot="button-content")
-            div.d-inline.px-2.px-lg-1
-              icon(name="calendar-day")
-              | Activity
-          b-dropdown-item(v-if="activityViews === null", disabled)
-            span.text-muted Loading...
-            br
-          b-dropdown-item(v-else-if="activityViews && activityViews.length <= 0", disabled)
-            | No activity reports available
-            br
-            small Make sure you have both an AFK and window watcher running
-          b-dropdown-item(v-for="view in activityViews", :key="view.name", :to="view.pathUrl")
+      // Activity - multiple or loading
+      div.sidebar-item.sidebar-group(v-if="!activityViews || activityViews.length !== 1")
+        div.sidebar-group-header
+          icon(name="calendar-day")
+          span.sidebar-label Activity
+        div.sidebar-group-items
+          div.sidebar-subitem.text-muted(v-if="activityViews === null")
+            icon(name="ellipsis-h")
+            span.sidebar-label Loading...
+          div.sidebar-subitem.text-muted(v-else-if="activityViews && activityViews.length <= 0")
+            span.sidebar-label No activity available
+          router-link.sidebar-subitem(
+            v-for="view in activityViews"
+            :key="view.name"
+            :to="view.pathUrl"
+          )
             icon(:name="view.icon")
-            | {{ view.name }}
+            span.sidebar-label {{ view.name }}
 
-        b-nav-item(to="/timeline" style="font-color: #000;")
-          div.px-2.px-lg-1
-            icon(name="stream")
-            | Timeline
+      router-link.sidebar-item(to="/timeline")
+        icon(name="stream")
+        span.sidebar-label Timeline
 
-        b-nav-item(to="/stopwatch")
-          div.px-2.px-lg-1
-            icon(name="stopwatch")
-            | Stopwatch
+      router-link.sidebar-item(to="/stopwatch")
+        icon(name="stopwatch")
+        span.sidebar-label Stopwatch
 
-      // Brand on large screens (centered)
-      b-navbar-nav.abs-center.d-none.d-lg-block
-        b-navbar-brand(to="/" style="background-color: transparent;")
-          img.ml-0.aligh-middle(src="/logo.png" style="height: 1.5em;")
-          span.ml-2.align-middle(style="font-size: 1.0em; color: #000;") ActivityWatch
+    // 分隔线
+    div.sidebar-divider
 
-      b-navbar-nav.ml-auto
-        b-nav-item-dropdown
-          template(slot="button-content")
-            div.d-inline.px-2.px-lg-1
-              icon(name="tools")
-              | Tools
-          b-dropdown-item(to="/search")
-            icon(name="search")
-            | Search
-          b-dropdown-item(to="/trends" v-if="devmode")
-            icon(name="chart-line")
-            | Trends
-          b-dropdown-item(to="/report" v-if="devmode")
-            icon(name="chart-pie")
-            | Report
-          b-dropdown-item(to="/alerts" v-if="devmode")
-            icon(name="flag-checkered")
-            | Alerts
-          b-dropdown-item(to="/timespiral" v-if="devmode")
-            icon(name="history")
-            | Timespiral
-          b-dropdown-item(to="/query")
-            icon(name="code")
-            | Query
-          b-dropdown-item(to="/graph" v-if="devmode")
-            // TODO: use circle-nodes instead in the future
-            icon(name="project-diagram")
-            | Graph
+    // Tools 分组
+    div.sidebar-item.sidebar-group
+      div.sidebar-group-header
+        icon(name="tools")
+        span.sidebar-label Tools
+      div.sidebar-group-items
+        router-link.sidebar-subitem(to="/search")
+          icon(name="search")
+          span.sidebar-label Search
+        router-link.sidebar-subitem(to="/query")
+          icon(name="code")
+          span.sidebar-label Query
+        router-link.sidebar-subitem(v-if="devmode" to="/trends")
+          icon(name="chart-line")
+          span.sidebar-label Trends
+        router-link.sidebar-subitem(v-if="devmode" to="/report")
+          icon(name="chart-pie")
+          span.sidebar-label Report
+        router-link.sidebar-subitem(v-if="devmode" to="/alerts")
+          icon(name="flag-checkered")
+          span.sidebar-label Alerts
+        router-link.sidebar-subitem(v-if="devmode" to="/timespiral")
+          icon(name="history")
+          span.sidebar-label Timespiral
+        router-link.sidebar-subitem(v-if="devmode" to="/graph")
+          icon(name="project-diagram")
+          span.sidebar-label Graph
 
-        b-nav-item(to="/buckets")
-          div.px-2.px-lg-1
-            icon(name="database")
-            | Raw Data
-        b-nav-item(to="/settings")
-          div.px-2.px-lg-1
-            icon(name="cog")
-            | Settings
+    // 底部固定项
+    div.sidebar-bottom
+      router-link.sidebar-item(to="/buckets")
+        icon(name="database")
+        span.sidebar-label Raw Data
+      router-link.sidebar-item(to="/settings")
+        icon(name="cog")
+        span.sidebar-label Settings
 </template>
-
-<style lang="scss" scoped>
-.fixed-top-padding {
-  padding-bottom: 3.5em;
-}
-</style>
 
 <script lang="ts">
 // only import the icons you use to reduce bundle size
@@ -185,36 +177,209 @@ export default {
 <style lang="scss" scoped>
 @import '../style/globals';
 
-.aw-navbar {
-  background-color: white;
-  border: solid $lightBorderColor;
-  border-width: 0 0 1px 0;
-}
+$sidebar-collapsed: 56px;
+$sidebar-expanded: 200px;
+$sidebar-transition: 0.2s ease;
+$item-height: 44px;
 
-.nav-item {
-  align-items: center;
-
-  margin-left: 0.2em;
-  margin-right: 0.2em;
-  border-radius: 0.5em;
+.aw-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: $sidebar-collapsed;
+  background: #fff;
+  border-right: 1px solid $lightBorderColor;
+  z-index: 200;
+  transition: width $sidebar-transition;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
-    background-color: #ddd;
+    width: $sidebar-expanded;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
+
+    .sidebar-label {
+      opacity: 1;
+    }
+
+    .sidebar-group-items {
+      max-height: 400px;
+    }
   }
 }
 
-.abs-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px 0;
 }
-</style>
 
-<style lang="scss">
-// Needed because dropdown somehow doesn't properly work with scoping
-.nav-item {
-  .nav-link {
-    color: #555 !important;
+.sidebar-label {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+  margin-left: 12px;
+  font-size: 0.88rem;
+  color: #444;
+}
+
+// Logo 区域
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  height: $item-height;
+  padding: 0 16px;
+  margin-bottom: 8px;
+  text-decoration: none;
+
+  img {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    object-fit: contain;
   }
+
+  .sidebar-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #222;
+    font-family: 'Varela Round', sans-serif;
+  }
+}
+
+// 主导航区
+.sidebar-main {
+  flex: 1;
+  overflow: hidden;
+}
+
+// 通用导航项
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  height: $item-height;
+  padding: 0 16px;
+  color: #555;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background-color 0.15s ease;
+  position: relative;
+
+  &:hover {
+    background-color: #f3f4f6;
+    color: #222;
+    text-decoration: none;
+  }
+
+  &.router-link-active {
+    color: $activeHighlightColor;
+    background-color: rgba($activeHighlightColor, 0.06);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      background: $activeHighlightColor;
+      border-radius: 0 2px 2px 0;
+    }
+  }
+
+  // vue-awesome icon sizing
+  .fa-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin: 0;
+  }
+}
+
+// 分隔线
+.sidebar-divider {
+  height: 1px;
+  background: $lightBorderColor;
+  margin: 8px 12px;
+}
+
+// 分组
+.sidebar-group {
+  flex-direction: column;
+  height: auto;
+  padding: 0;
+  align-items: stretch;
+
+  .sidebar-group-header {
+    display: flex;
+    align-items: center;
+    height: $item-height;
+    padding: 0 16px;
+    color: #888;
+    cursor: default;
+
+    .fa-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      margin: 0;
+    }
+
+    .sidebar-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #aaa;
+    }
+  }
+
+  .sidebar-group-items {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease;
+  }
+}
+
+// 子菜单项
+.sidebar-subitem {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px 0 20px;
+  color: #666;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: #f3f4f6;
+    color: #222;
+    text-decoration: none;
+  }
+
+  &.router-link-active {
+    color: $activeHighlightColor;
+  }
+
+  .fa-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    margin: 0;
+  }
+
+  .sidebar-label {
+    font-size: 0.85rem;
+  }
+}
+
+// 底部区域
+.sidebar-bottom {
+  border-top: 1px solid $lightBorderColor;
+  padding-top: 8px;
 }
 </style>

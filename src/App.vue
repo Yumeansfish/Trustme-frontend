@@ -2,15 +2,44 @@
 div#wrapper(v-if="loaded")
   aw-header
 
-  div(:class="{'container': !fullContainer, 'container-fluid': fullContainer}").px-0.px-md-2
+  div.main-content(:class="{'container': !fullContainer, 'container-fluid': fullContainer}").px-0.px-md-2
     div.aw-container.my-sm-3.p-3
       error-boundary
-        user-satisfaction-poll
+        //- user-satisfaction-poll
         new-release-notification(v-if="isNewReleaseCheckEnabled")
         router-view
 
-  aw-footer
 </template>
+
+<style lang="scss">
+$sidebar-collapsed: 56px;
+$sidebar-expanded: 200px;
+$content-padding: 24px;
+$sidebar-transition: 0.2s ease;
+
+body {
+  overflow-x: hidden;
+}
+
+.main-content {
+  margin-left: $sidebar-collapsed;
+  padding-left: $content-padding;
+  padding-right: $content-padding;
+  min-width: 0;
+  transition: margin-left $sidebar-transition;
+
+  // 覆盖 Bootstrap .container 的最大宽度限制
+  &.container {
+    max-width: none;
+    width: auto;
+  }
+}
+
+// 当 sidebar hover 时，主内容区同步右移
+.aw-sidebar:hover ~ .main-content {
+  margin-left: $sidebar-expanded;
+}
+</style>
 
 <script lang="ts">
 import { useSettingsStore } from '~/stores/settings';
