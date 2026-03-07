@@ -73,18 +73,6 @@ div
       | &nbsp;
       | {{ msg }}
 
-  b-modal(id="delete-modal", title="Danger!", centered, hide-footer)
-    | Are you sure you want to delete bucket "{{delete_bucket_selected}}"?
-    br
-    br
-    b This is permanent and cannot be undone!
-    hr
-    div.float-right
-      b-button.mx-2(@click="$root.$emit('bv::hide::modal','delete-modal')")
-        | Cancel
-      b-button(@click="deleteBucket(delete_bucket_selected)", variant="danger")
-        | Confirm
-
   h3 Import and export buckets
 
   b-card-group.deck
@@ -150,6 +138,7 @@ div
 import _ from 'lodash';
 import Papa from 'papaparse';
 import moment from 'moment';
+import { useDialog } from '~/composables/useDialog';
 
 import { useServerStore } from '~/stores/server';
 import { useBucketsStore } from '~/stores/buckets';
@@ -168,7 +157,6 @@ export default {
 
       import_file: null,
       import_error: null,
-      delete_bucket_selected: null,
       fields: [
         { key: 'id', label: 'Bucket ID', sortable: true },
         { key: 'hostname', sortable: true },
@@ -233,13 +221,21 @@ export default {
       const failedChecks = _.filter(checks, c => c.failed());
       return _.map(failedChecks, c => c.msg());
     },
-    openDeleteBucketModal: function (bucketId: string) {
-      this.delete_bucket_selected = bucketId;
-      this.$root.$emit('bv::show::modal', 'delete-modal');
+    openDeleteBucketModal: async function (bucketId: string) {
+      const { confirm } = useDialog();
+      const shouldDelete = await confirm({
+        title: 'Delete bucket',
+        description: `Delete bucket "${bucketId}" permanently? This cannot be undone.`,
+        confirmText: 'Delete bucket',
+        cancelText: 'Cancel',
+      });
+      if (!shouldDelete) {
+        return;
+      }
+      await this.deleteBucket(bucketId);
     },
     deleteBucket: async function (bucketId: string) {
       await this.bucketsStore.deleteBucket({ bucketId });
-      this.$root.$emit('bv::hide::modal', 'delete-modal');
     },
     importBuckets: async function (importFile) {
       const formData = new FormData();

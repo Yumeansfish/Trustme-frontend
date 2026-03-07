@@ -1,45 +1,36 @@
 <template lang="pug">
-div
-  h3 Settings
+div.space-y-6
+  h3.text-2xl.font-semibold.text-slate-900 Settings
 
-  hr
-
+  div.h-px.bg-slate-200
   DaystartSettings
 
-  hr
-
+  div.h-px.bg-slate-200
   TimelineDurationSettings
 
-  hr
-
+  div.h-px.bg-slate-200
   LandingPageSettings
 
-  hr
-
+  div.h-px.bg-slate-200
   DeviceGroupingSettings
-  
-  hr
 
+  div.h-px.bg-slate-200
   Theme
 
-  hr
-
-  div(v-if="!$isAndroid")
+  div(v-if="!$isAndroid").space-y-6
+    div.h-px.bg-slate-200
     ReleaseNotificationSettings
-    hr
 
+  div.h-px.bg-slate-200
   ColorSettings
 
-  hr
-
+  div.h-px.bg-slate-200
   ActivePatternSettings
 
-  hr
-
+  div.h-px.bg-slate-200
   CategorizationSettings
 
-  hr
-
+  div.h-px.bg-slate-200
   DeveloperSettings
 </template>
 
@@ -57,6 +48,7 @@ import DeveloperSettings from '~/views/settings/DeveloperSettings.vue';
 import Theme from '~/views/settings/Theme.vue';
 import ColorSettings from '~/views/settings/ColorSettings.vue';
 import ActivePatternSettings from '~/views/settings/ActivePatternSettings.vue';
+import { useDialog } from '~/composables/useDialog';
 
 export default {
   name: 'Settings',
@@ -72,17 +64,18 @@ export default {
     DeveloperSettings,
     ActivePatternSettings,
   },
-  beforeRouteLeave(to, from, next) {
+  async beforeRouteLeave() {
     const categoryStore = useCategoryStore();
     if (categoryStore.classes_unsaved_changes) {
-      if (confirm('Your categories have unsaved changes, are you sure you want to leave?')) {
-        next();
-      } else {
-        next(false);
-      }
-    } else {
-      next();
+      const { confirm } = useDialog();
+      return await confirm({
+        title: 'Unsaved category changes',
+        description: 'Your category edits are not saved yet. Leave this page anyway?',
+        confirmText: 'Leave page',
+        cancelText: 'Stay here',
+      });
     }
+    return true;
   },
   async created() {
     await this.init();

@@ -1,47 +1,60 @@
 <template lang="pug">
 div(v-if="view")
-  draggable.row(v-model="elements" handle=".handle" item-key="index")
+  draggable.flex.flex-wrap.-m-2(v-model="elements" handle=".handle" item-key="index")
     template(#item="{ element: el, index }")
-      div.p-2(:class="{'col-12': isVisFullWidth(el), 'col-12 col-md-4': !isVisFullWidth(el)}")
-        div.ui-card
+      div.w-full.p-2(:class="isVisFullWidth(el) ? 'w-full' : 'md:w-1/3'")
+        div.h-full.rounded-2xl.border.border-slate-200.bg-white.p-4.shadow-sm
           aw-selectable-vis(:id="index" :type="el.type" :props="el.props" :view-id="view.id" @onTypeChange="onTypeChange" @onRemove="onRemove" :editable="editing")
 
-    div.col-md-6.col-lg-4.p-3(v-if="editing")
-      b-button(@click="addVisualization" variant="outline-dark" block size="lg")
+    div.w-full.p-3(class="md:w-1/2 lg:w-1/3" v-if="editing")
+      button.inline-flex.h-11.w-full.items-center.justify-center.gap-2.rounded-md.border.border-slate-300.bg-white.px-4.text-sm.font-medium.text-slate-700.transition(
+        type="button"
+        @click="addVisualization"
+        class="hover:bg-slate-100"
+      )
         icon(name="plus")
         span Add visualization
 
-  div(v-if="editing").mt-2
-    div.d-flex.flex-row-reverse
-      b-button(variant="outline-dark" @click="discard(); editing = !editing;")
+  div.mt-2.flex.flex-col.gap-2(v-if="editing")
+    div.flex.flex-wrap.justify-end.gap-2
+      button.inline-flex.h-10.items-center.justify-center.gap-2.rounded-md.border.border-slate-300.bg-white.px-4.text-sm.font-medium.text-slate-700.transition(
+        type="button"
+        @click="discard(); editing = !editing;"
+        class="hover:bg-slate-100"
+      )
         icon(name="times")
         span Cancel
-      b-button.mr-2(variant="success" @click="save(); editing = !editing;")
+      button.inline-flex.h-10.items-center.justify-center.gap-2.rounded-md.border.border-emerald-500.bg-emerald-600.px-4.text-sm.font-medium.text-white.transition(
+        type="button"
+        @click="save(); editing = !editing;"
+        class="hover:bg-emerald-700"
+      )
         icon(name="save")
         span Save
-    div.mt-2.d-flex.flex-row-reverse
-      b-button(variant="warning" size="sm" @click="restoreDefaults();")
-        icon(name="undo")
-        span Restore defaults
-      b-button.mr-2(variant="danger" size="sm" @click="remove();")
+    div.flex.flex-wrap.justify-end.gap-2
+      button.inline-flex.h-9.items-center.justify-center.gap-2.rounded-md.border.border-rose-500.bg-rose-600.px-3.text-xs.font-medium.text-white.transition(
+        type="button"
+        @click="remove();"
+        class="hover:bg-rose-700"
+      )
         icon(name="trash")
         span Remove
-  div(v-else).d-flex.flex-row-reverse.mt-2
-    b-button(variant="outline-dark" size="sm" @click="editing = !editing")
+      button.inline-flex.h-9.items-center.justify-center.gap-2.rounded-md.border.border-amber-400.bg-amber-500.px-3.text-xs.font-medium.text-white.transition(
+        type="button"
+        @click="restoreDefaults();"
+        class="hover:bg-amber-600"
+      )
+        icon(name="undo")
+        span Restore defaults
+  div.mt-2.flex.justify-end(v-else)
+    button.inline-flex.h-9.items-center.justify-center.gap-2.rounded-md.border.border-slate-300.bg-white.px-3.text-xs.font-medium.text-slate-700.transition(
+      type="button"
+      @click="editing = !editing"
+      class="hover:bg-slate-100"
+    )
       icon(name="edit")
       span Edit view
 </template>
-
-<style lang="scss" scoped>
-.ui-card {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  padding: 16px;
-  height: 100%;
-  position: relative;
-}
-</style>
 
 <script lang="ts">
 
@@ -49,6 +62,8 @@ import { mapState } from 'pinia';
 import draggable from 'vuedraggable';
 
 import { useViewsStore } from '~/stores/views';
+import { useDialog } from '~/composables/useDialog';
+import { useToast } from '~/composables/useToast';
 
 import { defineComponent } from 'vue';
 
@@ -100,8 +115,10 @@ export default defineComponent({
     },
     restoreDefaults() {
       useViewsStore().restoreDefaults();
-      alert(
-        "All views have been restored to defaults. Changes won't be saved until you click 'Save'."
+      const { info } = useToast();
+      info(
+        'Views restored',
+        "All views are reset to defaults. Click 'Save' to persist this change."
       );
       // If we're on an URL that might become invalid, navigate to the main/default view
       if (!this.$route.path.includes('default')) {
@@ -115,15 +132,27 @@ export default defineComponent({
       let props = {};
 
       if (type === 'custom_vis') {
-        const visname = prompt('Please enter the watcher name', 'aw-watcher-');
-        if (!visname) return;
+        const { prompt } = useDialog();
+        const visname = await prompt({
+          title: 'Create custom visualization',
+          description: 'Enter the watcher bucket prefix.',
+          defaultValue: 'aw-watcher-',
+          placeholder: 'aw-watcher-',
+          confirmText: 'Next',
+        });
+        if (!visname || visname.trim() === '') return;
 
-        const title = prompt('Please enter the visualization title');
-        if (!title) return;
+        const title = await prompt({
+          title: 'Visualization title',
+          description: 'Give the visualization a readable title.',
+          placeholder: 'My custom visualization',
+          confirmText: 'Create',
+        });
+        if (!title || title.trim() === '') return;
 
         props = {
-          visname,
-          title,
+          visname: visname.trim(),
+          title: title.trim(),
         };
       }
 

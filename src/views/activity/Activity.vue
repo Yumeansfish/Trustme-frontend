@@ -70,18 +70,47 @@ div
         h6 {{view.name}}
 
     li.nav-item(style="margin-left: auto")
-      a.nav-link(@click="$refs.new_view.show()")
-        h6
+      button.nav-link.flex.items-center.gap-2(type="button" @click="openNewViewModal")
+        h6.mb-0.flex.items-center.gap-2
           icon(name="plus")
           span.d-none.d-md-inline
             | New view
 
-  b-modal(id="new_view" ref="new_view" title="New view" @show="resetModal" @hidden="resetModal" @ok="handleOk")
-    div.my-1
-      b-input-group.my-1(prepend="ID")
-        b-form-input(v-model="new_view.id")
-      b-input-group.my-1(prepend="Name")
-        b-form-input(v-model="new_view.name")
+  app-modal(
+    :open="isNewViewModalOpen"
+    title="New view"
+    panel-class="max-w-md"
+    @update:open="onNewViewModalChange"
+  )
+    div.space-y-3
+      label.flex.flex-col.gap-1.text-sm.font-medium.text-slate-700
+        span ID
+        input.h-10.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+          v-model="new_view.id"
+          type="text"
+          placeholder="default"
+          class="focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+        )
+      label.flex.flex-col.gap-1.text-sm.font-medium.text-slate-700
+        span Name
+        input.h-10.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+          v-model="new_view.name"
+          type="text"
+          placeholder="My view"
+          class="focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+          @keydown.enter.prevent="handleSubmit"
+        )
+    template(#footer)
+      button.inline-flex.h-9.items-center.justify-center.rounded-md.border.border-slate-300.bg-white.px-4.text-sm.font-medium.text-slate-700.transition(
+        type="button"
+        @click="closeNewViewModal"
+        class="hover:bg-slate-100"
+      ) Cancel
+      button.inline-flex.h-9.items-center.justify-center.rounded-md.border.border-slate-900.bg-slate-900.px-4.text-sm.font-medium.text-white.transition(
+        type="button"
+        @click="handleSubmit"
+        class="hover:bg-slate-800"
+      ) Create view
 
   div
     router-view
@@ -319,7 +348,8 @@ import moment from 'moment';
 import { get_day_start_with_offset, get_today_with_offset } from '~/util/time';
 import { periodLengthConvertMoment } from '~/util/timeperiod';
 import _ from 'lodash';
-
+import { useToast } from '~/composables/useToast';
+import AppModal from '~/components/ui/AppModal.vue';
 
 import { useSettingsStore } from '~/stores/settings';
 import { useCategoryStore } from '~/stores/categories';
@@ -332,6 +362,7 @@ export default defineComponent({
   name: 'Activity',
   components: {
     'aw-uncategorized-notification': defineAsyncComponent(() => import('~/components/UncategorizedNotification.vue')),
+    AppModal,
   },
   props: {
     host: String,
@@ -357,11 +388,15 @@ export default defineComponent({
 
       today: null,
       showOptions: false,
+      isNewViewModalOpen: false,
 
       include_audible: true,
       include_stopwatch: false,
       filter_afk: true,
-      new_view: {},
+      new_view: {
+        id: '',
+        name: '',
+      },
     };
   },
   computed: {
@@ -621,16 +656,24 @@ export default defineComponent({
         .map(([k, _v]) => k);
       const valid = errors.length == 0;
       if (!valid) {
-        alert(`Invalid form input: ${errors}`);
+        const { error } = useToast();
+        error('Invalid form input', errors.join(', '));
       }
       return valid;
     },
-
-    handleOk(event) {
-      // Prevent modal from closing
-      event.preventDefault();
-      // Trigger submit handler
-      this.handleSubmit();
+    openNewViewModal() {
+      this.resetModal();
+      this.isNewViewModalOpen = true;
+    },
+    closeNewViewModal() {
+      this.isNewViewModalOpen = false;
+      this.resetModal();
+    },
+    onNewViewModalChange(open) {
+      this.isNewViewModalOpen = open;
+      if (!open) {
+        this.resetModal();
+      }
     },
 
     handleSubmit() {
@@ -643,11 +686,7 @@ export default defineComponent({
       const viewsStore = useViewsStore();
       viewsStore.addView({ id: this.new_view.id, name: this.new_view.name, elements: [] });
       viewsStore.save();
-
-      // Hide the modal manually
-      this.$nextTick(() => {
-        this.$refs.new_view.hide();
-      });
+      this.closeNewViewModal();
     },
 
     resetModal() {
