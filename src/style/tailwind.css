@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Base styles / Overrides can go here */
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+}
