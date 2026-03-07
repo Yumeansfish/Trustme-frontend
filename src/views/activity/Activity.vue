@@ -17,11 +17,9 @@ div
         ) {{ label.charAt(0).toUpperCase() + label.slice(1) }}
 
       div.rize-nav-pill.mr-3
-        router-link.rize-nav-btn(
-          :to="link_prefix + '/' + previousPeriod() + '/' + subview + '/' + currentViewId"
-          tag="button"
-        )
-          icon(name="arrow-left")
+        router-link(:to="link_prefix + '/' + previousPeriod() + '/' + subview + '/' + currentViewId", custom, v-slot="{ navigate, href }")
+          button.rize-nav-btn(@click="navigate", :href="href")
+            icon(name="arrow-left")
 
         div.rize-nav-date
           icon(name="calendar")
@@ -32,12 +30,9 @@ div
             @change="setDate($event.target.value, periodLength)"
           )
 
-        router-link.rize-nav-btn(
-          :to="link_prefix + '/' + nextPeriod() + '/' + subview + '/' + currentViewId"
-          tag="button"
-          :disabled="nextPeriod() > today"
-        )
-          icon(name="arrow-right")
+        router-link(:to="link_prefix + '/' + nextPeriod() + '/' + subview + '/' + currentViewId", custom, v-slot="{ navigate, href }")
+          button.rize-nav-btn(@click="navigate", :href="href", :disabled="nextPeriod() > today")
+            icon(name="arrow-right")
 
       button.rize-icon-btn(:class="{ active: showOptions }" @click="showOptions = !showOptions" title="Filters")
         icon(name="filter")
@@ -50,11 +45,11 @@ div
       b-form-checkbox(v-model="filter_afk" size="sm")
         | Exclude AFK time
         icon#filterAFKHelp(name="question-circle" style="opacity: 0.4")
-        b-tooltip(target="filterAFKHelp" v-b-tooltip.hover title="Filter away time where the AFK watcher didn't detect any input.")
+        b-tooltip(target="filterAFKHelp" title="Filter away time where the AFK watcher didn't detect any input.")
       b-form-checkbox(v-model="include_audible" :disabled="!filter_afk" size="sm")
         | Count audible browser tab as active
         icon#includeAudibleHelp(name="question-circle" style="opacity: 0.4")
-        b-tooltip(target="includeAudibleHelp" v-b-tooltip.hover title="If the active window is an audible browser tab, count as active. Requires a browser watcher.")
+        b-tooltip(target="includeAudibleHelp" title="If the active window is an audible browser tab, count as active. Requires a browser watcher.")
 
       b-form-checkbox(v-if="devmode" v-model="include_stopwatch" size="sm")
         // WIP: https://github.com/ActivityWatch/aw-webui/pull/368
@@ -325,26 +320,18 @@ import { get_day_start_with_offset, get_today_with_offset } from '~/util/time';
 import { periodLengthConvertMoment } from '~/util/timeperiod';
 import _ from 'lodash';
 
-import 'vue-awesome/icons/arrow-left';
-import 'vue-awesome/icons/arrow-right';
-import 'vue-awesome/icons/sync';
-import 'vue-awesome/icons/plus';
-import 'vue-awesome/icons/edit';
-import 'vue-awesome/icons/times';
-import 'vue-awesome/icons/save';
-import 'vue-awesome/icons/question-circle';
-import 'vue-awesome/icons/filter';
-import 'vue-awesome/icons/calendar';
 
 import { useSettingsStore } from '~/stores/settings';
 import { useCategoryStore } from '~/stores/categories';
 import { useActivityStore, QueryOptions } from '~/stores/activity';
 import { useViewsStore } from '~/stores/views';
 
-export default {
+import { defineComponent, defineAsyncComponent } from 'vue';
+
+export default defineComponent({
   name: 'Activity',
   components: {
-    'aw-uncategorized-notification': () => import('~/components/UncategorizedNotification.vue'),
+    'aw-uncategorized-notification': defineAsyncComponent(() => import('~/components/UncategorizedNotification.vue')),
   },
   props: {
     host: String,
@@ -412,7 +399,7 @@ export default {
       } else if (this.periodLength === 'year') {
         return periodStart.format('YYYY');
       }
-      return `${periodStart.format('YYYY-MM-DD')} — ${moment(this.timeperiod.start)
+      return `${periodStart.format('YYYY-MM-DD')} - ${moment(this.timeperiod.start)
         .add(...this.timeperiod.length)
         .format('YYYY-MM-DD')}`;
     },
@@ -465,16 +452,16 @@ export default {
       if (this.periodIsBrowseable) {
         return {
           start: get_day_start_with_offset(this._date, settingsStore.startOfDay),
-          length: [1, this.periodLength],
+          length: [1, this.periodLength || 'day'],
         };
       } else {
-        const len = { last7d: [7, 'days'], last30d: [30, 'days'] }[this.periodLength];
+        const len = { last7d: [7, 'days'], last30d: [30, 'days'] }[this.periodLength] || [1, 'day'];
         return {
           start: get_day_start_with_offset(
-            moment(this._date).subtract(len[0] - 1, len[1]),
+            moment(this._date).subtract(len[0] - 1, len[1] as any),
             settingsStore.startOfDay
           ),
-          length: len,
+          length: len as [number, string],
         };
       }
     },
@@ -524,19 +511,30 @@ export default {
   },
 
   mounted: async function () {
-    this.viewsStore.load();
-    this.categoryStore.load();
+    console.log('ACTIVITY.VUE: mounted started');
     try {
+      this.viewsStore.load();
+      console.log('ACTIVITY.VUE: viewsStore.load() completed');
+    } catch(e) { console.error('ACTIVITY.VUE: viewsStore.load() failed', e); }
+    
+    try {
+      this.categoryStore.load();
+      console.log('ACTIVITY.VUE: categoryStore.load() completed');
+    } catch(e) { console.error('ACTIVITY.VUE: categoryStore.load() failed', e); }
+
+    try {
+      console.log('ACTIVITY.VUE: calling refresh()');
       await this.refresh();
+      console.log('ACTIVITY.VUE: refresh() completed');
     } catch (e) {
+      console.error('ACTIVITY.VUE: refresh() failed', e);
       if (e.message !== 'canceled') {
-        console.error(e);
         throw e;
       }
     }
   },
 
-  beforeDestroy: async function () {
+  beforeUnmount: async function () {
     // Cancels pending requests and resets store
     await this.activityStore.reset();
   },
@@ -659,5 +657,5 @@ export default {
       };
     },
   },
-};
+});
 </script>

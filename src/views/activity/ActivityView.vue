@@ -1,10 +1,10 @@
 <template lang="pug">
 div(v-if="view")
-  draggable.row(v-model="elements" handle=".handle")
-    // TODO: Handle large/variable sized visualizations better
-    div.p-2(v-for="el, index in elements", :key="index", :class="{'col-12': isVisFullWidth(el), 'col-12 col-md-4': !isVisFullWidth(el)}")
-      div.ui-card
-        aw-selectable-vis(:id="index" :type="el.type" :props="el.props" :view-id="view.id" @onTypeChange="onTypeChange" @onRemove="onRemove" :editable="editing")
+  draggable.row(v-model="elements" handle=".handle" item-key="index")
+    template(#item="{ element: el, index }")
+      div.p-2(:class="{'col-12': isVisFullWidth(el), 'col-12 col-md-4': !isVisFullWidth(el)}")
+        div.ui-card
+          aw-selectable-vis(:id="index" :type="el.type" :props="el.props" :view-id="view.id" @onTypeChange="onTypeChange" @onRemove="onRemove" :editable="editing")
 
     div.col-md-6.col-lg-4.p-3(v-if="editing")
       b-button(@click="addVisualization" variant="outline-dark" block size="lg")
@@ -44,17 +44,15 @@ div(v-if="view")
 </style>
 
 <script lang="ts">
-import 'vue-awesome/icons/save';
-import 'vue-awesome/icons/times';
-import 'vue-awesome/icons/trash';
-import 'vue-awesome/icons/undo';
 
 import { mapState } from 'pinia';
 import draggable from 'vuedraggable';
 
 import { useViewsStore } from '~/stores/views';
 
-export default {
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   name: 'ActivityView',
   components: {
     draggable: draggable,
@@ -68,18 +66,21 @@ export default {
   computed: {
     ...mapState(useViewsStore, ['views']),
     view: function () {
+      if (!this.views || this.views.length === 0) return null;
       if (this.view_id == 'default') {
         return this.views[0];
       } else {
-        return this.views.find(v => v.id == this.view_id);
+        return this.views.find(v => v.id == this.view_id) || this.views[0];
       }
     },
     elements: {
       get() {
-        return this.view.elements;
+        return this.view ? this.view.elements : [];
       },
       set(elements) {
-        useViewsStore().setElements({ view_id: this.view.id, elements });
+        if (this.view) {
+          useViewsStore().setElements({ view_id: this.view.id, elements });
+        }
       },
     },
   },
@@ -138,5 +139,5 @@ export default {
       return el.type == 'timeline_barchart' || this.isVisLarge(el);
     },
   },
-};
+});
 </script>

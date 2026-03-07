@@ -15,11 +15,13 @@ div.mx-3
 </template>
 
 <script>
+import '@fullcalendar/core';
+import FullCalendar from '@fullcalendar/vue3';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import { getTitleAttr, getColorFromString } from '../util/color';
 import moment from 'moment';
 import _ from 'lodash';
-import FullCalendar from '@fullcalendar/vue';
-import timeGridPlugin from '@fullcalendar/timegrid';
 
 // TODO: Use canonical timeline query, with flooding and categorization
 // TODO: Checkbox for toggling category-view, where adjacent events with same category are merged and the events are labeled by category

@@ -231,6 +231,7 @@ export const useActivityStore = defineStore('activity', {
 
   actions: {
     async ensure_loaded(query_options: QueryOptions) {
+      console.log('--- ACTIVITY STORE: ensure_loaded called with options ---', query_options);
       const settingsStore = useSettingsStore();
       await settingsStore.ensureLoaded();
 
@@ -241,6 +242,7 @@ export const useActivityStore = defineStore('activity', {
         getClient().abort();
       }
       if (!this.loaded || this.query_options !== query_options || query_options.force) {
+        console.log('ACTIVITY STORE: Actually loading data now...');
         this.start_loading(query_options);
         if (!query_options.timeperiod) {
           query_options.timeperiod = dateToTimeperiod(query_options.date, settingsStore.startOfDay);
@@ -447,6 +449,7 @@ export const useActivityStore = defineStore('activity', {
       dontQueryInactive,
       always_active_pattern,
     }: QueryOptions & { dontQueryInactive: boolean }) {
+      console.log('ACTIVITY STORE: query_category_time_by_period STARTED.', { dontQueryInactive, filters: filter_categories });
       // TODO: Needs to be adapted for Android
       let periods: string[];
       const count = timeperiod.length[0];
@@ -470,6 +473,7 @@ export const useActivityStore = defineStore('activity', {
 
       // Filter out periods that start in the future
       periods = periods.filter(period => new Date(period.split('/')[0]) < new Date());
+      console.log('ACTIVITY STORE: query_category_time_by_period - Calculated periods:', periods.length);
 
       const signal = getClient().controller.signal;
       let cancelled = false;
@@ -520,12 +524,12 @@ export const useActivityStore = defineStore('activity', {
           always_active_pattern,
           ...(isAndroid
             ? {
-                bid_android: this.buckets.android[0],
-              }
+              bid_android: this.buckets.android[0],
+            }
             : {
-                bid_afk: this.buckets.afk[0],
-                bid_window: this.buckets.window[0],
-              }),
+              bid_afk: this.buckets.afk[0],
+              bid_window: this.buckets.window[0],
+            }),
         });
         const result = await getClient().query([period], query, {
           verbose: true,
@@ -539,6 +543,7 @@ export const useActivityStore = defineStore('activity', {
       // Filter out values that are undefined (no longer needed, only used when visualization was progressive (looks buggy))
       by_period = _.fromPairs(_.toPairs(by_period).filter(o => o[1]));
 
+      console.log('ACTIVITY STORE: query_category_time_by_period - Data ready to commit.', { periods: Object.keys(by_period).length });
       this.query_category_time_by_period_completed({ by_period });
     },
 
@@ -770,25 +775,27 @@ export const useActivityStore = defineStore('activity', {
         data.cat_events = scoreCategories(data.cat_events);
       }
 
-      this.window.top_apps = data.app_events;
-      this.window.top_titles = data.title_events;
-      this.category.top = data.cat_events;
+      this.window.top_apps = [...data.app_events];
+      this.window.top_titles = [...data.title_events];
+      this.category.top = [...data.cat_events];
       this.active.duration = data.duration;
-      this.active.events = data.active_events;
+      this.active.events = [...data.active_events];
+
+      console.log('ACTIVITY STORE: query_window_completed committed data');
     },
 
     query_browser_completed(
       this: State,
       data = { domains: [], urls: [], titles: [], duration: 0 }
     ) {
-      this.browser.top_domains = data.domains;
-      this.browser.top_urls = data.urls;
-      this.browser.top_titles = data.titles;
+      this.browser.top_domains = [...data.domains];
+      this.browser.top_urls = [...data.urls];
+      this.browser.top_titles = [...data.titles];
       this.browser.duration = data.duration;
     },
 
     query_stopwatch_completed(this: State, data = { stopwatch_events: [] }) {
-      this.stopwatch.top_stopwatches = data.stopwatch_events;
+      this.stopwatch.top_stopwatches = [...data.stopwatch_events];
     },
 
     query_editor_completed(
@@ -796,9 +803,9 @@ export const useActivityStore = defineStore('activity', {
       data = { duration: 0, files: [], languages: [], projects: [] }
     ) {
       this.editor.duration = data.duration;
-      this.editor.top_files = data.files;
-      this.editor.top_languages = data.languages;
-      this.editor.top_projects = data.projects;
+      this.editor.top_files = [...data.files];
+      this.editor.top_languages = [...data.languages];
+      this.editor.top_projects = [...data.projects];
     },
 
     query_active_history_completed(this: State, { active_history } = { active_history: {} }) {
@@ -809,7 +816,8 @@ export const useActivityStore = defineStore('activity', {
     },
 
     query_category_time_by_period_completed(this: State, { by_period } = { by_period: [] }) {
-      this.category.by_period = by_period;
+      this.category.by_period = Array.isArray(by_period) ? [...by_period] : { ...by_period };
+      console.log('ACTIVITY STORE: query_category_time_by_period_completed committed by_period');
     },
   },
 });

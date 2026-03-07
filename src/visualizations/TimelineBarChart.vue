@@ -12,7 +12,7 @@ div.small(v-else, style="font-size: 16pt; color: #aaa;")
 import _ from 'lodash';
 import { Chart, ChartOptions } from 'chart.js';
 import 'chart.js/auto';
-import { Bar } from 'vue-chartjs/legacy';
+import { Bar } from 'vue-chartjs';
 import { get_hour_offset } from '~/util/time';
 
 // Force Chart.js to respect container height globally
@@ -32,12 +32,14 @@ function hourToTick(hours: number): string {
   }
 }
 
-export default {
+import { defineComponent, PropType } from 'vue';
+
+export default defineComponent({
   name: 'TimelineBarChart',
   components: { Bar },
   props: {
     datasets: {
-      type: Array,
+      type: Array as PropType<any[]>,
       default: () => [
         {
           label: 'Total time',
@@ -51,14 +53,15 @@ export default {
       default: () => null,
     },
     timeperiod_length: {
-      type: Array,
+      type: Array as PropType<[number, string]>,
       default: () => [1, 'day'],
     },
   },
   computed: {
     labels() {
-      const start = this.timeperiod_start;
-      const [count, resolution] = this.timeperiod_length;
+      const start = this.timeperiod_start as string;
+      const count = this.timeperiod_length[0] as number;
+      const resolution = this.timeperiod_length[1] as string;
       if (resolution.startsWith('day') && count == 1) {
         const hourOffset = get_hour_offset();
         return _.range(0, 24).map(h => `${(h + hourOffset) % 24}`);
@@ -96,7 +99,7 @@ export default {
         return [];
       }
     },
-    chartData() {
+    chartData(): any {
       return {
         labels: this.labels,
         datasets: _.sortBy(this.datasets, d => d.label),
@@ -106,8 +109,8 @@ export default {
         },
       };
     },
-    chartOptions(): ChartOptions {
-      const resolution = this.timeperiod_length[1];
+    chartOptions(): ChartOptions<'bar'> {
+      const resolution = this.timeperiod_length[1] as string;
       return {
         responsive: true,
         maintainAspectRatio: false,
@@ -124,6 +127,7 @@ export default {
             callbacks: {
               label: function (context) {
                 const value = context.parsed.y;
+                if (value === null) return '';
                 let hours = Math.floor(value);
                 let minutes = Math.round((value - hours) * 60);
                 if (minutes == 60) {
@@ -145,7 +149,7 @@ export default {
             stacked: true,
             grid: {
               display: false,
-              drawBorder: false,
+              drawOnChartArea: false,
             },
             ticks: {
               display: true,
@@ -161,7 +165,7 @@ export default {
             suggestedMax: resolution.startsWith('day') ? 1 : undefined,
             grid: {
               color: '#f0f0f0',
-              drawBorder: false,
+              drawOnChartArea: true,
             },
             ticks: {
               callback: hourToTick,
@@ -170,10 +174,10 @@ export default {
             },
           },
         },
-      };
+      } as any;
     },
   },
-};
+});
 </script>
 
 <style scoped>

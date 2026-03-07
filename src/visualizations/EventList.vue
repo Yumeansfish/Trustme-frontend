@@ -23,10 +23,10 @@ div
           span.event
             span.field(:title="event.timestamp")
               icon(name="calendar")
-              | {{ event.timestamp | friendlytime }}
+              | {{ event.timestamp  ? new Date(event.timestamp ).toLocaleString() : "" }}
             span.field
               icon(name="clock")
-              | {{ event.duration | friendlyduration }}
+              | {{ friendlyduration(event.duration ) }}
             span(v-for="(val, key) in event.data").field
               icon(name="tags")
               // TODO: Add some kind of highlighting to key
@@ -115,10 +115,6 @@ $border-color: #ddd;
 </style>
 
 <script lang="ts">
-import 'vue-awesome/icons/edit';
-import 'vue-awesome/icons/tags';
-import 'vue-awesome/icons/clock';
-import 'vue-awesome/icons/calendar';
 
 import EventEditor from '~/components/EventEditor.vue';
 

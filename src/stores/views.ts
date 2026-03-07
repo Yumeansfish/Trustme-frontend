@@ -83,7 +83,18 @@ export const useViewsStore = defineStore('views', {
       const settingsStore = useSettingsStore();
       await settingsStore.ensureLoaded();
       const views = settingsStore.views;
-      this.loadViews(views);
+
+      const isViewsEmpty = !views || (Array.isArray(views) && views.length === 0) || (typeof views === 'object' && Object.keys(views).length === 0);
+
+      if (isViewsEmpty) {
+        console.log('ACTIVITY.VUE: settingsStore.views is empty, loading defaultViews instead', defaultViews);
+        this.loadViews([...defaultViews]);
+      } else {
+        console.log('ACTIVITY.VUE: Loading views from settingsStore:', views);
+        // Ensure it's an array, in case it was stored weirdly
+        const viewsArray = Array.isArray(views) ? views : Object.values(views);
+        this.loadViews(viewsArray as View[]);
+      }
     },
     async save() {
       const settingsStore = useSettingsStore();
@@ -91,45 +102,45 @@ export const useViewsStore = defineStore('views', {
       await this.load();
     },
     loadViews(views: View[]) {
-      this.$patch({ views });
-      console.log('Loaded views:', this.views);
+      this.views = [...views];
+      console.log('ACTIVITY.VUE: Loaded views:', this.views);
     },
-    clearViews(this: State) {
+    clearViews() {
       this.views = [];
     },
-    setElements(this: State, { view_id, elements }: { view_id: string; elements: IElement[] }) {
-      this.views.find(v => v.id == view_id).elements = elements;
+    setElements({ view_id, elements }: { view_id: string; elements: IElement[] }) {
+      const view = this.views.find(v => v.id == view_id);
+      if (view) view.elements = elements;
     },
-    restoreDefaults(this: State) {
-      this.views = defaultViews;
+    restoreDefaults() {
+      this.views = [...defaultViews];
     },
-    addView(this: State, view: View) {
+    addView(view: View) {
       this.views.push({ ...view, elements: [] });
     },
-    removeView(this: State, { view_id }) {
+    removeView({ view_id }) {
       const idx = this.views.map(v => v.id).indexOf(view_id);
-      this.views.splice(idx, 1);
+      if (idx !== -1) this.views.splice(idx, 1);
     },
-    editView(
-      this: State,
-      {
-        view_id,
-        el_id,
-        type,
-        props,
-      }: { view_id: string; el_id: string; type: string; props: Record<string, unknown> }
-    ) {
-      console.log(view_id, el_id, type, props);
-      console.log(this.views);
-      const element = this.views.find(v => v.id == view_id).elements[el_id];
-      element.type = type;
-      element.props = props;
+    editView({
+      view_id,
+      el_id,
+      type,
+      props,
+    }: { view_id: string; el_id: string; type: string; props: Record<string, unknown> }) {
+      const view = this.views.find(v => v.id == view_id);
+      if (view && view.elements[el_id]) {
+        view.elements[el_id].type = type;
+        view.elements[el_id].props = props;
+      }
     },
-    addVisualization(this: State, { view_id, type }) {
-      this.views.find(v => v.id == view_id).elements.push({ type: type });
+    addVisualization({ view_id, type }) {
+      const view = this.views.find(v => v.id == view_id);
+      if (view) view.elements.push({ type: type });
     },
-    removeVisualization(this: State, { view_id, el_id }) {
-      this.views.find(v => v.id == view_id).elements.splice(el_id, 1);
+    removeVisualization({ view_id, el_id }) {
+      const view = this.views.find(v => v.id == view_id);
+      if (view) view.elements.splice(el_id, 1);
     },
   },
 });

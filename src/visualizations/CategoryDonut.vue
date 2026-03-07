@@ -7,7 +7,7 @@ div.small(v-else, style="font-size: 14pt; color: #aaa; text-align: center; paddi
 
 <script lang="ts">
 import 'chart.js/auto';
-import { Doughnut } from 'vue-chartjs/legacy';
+import { Doughnut } from 'vue-chartjs';
 import { useActivityStore } from '~/stores/activity';
 
 // Rize Indigo palette — from deep to soft
@@ -31,7 +31,9 @@ function formatDuration(seconds: number): string {
   return `${min}m`;
 }
 
-export default {
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   name: 'CategoryDonut',
   components: { Doughnut },
   computed: {
@@ -67,7 +69,7 @@ export default {
         ],
       };
     },
-    chartOptions() {
+    chartOptions(): any {
       return {
         responsive: true,
         maintainAspectRatio: true,
@@ -83,7 +85,7 @@ export default {
             padding: 10,
             cornerRadius: 8,
             callbacks: {
-              label: ctx => {
+              label: (ctx: any) => {
                 const seconds = ctx.parsed * 3600;
                 const total = this.totalDuration;
                 const pct = total > 0 ? Math.round((seconds / total) * 100) : 0;
@@ -94,11 +96,11 @@ export default {
         },
       };
     },
-    centerTextPlugin() {
+    centerTextPlugin(): any {
       const totalDuration = this.totalDuration;
       return {
         id: 'centerText',
-        afterDraw(chart) {
+        afterDraw(chart: any) {
           const { ctx, chartArea } = chart;
           if (!chartArea) return;
           const centerX = (chartArea.left + chartArea.right) / 2;
@@ -123,7 +125,7 @@ export default {
       };
     },
   },
-};
+});
 </script>
 
 <style scoped></style>

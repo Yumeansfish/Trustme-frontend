@@ -15,7 +15,7 @@ sunburst(:data="data", :colorScale="colorfunc", :getCategoryForColor="categoryFo
       div(v-if="nodes.mouseOver !== null && nodes.mouseOver")
         div.parent {{ nodes.mouseOver.data.parent ? nodes.mouseOver.data.parent.join(" > ") : " " }}
         div.name {{ nodes.mouseOver.data.name }}
-        div {{ nodes.mouseOver.value | friendlyduration }}
+        div {{ friendlyduration(nodes.mouseOver.value ) }}
         div ({{ Math.round(100 * nodes.mouseOver.value / nodes.root.value) }}%)
 
   // Add legend
