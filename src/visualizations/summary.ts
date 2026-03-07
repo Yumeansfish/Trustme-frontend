@@ -56,7 +56,7 @@ function update(container: HTMLElement, apps: Entry[]) {
 
   list.innerHTML = '';
 
-  _.each(apps, (app) => {
+  _.each(apps, app => {
     const pct = total_duration > 0 ? Math.round((app.duration / total_duration) * 100) : 0;
     const barWidth = longest_duration > 0 ? (app.duration / longest_duration) * 100 : 0;
 

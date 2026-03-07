@@ -252,11 +252,15 @@ export const useActivityStore = defineStore('activity', {
         // TODO: These queries can actually run in parallel, but since server won't process them in parallel anyway we won't.
         this.set_available();
 
+        const hostsList = query_options.host.split(',').map(h => h.trim());
+
         if (this.window.available) {
           console.info(
-            settingsStore.useMultidevice ? 'Querying multiple devices' : 'Querying a single device'
+            settingsStore.useMultidevice || hostsList.length > 1
+              ? 'Querying multiple devices'
+              : 'Querying a single device'
           );
-          if (settingsStore.useMultidevice) {
+          if (settingsStore.useMultidevice || hostsList.length > 1) {
             const hostnames = bucketsStore.hosts.filter(
               // require that the host has window buckets,
               // and that the host is not a fakedata host,
@@ -264,6 +268,7 @@ export const useActivityStore = defineStore('activity', {
               host =>
                 host &&
                 bucketsStore.bucketsWindow(host).length > 0 &&
+                hostsList.includes(host) &&
                 (!host.startsWith('fakedata') || query_options.host.startsWith('fakedata'))
             );
             console.info('Including hosts in multiquery: ', hostnames);
@@ -403,7 +408,9 @@ export const useActivityStore = defineStore('activity', {
         );
       });
       let afk_buckets: string[] = [];
-      if (settingsStore.useMultidevice) {
+      const hostsList = query_options.host.split(',').map(h => h.trim());
+
+      if (settingsStore.useMultidevice || hostsList.length > 1) {
         // get all hostnames that qualify for the multidevice query
         const hostnames = bucketsStore.hosts.filter(
           // require that the host has afk buckets,
@@ -412,6 +419,7 @@ export const useActivityStore = defineStore('activity', {
           host =>
             host &&
             bucketsStore.bucketsAFK(host).length > 0 &&
+            hostsList.includes(host) &&
             (!host.startsWith('fakedata') || query_options.host.startsWith('fakedata'))
         );
         // get all afk buckets for all hosts
@@ -512,12 +520,12 @@ export const useActivityStore = defineStore('activity', {
           always_active_pattern,
           ...(isAndroid
             ? {
-              bid_android: this.buckets.android[0],
-            }
+                bid_android: this.buckets.android[0],
+              }
             : {
-              bid_afk: this.buckets.afk[0],
-              bid_window: this.buckets.window[0],
-            }),
+                bid_afk: this.buckets.afk[0],
+                bid_window: this.buckets.window[0],
+              }),
         });
         const result = await getClient().query([period], query, {
           verbose: true,
@@ -569,12 +577,14 @@ export const useActivityStore = defineStore('activity', {
     async get_buckets(this: State, { host }) {
       // TODO: Move to bucketStore on a per-host basis?
       const bucketsStore = useBucketsStore();
-      this.buckets.afk = bucketsStore.bucketsAFK(host);
-      this.buckets.window = bucketsStore.bucketsWindow(host);
-      this.buckets.android = bucketsStore.bucketsAndroid(host);
-      this.buckets.browser = bucketsStore.bucketsBrowser(host);
-      this.buckets.editor = bucketsStore.bucketsEditor(host);
-      this.buckets.stopwatch = bucketsStore.bucketsStopwatch(host);
+      const hosts = host.split(',').map(h => h.trim());
+
+      this.buckets.afk = _.flatten(hosts.map(h => bucketsStore.bucketsAFK(h)));
+      this.buckets.window = _.flatten(hosts.map(h => bucketsStore.bucketsWindow(h)));
+      this.buckets.android = _.flatten(hosts.map(h => bucketsStore.bucketsAndroid(h)));
+      this.buckets.browser = _.flatten(hosts.map(h => bucketsStore.bucketsBrowser(h)));
+      this.buckets.editor = _.flatten(hosts.map(h => bucketsStore.bucketsEditor(h)));
+      this.buckets.stopwatch = _.flatten(hosts.map(h => bucketsStore.bucketsStopwatch(h)));
 
       console.log('Available buckets: ', this.buckets);
       this.buckets.loaded = true;
@@ -674,16 +684,40 @@ export const useActivityStore = defineStore('activity', {
           const cat_events = [];
 
           // Create a nice distribution of activities for a vivid chart
-          if (i >= 9 && i <= 17) { // Work hours
-            cat_events.push({ duration: Math.random() * 2000 + 1000, data: { $category: ['Work', 'Programming', 'ActivityWatch'] } });
-            if (Math.random() > 0.4) cat_events.push({ duration: Math.random() * 800, data: { $category: ['Comms', 'Video Conferencing'] } });
-          } else if (i >= 18 && i <= 22) { // Evening
-            if (Math.random() > 0.2) cat_events.push({ duration: Math.random() * 1500 + 1000, data: { $category: ['Media', 'Games'] } });
-            cat_events.push({ duration: Math.random() * 1000 + 200, data: { $category: ['Media', 'Social Media'] } });
-          } else if (i >= 8 && i <= 9) { // Morning
-            cat_events.push({ duration: Math.random() * 800 + 400, data: { $category: ['Comms', 'Email'] } });
-          } else if (i < 2 || (i >= 23)) { // Late night
-            cat_events.push({ duration: Math.random() * 600, data: { $category: ['Media', 'Social Media'] } });
+          if (i >= 9 && i <= 17) {
+            // Work hours
+            cat_events.push({
+              duration: Math.random() * 2000 + 1000,
+              data: { $category: ['Work', 'Programming', 'ActivityWatch'] },
+            });
+            if (Math.random() > 0.4)
+              cat_events.push({
+                duration: Math.random() * 800,
+                data: { $category: ['Comms', 'Video Conferencing'] },
+              });
+          } else if (i >= 18 && i <= 22) {
+            // Evening
+            if (Math.random() > 0.2)
+              cat_events.push({
+                duration: Math.random() * 1500 + 1000,
+                data: { $category: ['Media', 'Games'] },
+              });
+            cat_events.push({
+              duration: Math.random() * 1000 + 200,
+              data: { $category: ['Media', 'Social Media'] },
+            });
+          } else if (i >= 8 && i <= 9) {
+            // Morning
+            cat_events.push({
+              duration: Math.random() * 800 + 400,
+              data: { $category: ['Comms', 'Email'] },
+            });
+          } else if (i < 2 || i >= 23) {
+            // Late night
+            cat_events.push({
+              duration: Math.random() * 600,
+              data: { $category: ['Media', 'Social Media'] },
+            });
           }
 
           by_period[key] = { cat_events };

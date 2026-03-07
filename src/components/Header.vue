@@ -14,7 +14,7 @@ div.aw-sidebar
         v-if="activityViews && activityViews.length === 1"
         v-for="view in activityViews"
         :key="view.name"
-        :to="view.pathUrl"
+        :to="`/activity/${view.hostname}`"
       )
         icon(name="calendar-day")
         span.sidebar-label Activity
@@ -33,7 +33,7 @@ div.aw-sidebar
           router-link.sidebar-subitem(
             v-for="view in activityViews"
             :key="view.name"
-            :to="view.pathUrl"
+            :to="`/activity/${view.hostname}`"
           )
             icon(:name="view.icon")
             span.sidebar-label {{ view.name }}
@@ -61,22 +61,6 @@ div.aw-sidebar
         router-link.sidebar-subitem(to="/query")
           icon(name="code")
           span.sidebar-label Query
-        router-link.sidebar-subitem(v-if="devmode" to="/trends")
-          icon(name="chart-line")
-          span.sidebar-label Trends
-        router-link.sidebar-subitem(v-if="devmode" to="/report")
-          icon(name="chart-pie")
-          span.sidebar-label Report
-        router-link.sidebar-subitem(v-if="devmode" to="/alerts")
-          icon(name="flag-checkered")
-          span.sidebar-label Alerts
-        router-link.sidebar-subitem(v-if="devmode" to="/timespiral")
-          icon(name="history")
-          span.sidebar-label Timespiral
-        router-link.sidebar-subitem(v-if="devmode" to="/graph")
-          icon(name="project-diagram")
-          span.sidebar-label Graph
-
     // 底部固定项
     div.sidebar-bottom
       router-link.sidebar-item(to="/buckets")
@@ -95,16 +79,7 @@ import 'vue-awesome/icons/stream';
 import 'vue-awesome/icons/database';
 import 'vue-awesome/icons/search';
 import 'vue-awesome/icons/code';
-import 'vue-awesome/icons/chart-line'; // TODO: switch to chart-column, when vue-awesome supports FA v6
-import 'vue-awesome/icons/chart-pie';
-import 'vue-awesome/icons/flag-checkered';
-import 'vue-awesome/icons/stopwatch';
-import 'vue-awesome/icons/cog';
-import 'vue-awesome/icons/tools';
-import 'vue-awesome/icons/history';
-
 // TODO: use circle-nodes instead in the future
-import 'vue-awesome/icons/project-diagram';
 //import 'vue-awesome/icons/cicle-nodes';
 
 import 'vue-awesome/icons/ellipsis-h';
@@ -123,53 +98,80 @@ export default {
   name: 'Header',
   data() {
     return {
-      activityViews: null,
       // Make configurable?
       fixedTopMenu: this.$isAndroid,
     };
   },
   computed: {
-    ...mapState(useSettingsStore, ['devmode']),
+    ...mapState(useSettingsStore, ['devmode', 'deviceMappings']),
+    ...mapState(useBucketsStore, ['buckets']),
+    activityViews() {
+      const settingsStore = useSettingsStore();
+      if (!settingsStore.loaded || !this.buckets || this.buckets.length === 0) return [];
+
+      const types_by_host: Record<string, any> = {};
+      const views = [];
+
+      // Identify which watchers each host has
+      _.each(this.buckets, v => {
+        types_by_host[v.hostname] = types_by_host[v.hostname] || {};
+        types_by_host[v.hostname].afk ||= v.type == 'afkstatus';
+        types_by_host[v.hostname].window ||= v.type == 'currentwindow';
+        types_by_host[v.hostname].android ||= v.type == 'currentwindow' && v.id.includes('android');
+      });
+
+      const processedHosts = new Set<string>();
+
+      const activeMappings =
+        this.deviceMappings && Object.keys(this.deviceMappings).length > 0
+          ? this.deviceMappings
+          : null;
+
+      // 1. Add grouped/mapped aliases first
+      if (activeMappings) {
+        _.each(activeMappings, (hostsArr: string[], groupName: string) => {
+          const validGroupHosts = hostsArr.filter(h => types_by_host[h]);
+          if (validGroupHosts.length > 0) {
+            validGroupHosts.forEach(h => processedHosts.add(h));
+            const isMostlyAndroid = validGroupHosts.some(h => types_by_host[h].android);
+
+            views.push({
+              name: groupName,
+              hostname: validGroupHosts.join(','), // comma separated payload
+              type: isMostlyAndroid ? 'android' : 'default',
+              icon: isMostlyAndroid ? 'mobile' : 'desktop',
+            });
+          }
+        });
+      }
+
+      // 2. Add any remaining unassigned discrete hosts
+      _.each(types_by_host, (types, hostname) => {
+        if (processedHosts.has(hostname) || hostname === 'unknown') return;
+
+        if (types['android']) {
+          views.push({
+            name: `${hostname} (Android)`,
+            hostname: hostname,
+            type: 'android',
+            icon: 'mobile',
+          });
+        } else {
+          views.push({
+            name: hostname,
+            hostname: hostname,
+            type: 'default',
+            icon: 'desktop',
+          });
+        }
+      });
+
+      return views;
+    },
   },
   mounted: async function () {
     const bucketStore = useBucketsStore();
     await bucketStore.ensureLoaded();
-    const buckets: IBucket[] = bucketStore.buckets;
-    const types_by_host = {};
-
-    const activityViews = [];
-
-    // TODO: Change to use same bucket detection logic as get_buckets/set_available in store/modules/activity.ts
-    _.each(buckets, v => {
-      types_by_host[v.hostname] = types_by_host[v.hostname] || {};
-      types_by_host[v.hostname].afk ||= v.type == 'afkstatus';
-      types_by_host[v.hostname].window ||= v.type == 'currentwindow';
-      // TODO: Use other bucket type ID in the future
-      types_by_host[v.hostname].android ||= v.type == 'currentwindow' && v.id.includes('android');
-    });
-    //console.log(types_by_host);
-
-    _.each(types_by_host, (types, hostname) => {
-      if (types['android']) {
-        activityViews.push({
-          name: `${hostname} (Android)`,
-          hostname: hostname,
-          type: 'android',
-          pathUrl: `/activity/${hostname}`,
-          icon: 'mobile',
-        });
-      } else if (hostname != 'unknown') {
-        activityViews.push({
-          name: hostname,
-          hostname: hostname,
-          type: 'default',
-          pathUrl: `/activity/${hostname}`,
-          icon: 'desktop',
-        });
-      }
-    });
-
-    this.activityViews = activityViews;
   },
 };
 </script>

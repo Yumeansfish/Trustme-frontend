@@ -16,6 +16,10 @@ div
 
   hr
 
+  DeviceGroupingSettings
+  
+  hr
+
   Theme
 
   hr
@@ -48,6 +52,7 @@ import TimelineDurationSettings from '~/views/settings/TimelineDurationSettings.
 import ReleaseNotificationSettings from '~/views/settings/ReleaseNotificationSettings.vue';
 import CategorizationSettings from '~/views/settings/CategorizationSettings.vue';
 import LandingPageSettings from '~/views/settings/LandingPageSettings.vue';
+import DeviceGroupingSettings from '~/views/settings/DeviceGroupingSettings.vue';
 import DeveloperSettings from '~/views/settings/DeveloperSettings.vue';
 import Theme from '~/views/settings/Theme.vue';
 import ColorSettings from '~/views/settings/ColorSettings.vue';
@@ -61,6 +66,7 @@ export default {
     ReleaseNotificationSettings,
     CategorizationSettings,
     LandingPageSettings,
+    DeviceGroupingSettings,
     Theme,
     ColorSettings,
     DeveloperSettings,

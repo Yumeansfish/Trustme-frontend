@@ -45,6 +45,8 @@ interface State {
   useMultidevice: boolean;
   requestTimeout: number;
 
+  deviceMappings: Record<string, string[]>;
+
   // Set to true if settings loaded
   _loaded: boolean;
 }
@@ -83,6 +85,8 @@ export const useSettingsStore = defineStore('settings', {
     showYearly: false,
     useMultidevice: false,
     requestTimeout: 30,
+
+    deviceMappings: {},
 
     _loaded: false,
   }),
@@ -142,7 +146,12 @@ export const useSettingsStore = defineStore('settings', {
           storage[key] = value;
         }
       }
-      this.$patch({ ...storage, _loaded: true });
+      this.$patch(state => {
+        for (const [key, val] of Object.entries(storage)) {
+          state[key] = val;
+        }
+        state._loaded = true;
+      });
 
       // Since `requestTimeout` is used to initialize the client, we need to set it again
       // https://github.com/ActivityWatch/activitywatch/issues/979
@@ -210,7 +219,11 @@ export const useSettingsStore = defineStore('settings', {
     },
     async update(new_state: Record<string, any>) {
       console.log('Updating state', new_state);
-      this.$patch(new_state);
+      this.$patch(state => {
+        for (const [key, value] of Object.entries(new_state)) {
+          state[key] = value;
+        }
+      });
       await this.save();
     },
   },

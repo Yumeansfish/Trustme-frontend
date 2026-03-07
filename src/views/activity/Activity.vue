@@ -591,9 +591,11 @@ export default {
     },
 
     refresh: async function (force) {
+      // Decode the host param to support comma-separated multi-host querying
+      const decodedHost = decodeURIComponent(this.host);
       const queryOptions: QueryOptions = {
         timeperiod: this.timeperiod,
-        host: this.host,
+        host: decodedHost,
         force: force,
         filter_afk: this.filter_afk,
         include_audible: this.include_audible,
