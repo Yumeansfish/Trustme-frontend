@@ -4,7 +4,10 @@ div
   //       Currently, more than one event-editor on the same view can lead to multiple event-editors opening.
   event-editor(
     v-if="editable"
-    :event="editableEvent", :bucket_id="bucket_id",
+    :event="editableEvent"
+    :bucket_id="bucket_id"
+    :open="isEditorOpen"
+    @update:open="onEditorOpenChange"
     @save="(e) => $emit('save', e)", @delete="removeEvent"
   )
   b-card.event-container(no-block=true)
@@ -136,6 +139,7 @@ export default {
       isListExpanded: false,
       limit: 100,
       editableEvent: null,
+      isEditorOpen: false,
     };
   },
   computed: {
@@ -146,9 +150,13 @@ export default {
   methods: {
     editEvent: function (event) {
       this.editableEvent = event;
-      this.$nextTick(() => {
-        this.$bvModal.show('edit-modal-' + event.id);
-      });
+      this.isEditorOpen = true;
+    },
+    onEditorOpenChange(open) {
+      this.isEditorOpen = open;
+      if (!open) {
+        this.editableEvent = null;
+      }
     },
     expandList: function () {
       this.isListExpanded = !this.isListExpanded;

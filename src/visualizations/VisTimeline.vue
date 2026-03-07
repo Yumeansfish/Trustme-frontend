@@ -1,42 +1,18 @@
 <template lang="pug">
   div
-    div#visualization
+    div#visualization.mt-2.mb-2.w-full.max-w-full.overflow-hidden.box-border
 
-    div.small.text-muted.my-2(v-if="bucketsFromEither.length != 1")
+    div.my-2.text-sm.text-slate-500(v-if="bucketsFromEither.length != 1")
       i Buckets with no events in the queried range will be hidden.
 
     div(v-if="editingEvent")
-      EventEditor(:event="editingEvent" :bucket_id="editingEventBucket")
+      EventEditor(
+        :event="editingEvent"
+        :bucket_id="editingEventBucket"
+        :open="editorOpen"
+        @update:open="onEditorOpenChange"
+      )
 </template>
-
-<style lang="scss">
-div#visualization {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-  overflow: hidden;
-  width: 100%;
-  max-width: 100vw;
-  box-sizing: border-box;
-
-  .vis-timeline {
-    overflow: hidden;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .timeline-timeline {
-    font-family: sans-serif !important;
-
-    .timeline-panel {
-      box-sizing: border-box;
-    }
-
-    .timeline-item {
-      border-radius: 2px;
-    }
-  }
-}
-</style>
 
 <script lang="ts">
 import _ from 'lodash';
@@ -46,6 +22,7 @@ import { buildTooltip } from '../util/tooltip.js';
 import { getCategoryColorFromEvent, getTitleAttr } from '../util/color';
 import { getSwimlane } from '../util/swimlane.js';
 import { IEvent } from '../util/interfaces';
+import { useToast } from '~/composables/useToast';
 
 import { Timeline } from 'vis-timeline/esnext';
 import 'vis-timeline/styles/vis-timeline-graph2d.css';
@@ -94,6 +71,7 @@ export default {
       },
       editingEvent: null,
       editingEventBucket: null,
+      editorOpen: false,
 
       updateHasRun: false,
     };
@@ -179,10 +157,9 @@ export default {
     });
   },
   methods: {
-    openEditor: function () {
-      this.$bvModal.show('edit-modal-' + this.editingEvent.id);
-    },
     onSelect: async function (properties) {
+      const { info, warning } = useToast();
+
       if (properties.items.length == 0) {
         return;
       } else if (properties.items.length == 1) {
@@ -194,19 +171,25 @@ export default {
         // See: https://github.com/ActivityWatch/aw-webui/pull/320#issuecomment-1056921587
         this.editingEvent = await this.$aw.getEvent(bucketId, event.id);
         this.editingEventBucket = bucketId;
+        this.editorOpen = true;
 
-        this.$nextTick(() => {
-          console.log('Editing event', event, ', in bucket', bucketId);
-          this.openEditor();
-        });
+        console.log('Editing event', event, ', in bucket', bucketId);
         if (!isAlertWarningShown) {
-          alert(
-            "Note: Changes won't be reflected in the timeline until the page is refreshed. This will be improved in a future version."
+          warning(
+            'Timeline note',
+            "Changes won't be reflected until you refresh. This will be improved in a future version."
           );
           isAlertWarningShown = true;
         }
       } else {
-        alert('selected multiple items: ' + JSON.stringify(properties.items));
+        info('Multiple selection', `Selected ${properties.items.length} timeline items.`);
+      }
+    },
+    onEditorOpenChange(open) {
+      this.editorOpen = open;
+      if (!open) {
+        this.editingEvent = null;
+        this.editingEventBucket = null;
       }
     },
     ensureUpdate() {

@@ -78,21 +78,44 @@ div
                       @ok="createRuleOk()"
                       @hidden="createRuleCancel()")
 
-  b-modal(id="appendRule" title="Append rule" @ok="handleOk" :ok-disabled="!valid")
-    b-form(ref="form" @submit.stop.prevent="handleSubmit")
-      b-form-group(label="Rule"
-                   label-for="append-category"
-                   invalid-feedback="Category is required"
-                   :state="validCategory"
-                   required)
-        b-form-select#append-category(v-model="append.category")
-          b-form-select-option(v-for="cat in allCategoriesSelect" :value="cat.value" :key="cat.id") {{ cat.text }}
-      b-form-group(label="Word")
-        b-form-input(v-model="append.word")
-        small
-          div(v-if="validPattern" style="color: green") Valid
-          div(v-else style="color: red") Invalid pattern
-          div(v-if="validPattern && broad_pattern" style="color: orange") Pattern too broad
+  app-modal(
+    :open="isAppendRuleOpen"
+    title="Append rule"
+    panel-class="max-w-lg"
+    @update:open="onAppendRuleOpenChange"
+  )
+    div.space-y-4
+      label.flex.flex-col.gap-1.text-sm.font-medium.text-slate-700
+        span Category
+        select#append-category.h-10.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+          v-model="append.category"
+          class="focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+        )
+          option(v-for="cat in allCategoriesSelect" :value="cat.value" :key="cat.text") {{ cat.text }}
+      label.flex.flex-col.gap-1.text-sm.font-medium.text-slate-700
+        span Word
+        input.h-10.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+          v-model="append.word"
+          type="text"
+          class="focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+          @keydown.enter.prevent="handleSubmit"
+        )
+      div.text-sm
+        div.text-emerald-600(v-if="validPattern && !broad_pattern") Pattern looks good
+        div.text-rose-600(v-else-if="!validPattern") Invalid pattern
+        div.text-amber-600(v-else) Pattern too broad
+    template(#footer)
+      button.inline-flex.h-9.items-center.justify-center.rounded-md.border.border-slate-300.bg-white.px-4.text-sm.font-medium.text-slate-700.transition(
+        type="button"
+        @click="closeAppendRule"
+        class="hover:bg-slate-100"
+      ) Cancel
+      button.inline-flex.h-9.items-center.justify-center.rounded-md.border.border-slate-900.bg-slate-900.px-4.text-sm.font-medium.text-white.transition(
+        type="button"
+        :disabled="!valid"
+        @click="handleSubmit"
+        class="hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+      ) Append rule
 </template>
 
 <style>
@@ -112,11 +135,12 @@ import { useBucketsStore } from '~/stores/buckets';
 import { canonicalEvents } from '~/queries';
 import { getClient } from '~/util/awclient';
 import CategoryEditModal from '~/components/CategoryEditModal.vue';
+import AppModal from '~/components/ui/AppModal.vue';
 import { isRegexBroad, validateRegex } from '~/util/validate';
 
 export default {
   name: 'aw-category-builder',
-  components: { CategoryEditModal },
+  components: { CategoryEditModal, AppModal },
   props: {},
   data() {
     return {
@@ -144,6 +168,7 @@ export default {
         word: '',
         category: [],
       },
+      isAppendRuleOpen: false,
       create: {
         word: '',
         categoryId: null,
@@ -304,7 +329,7 @@ export default {
     appendRule(word) {
       console.log('Opening modal to append rule with word: ' + word);
       this.append.word = _.escapeRegExp(word);
-      this.$bvModal.show('appendRule');
+      this.isAppendRuleOpen = true;
     },
     async appendRuleOk() {
       console.log('Appending rule with word: ' + this.append.word);
@@ -313,26 +338,18 @@ export default {
       await this.categoryStore.save();
       this.fetchWords();
     },
-    handleOk(bvModalEvent) {
-      // Prevent modal from closing (to be closed later in handleSubmit, if validation passes)
-      bvModalEvent.preventDefault();
-
-      // Trigger submit handler
-      this.handleSubmit(bvModalEvent);
+    closeAppendRule() {
+      this.isAppendRuleOpen = false;
     },
-    handleSubmit(e) {
+    onAppendRuleOpenChange(open) {
+      this.isAppendRuleOpen = open;
+    },
+    handleSubmit() {
       // Exit when the form isn't valid
       if (!this.valid) {
-        //console.log(e);
-        e.preventDefault();
         return;
       }
-
-      // Hide the modal manually
-      this.$nextTick(() => {
-        this.$bvModal.hide('appendRule');
-      });
-
+      this.closeAppendRule();
       this.appendRuleOk();
     },
   },

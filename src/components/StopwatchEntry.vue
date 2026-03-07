@@ -17,10 +17,17 @@ div
       b-button.mx-1(v-if="!event.data.running", @click="$emit('new')", variant="outline-primary", size="sm")
         icon.ml-0.mr-1(name="play")
         | Start new
-      b-button.mx-1(v-b-modal="'edit-modal-' + event.id", variant="outline-dark", size="sm")
+      b-button.mx-1(@click="isEditorOpen = true", variant="outline-dark", size="sm")
         icon.ml-0.mr-1(name="edit")
         | Edit
-  event-editor(:event="event", :bucket_id="bucket_id", @save="save", @delete="delete_")
+  event-editor(
+    :event="event"
+    :bucket_id="bucket_id"
+    :open="isEditorOpen"
+    @update:open="isEditorOpen = $event"
+    @save="save"
+    @delete="delete_"
+  )
 </template>
 
 <style scoped lang="scss">
@@ -46,6 +53,11 @@ export default {
       type: moment,
       default: moment(),
     },
+  },
+  data() {
+    return {
+      isEditorOpen: false,
+    };
   },
   methods: {
     stop: async function () {

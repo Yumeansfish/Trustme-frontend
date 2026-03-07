@@ -1,27 +1,38 @@
 <template lang="pug">
-div.mx-3
-  b-form
-    b-form-group(label="Bucket:")
-      select(v-model="selectedBucket")
-        option(v-for="bucket in buckets", :value="bucket.id") {{ bucket.id }}
-    b-form-group(label="Show:")
-      select(v-model="view")
+div.mx-3.space-y-3
+  div.grid.gap-3.rounded-xl.border.border-slate-200.bg-white.p-4.shadow-sm(class="md:grid-cols-3")
+    label.flex.flex-col.gap-1.text-sm.font-medium.text-slate-700
+      span Bucket
+      select.h-10.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+        v-model="selectedBucket"
+        class="focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+      )
+        option(v-for="bucket in buckets", :key="bucket.id", :value="bucket.id") {{ bucket.id }}
+
+    label.flex.flex-col.gap-1.text-sm.font-medium.text-slate-700
+      span Show
+      select.h-10.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+        v-model="view"
+        class="focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+      )
         option(value="timeGridDay") Day
         option(value="timeGridWeek") Week
-    b-form-group
-      b-checkbox(v-model="fitToActive")
-        | Fit to active
+
+    label.flex.items-center.gap-2.self-end.text-sm.text-slate-700
+      input.h-4.w-4.rounded.border-slate-300.text-violet-600(type="checkbox" v-model="fitToActive" class="focus:ring-violet-400")
+      span Fit to active
+
   FullCalendar(ref="fullCalendar", :options="calendarOptions")
 </template>
 
 <script>
 import '@fullcalendar/core';
 import FullCalendar from '@fullcalendar/vue3';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { getTitleAttr, getColorFromString } from '../util/color';
 import moment from 'moment';
 import _ from 'lodash';
+import { useToast } from '~/composables/useToast';
 
 // TODO: Use canonical timeline query, with flooding and categorization
 // TODO: Checkbox for toggling category-view, where adjacent events with same category are merged and the events are labeled by category
@@ -98,8 +109,12 @@ export default {
   },
   methods: {
     onEventClick: function (arg) {
-      // TODO: Open event inspector/editor here
-      alert('event click! ' + JSON.stringify(arg.event));
+      const { info } = useToast();
+      const startTime = arg.event?.start ? moment(arg.event.start).format('YYYY-MM-DD HH:mm') : 'unknown start';
+      const endTime = arg.event?.end ? moment(arg.event.end).format('YYYY-MM-DD HH:mm') : 'unknown end';
+      const title = arg.event?.title || 'Untitled';
+
+      info('Event selected', `${title} · ${startTime} → ${endTime}`);
     },
   },
 };
