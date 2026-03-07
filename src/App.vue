@@ -2,42 +2,40 @@
 div#wrapper(v-if="loaded")
   aw-header
 
-  div.main-content(:class="{'container': !fullContainer, 'container-fluid': fullContainer}").px-0.px-md-2
-    div.aw-container.my-sm-3.p-3
+  div.main-content.px-0(class="md:px-2" :class="fullContainer ? 'w-full' : 'max-w-none'")
+    div.my-2.rounded-xl.border.border-slate-200.bg-white.p-3.shadow-sm(class="md:my-3")
       error-boundary
         //- user-satisfaction-poll
         new-release-notification(v-if="isNewReleaseCheckEnabled")
         router-view
+  app-toaster
+  app-dialog
 
 </template>
 
-<style lang="scss">
-$sidebar-collapsed: 56px;
-$sidebar-expanded: 200px;
-$content-padding: 24px;
-$sidebar-transition: 0.2s ease;
-
+<style>
 body {
   overflow-x: hidden;
 }
 
 .main-content {
-  margin-left: $sidebar-collapsed;
-  padding-left: $content-padding;
-  padding-right: $content-padding;
+  margin-left: 56px;
   min-width: 0;
-  transition: margin-left $sidebar-transition;
+  padding-left: 24px;
+  padding-right: 24px;
+  transition: margin-left 0.2s ease;
+}
 
-  // 覆盖 Bootstrap .container 的最大宽度限制
-  &.container {
-    max-width: none;
-    width: auto;
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
-// 当 sidebar hover 时，主内容区同步右移
 .aw-sidebar:hover ~ .main-content {
-  margin-left: $sidebar-expanded;
+  margin-left: 200px;
 }
 </style>
 
@@ -45,6 +43,8 @@ body {
 import { useSettingsStore } from '~/stores/settings';
 import { useServerStore } from '~/stores/server';
 import { detectPreferredTheme } from '~/util/theme';
+import AppToaster from '~/components/ui/AppToaster.vue';
+import AppDialog from '~/components/ui/AppDialog.vue';
 // if vite is used, you can import css file as module
 //import darkCssUrl from '../static/dark.css?url';
 //import darkCssContent from '../static/dark.css?inline';
@@ -52,6 +52,10 @@ import { detectPreferredTheme } from '~/util/theme';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
+  components: {
+    AppToaster,
+    AppDialog,
+  },
   data: function () {
     return {
       activityViews: [],
