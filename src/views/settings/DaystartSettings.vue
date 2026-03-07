@@ -1,20 +1,27 @@
 <template lang="pug">
-div
-  div.d-sm-flex.justify-content-between
-    div
-      h5.mt-1.mb-2.mb-sm-0 Start of day
-    div
-      b-input(type="time" size="sm" :value="startOfDay" @change="startOfDay = $event")
-  small
+div.space-y-3
+  div.flex.flex-col.gap-3(class="sm:flex-row sm:items-center sm:justify-between")
+    h5.m-0.text-base.font-semibold.text-slate-900 Start of day
+    input.h-9.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+      :value="startOfDay"
+      type="time"
+      class="sm:w-40 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+      @change="startOfDay = $event.target.value"
+    )
+  small.text-sm.text-slate-500
     | The time at which days "start", since humans don't always go to bed before midnight.
     | Set to 04:00 by default.
 
-  div.mt-3.d-sm-flex.justify-content-between
-    div
-      h5.mt-1.mb-2.mb-sm-0 Start of week
-    div
-      b-form-select(:text="startOfWeek", size="sm" v-model="startOfWeek" variant="outline-dark" :options="['Saturday', 'Sunday', 'Monday']")
-  small
+  div.flex.flex-col.gap-3.pt-2(class="sm:flex-row sm:items-center sm:justify-between")
+    h5.m-0.text-base.font-semibold.text-slate-900 Start of week
+    select.h-9.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+      v-model="startOfWeek"
+      class="sm:w-40 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+    )
+      option(value="Saturday") Saturday
+      option(value="Sunday") Sunday
+      option(value="Monday") Monday
+  small.text-sm.text-slate-500
     | The weekday which starts a new week.
 </template>
 <script lang="ts">

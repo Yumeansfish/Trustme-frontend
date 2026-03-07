@@ -1,16 +1,18 @@
 <template lang="pug">
-div
-  div.d-sm-flex.justify-content-between
-    div
-      h5.mt-1.mb-2.mb-sm-0 Theme
-    div
-      b-select.landingpage(v-if="_loaded" size="sm" :value="theme", @change="theme = $event")
-        option(value="auto") Auto (System)
-        option(value="light") Light
-        option(value="dark") Dark
-      span(v-else)
-        .aw-loading Loading...
-  small
+div.space-y-3
+  div.flex.flex-col.gap-3(class="sm:flex-row sm:items-center sm:justify-between")
+    h5.m-0.text-base.font-semibold.text-slate-900 Theme
+    select.h-9.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+      v-if="_loaded"
+      :value="theme"
+      class="sm:w-40 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+      @change="theme = $event.target.value"
+    )
+      option(value="auto") Auto (System)
+      option(value="light") Light
+      option(value="dark") Dark
+    span.text-sm.text-slate-500(v-else) Loading...
+  small.text-sm.text-slate-500
     | Change color theme of the application (you need to change categories colors manually to be suitable with dark mode).
 </template>
 

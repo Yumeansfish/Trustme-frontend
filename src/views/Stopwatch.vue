@@ -1,58 +1,57 @@
 <template lang="pug">
-div
-  h2 Stopwatch
-  p
-    | Using bucket: {{bucket_id}}
+div.space-y-5
+  div.space-y-1
+    h2.text-2xl.font-semibold.text-slate-900 Stopwatch
+    p.text-sm.text-slate-500
+      | Using bucket: {{bucket_id}}
 
   b-alert(show)
     | This is an early experiment. Data entered here is not shown in the Activity view, yet.
 
-  b-input-group(size="lg")
-    b-input(v-model="label" placeholder="What are you working on?")
-    b-input-group-append
-      b-button(@click="startTimer(label)", variant="success")
-        icon(name="play")
-        | Start
+  div.flex.flex-col.gap-3.rounded-xl.border.border-slate-200.bg-white.p-4.shadow-sm(class="sm:flex-row sm:items-center")
+    input.h-11.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+      v-model="label"
+      type="text"
+      placeholder="What are you working on?"
+      class="focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+      @keyup.enter="startTimer(label)"
+    )
+    button.inline-flex.h-11.items-center.justify-center.gap-2.rounded-md.border.border-emerald-600.bg-emerald-600.px-4.text-sm.font-medium.text-white.transition(
+      type="button"
+      @click="startTimer(label)"
+      class="hover:bg-emerald-700"
+    )
+      icon(name="play")
+      span Start
 
-  hr
+  div.h-px.bg-slate-200
 
-  div(v-if="loading")
-    span.text-muted.center.aw-loading Loading...
-  div.row(v-else)
-    div.col-md-12
-      h3 Running
+  div.rounded-xl.border.border-slate-200.bg-white.p-5.shadow-sm(v-if="loading")
+    span.text-sm.text-slate-500 Loading...
+  div.space-y-6(v-else)
+    div.space-y-3
+      h3.text-xl.font-semibold.text-slate-900 Running
       div(v-if="runningTimers.length > 0")
         div(v-for="e in runningTimers" :key="e.id")
           stopwatch-entry(:event="e", :bucket_id="bucket_id", :now="now",
             @delete="removeTimer", @update="updateTimer")
           hr(style="margin: 0")
       div(v-else)
-        span(style="color: #555") No stopwatch running
+        span.text-sm.text-slate-500 No stopwatch running
         hr
 
-      div(v-if="stoppedTimers.length > 0")
-        h3.mt-4.mb-4 History
+      div.space-y-3(v-if="stoppedTimers.length > 0")
+        h3.text-xl.font-semibold.text-slate-900 History
         div(v-for="k in Object.keys(timersByDate).sort().reverse()")
-          h5.mt-2.mb-1 {{ k }}
+          h5.mb-1.mt-2.text-sm.font-semibold.uppercase.text-slate-500(class="tracking-[0.18em]") {{ k }}
           div(v-for="e in timersByDate[k]" :key="e.id")
             stopwatch-entry(:event="e", :bucket_id="bucket_id", :now="now",
               @delete="removeTimer", @update="updateTimer", @new="startTimer(e.data.label)")
             hr(style="margin: 0")
       div(v-else)
-        span(style="color: #555") No history to show
+        span.text-sm.text-slate-500 No history to show
         hr
 </template>
-
-<style scoped lang="scss">
-.btn {
-  margin-right: 0.5em;
-
-  .fa-icon {
-    margin-left: 0;
-    margin-right: 0.5em;
-  }
-}
-</style>
 
 <script lang="ts">
 import _ from 'lodash';

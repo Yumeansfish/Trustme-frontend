@@ -1,6 +1,6 @@
 <template lang="pug">
-div
-  h3 Search
+div.space-y-4
+  h3.text-2xl.font-semibold.text-slate-900 Search
 
   b-alert(style="warning" show)
     | This feature is still in early development.
@@ -8,37 +8,55 @@ div
   b-alert(v-if="error" show variant="danger")
     | {{error}}
 
-  b-input-group(size="lg")
-    b-input(v-model="pattern" v-on:keyup.enter="search()" placeholder="Regex pattern to search for")
-    b-input-group-append
-      b-button(type="button", @click="search()" variant="success")
-        icon(name="search")
-        | Search
+  div.flex.flex-col.gap-3.rounded-xl.border.border-slate-200.bg-white.p-4.shadow-sm(class="sm:flex-row sm:items-center")
+    input.h-11.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+      v-model="pattern"
+      type="text"
+      placeholder="Regex pattern to search for"
+      class="focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+      @keyup.enter="search()"
+    )
+    button.inline-flex.h-11.items-center.justify-center.gap-2.rounded-md.border.border-emerald-600.bg-emerald-600.px-4.text-sm.font-medium.text-white.transition(
+      type="button"
+      @click="search()"
+      class="hover:bg-emerald-700"
+    )
+      icon(name="search")
+      span Search
 
-  div.d-flex.mt-1
-    span.mr-auto.small(style="color: #666") Hostname: {{queryOptions.hostname}}
-    b-button.border-0(size="sm", variant="outline-dark" @click="show_options = !show_options")
+  div.flex.items-center.justify-between.gap-3
+    span.text-sm.text-slate-500 Hostname: {{queryOptions.hostname}}
+    button.inline-flex.h-9.items-center.justify-center.gap-2.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.font-medium.text-slate-700.transition(
+      type="button"
+      @click="show_options = !show_options"
+      class="hover:bg-slate-100"
+    )
       span(v-if="!show_options")
         | #[icon(name="angle-double-down")] Show options
       span(v-else)
         | #[icon(name="angle-double-up")] Hide options
 
-  div(v-show="show_options")
-    h4 Options
+  div.space-y-3.rounded-xl.border.border-slate-200.bg-slate-50.p-4(v-show="show_options")
+    h4.text-lg.font-semibold.text-slate-900 Options
     aw-query-options(v-model="queryOptions")
 
-  div(v-if="status == 'searching'")
+  div.rounded-xl.border.border-slate-200.bg-white.p-4.text-sm.text-slate-600(v-if="status == 'searching'")
     div #[icon(name="spinner" pulse)] Searching...
 
-  div(v-if="events != null")
-    hr
+  div.space-y-4(v-if="events != null")
+    div.h-px.bg-slate-200
 
     aw-selectable-eventview(:events="events")
 
-    div
+    div.text-sm.text-slate-600
       | Didn't find what you were looking for?
       br
-      | Add a week to the search: #[b-button(size="sm" variant="outline-dark" @click="start = start.subtract(1, 'week'); search()") +1 week]
+      | Add a week to the search:
+      button.ml-2.inline-flex.h-8.items-center.justify-center.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.font-medium.text-slate-700.transition(
+        type="button"
+        @click="queryOptions.start = moment(queryOptions.start).subtract(1, 'week'); search()"
+        class="hover:bg-slate-100"
+      ) +1 week
 </template>
 
 <script lang="ts">

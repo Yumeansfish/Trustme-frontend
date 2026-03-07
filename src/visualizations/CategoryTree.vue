@@ -23,7 +23,9 @@ div(style="font-size: 0.9em")
         | {{ friendlyduration(cat.duration ) }}
   hr
   // TODO: Make configurable in a cleaner way (figure out a way to configure visualizations generally)
-  b-checkbox(v-model="show_perc" size="sm") Show percent
+  label.inline-flex.items-center.gap-2.text-sm.text-slate-700
+    input.h-4.w-4.rounded.border-slate-300.text-slate-900(v-model="show_perc" type="checkbox" class="focus:ring-slate-400")
+    span Show percent
 </template>
 
 <style lang="scss" scoped>

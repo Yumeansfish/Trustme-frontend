@@ -1,25 +1,38 @@
 <template lang="pug">
-div
-  h4.mb-3 Developer settings
+div.space-y-4
+  h4.mb-3.text-lg.font-semibold.text-slate-900 Developer settings
   b-alert(show) #[b Note:] These settings are meant for developers who (hopefully) know what they are doing, and as such, may break things unexpectedly.
 
-  b-form-group(label="Force devmode" label-cols-md=3 description="Devmode enables some features that are still work-in-progress.")
-    div
-      b-form-checkbox.float-right.ml-2(v-model="devmode" switch)
+  div.space-y-3
+    div.flex.items-start.justify-between.gap-4.rounded-xl.border.border-slate-200.bg-white.p-4.shadow-sm
+      div.space-y-1
+        h5.text-sm.font-semibold.text-slate-900 Force devmode
+        p.text-sm.leading-6.text-slate-500 Devmode enables some features that are still work-in-progress.
+      input.h-4.w-4.rounded.border-slate-300.text-slate-900.mt-1(type="checkbox" v-model="devmode" class="focus:ring-slate-400")
 
-  b-form-group(label="Show yearly time range" label-cols-md=3 description="Querying an entire year is a very heavy operation, and is likely to lead to timeouts. However, the query might be fast enough if you're running aw-server-rust.")
-    div
-      b-form-checkbox.float-right.ml-2(v-model="showYearly" switch)
+    div.flex.items-start.justify-between.gap-4.rounded-xl.border.border-slate-200.bg-white.p-4.shadow-sm
+      div.space-y-1
+        h5.text-sm.font-semibold.text-slate-900 Show yearly time range
+        p.text-sm.leading-6.text-slate-500 Querying an entire year is heavy and likely to time out unless the server is fast enough.
+      input.h-4.w-4.rounded.border-slate-300.text-slate-900.mt-1(type="checkbox" v-model="showYearly" class="focus:ring-slate-400")
 
-  b-form-group(label="Use multidevice query" label-cols-md=3 description="Multidevice query is where events are collected from several hosts in the Activity view. It is an early experiment, that currently does not support browser buckets (or the audible-as-active feature).")
-    div
-      b-form-checkbox.float-right.ml-2(v-model="useMultidevice" switch)
+    div.flex.items-start.justify-between.gap-4.rounded-xl.border.border-slate-200.bg-white.p-4.shadow-sm
+      div.space-y-1
+        h5.text-sm.font-semibold.text-slate-900 Use multidevice query
+        p.text-sm.leading-6.text-slate-500 Multidevice queries are experimental and currently do not support browser buckets or audible-as-active.
+      input.h-4.w-4.rounded.border-slate-300.text-slate-900.mt-1(type="checkbox" v-model="useMultidevice" class="focus:ring-slate-400")
 
-  b-form-group(label="Request timeout" label-cols-md=3 description="The maximum amount of time a server request can take before timing out. Setting this to a high value can be useful for large queries. Note that you need to reload the web UI for it to apply.")
-    div
-      b-input.float-right.ml-2(v-model="requestTimeout" type="number")
+    div.flex.flex-col.gap-3.rounded-xl.border.border-slate-200.bg-white.p-4.shadow-sm(class="sm:flex-row sm:items-center sm:justify-between")
+      div.space-y-1
+        h5.text-sm.font-semibold.text-slate-900 Request timeout
+        p.text-sm.leading-6.text-slate-500 The max server request duration before timeout. Reload the web UI after changing it.
+      input.h-9.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
+        v-model.number="requestTimeout"
+        type="number"
+        class="sm:w-32 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+      )
 
-  div
+  div.text-sm.text-slate-500
     | Web UI commit hash: {{ COMMIT_HASH }}
 </template>
 
