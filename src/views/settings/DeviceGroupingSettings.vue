@@ -89,7 +89,8 @@ export default defineComponent({
       this.newGroupHosts = [];
     },
     async removeGroup(groupName: string) {
-      if (!confirm(`Are you sure you want to remove the group "${groupName}"?`)) return;
+      // Temporarily skip confirmation for debugging
+      // if (!confirm(`Are you sure you want to remove the group "${groupName}"?`)) return;
 
       const settingsStore = useSettingsStore();
       const currentMappings = { ...this.deviceMappings };
