@@ -10,6 +10,15 @@
  */
 import { defineComponent, h } from 'vue';
 
+const isSameValue = (left, right) => {
+    if (left === right) return true;
+    try {
+        return JSON.stringify(left) === JSON.stringify(right);
+    } catch {
+        return false;
+    }
+};
+
 // Simple pass-through: renders a <div> with all attrs/slots
 const makeDiv = (name) =>
     defineComponent({
@@ -59,21 +68,27 @@ const BFormInput = defineComponent({
     inheritAttrs: true,
     props: {
         modelValue: [String, Number],
+        value: [String, Number],
         type: { type: String, default: 'text' },
         size: String,
         state: { type: [Boolean, null], default: null },
         disabled: Boolean,
         placeholder: String,
     },
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'input', 'change'],
     render() {
+        const currentValue = this.modelValue ?? this.value ?? '';
         return h('input', {
             type: this.type,
-            value: this.modelValue,
+            value: currentValue,
             disabled: this.disabled,
             placeholder: this.placeholder,
             class: ['form-control', this.size && `form-control-${this.size}`].filter(Boolean),
-            onInput: (e) => this.$emit('update:modelValue', e.target.value),
+            onInput: (e) => {
+                this.$emit('update:modelValue', e.target.value);
+                this.$emit('input', e.target.value);
+            },
+            onChange: (e) => this.$emit('change', e.target.value),
             ...this.$attrs,
         });
     },
@@ -85,18 +100,24 @@ const BFormSelect = defineComponent({
     inheritAttrs: true,
     props: {
         modelValue: [String, Number, Array],
+        value: [String, Number, Array],
         options: Array,
         size: String,
         disabled: Boolean,
     },
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'change'],
     render() {
+        const normalizedOptions = (this.options || []).map((opt) => ({
+            value: typeof opt === 'object' ? opt.value : opt,
+            text: typeof opt === 'object' ? opt.text : opt,
+        }));
+        const currentValue = this.modelValue ?? this.value;
+        const selectedIndex = normalizedOptions.findIndex((opt) => isSameValue(opt.value, currentValue));
+        const optionPrefix = '__aw_opt_';
         const children = [];
-        if (this.options) {
-            this.options.forEach((opt) => {
-                const val = typeof opt === 'object' ? opt.value : opt;
-                const text = typeof opt === 'object' ? opt.text : opt;
-                children.push(h('option', { value: val }, text));
+        if (normalizedOptions.length > 0) {
+            normalizedOptions.forEach((opt, index) => {
+                children.push(h('option', { value: `${optionPrefix}${index}` }, opt.text));
             });
         }
         if (this.$slots.default) {
@@ -105,10 +126,17 @@ const BFormSelect = defineComponent({
         return h(
             'select',
             {
-                value: this.modelValue,
+                value: selectedIndex >= 0 ? `${optionPrefix}${selectedIndex}` : currentValue,
                 disabled: this.disabled,
                 class: ['form-select', this.size && `form-select-${this.size}`].filter(Boolean),
-                onChange: (e) => this.$emit('update:modelValue', e.target.value),
+                onChange: (e) => {
+                    const rawValue = e.target.value;
+                    const resolvedValue = rawValue.startsWith(optionPrefix)
+                        ? normalizedOptions[Number(rawValue.slice(optionPrefix.length))]?.value
+                        : rawValue;
+                    this.$emit('update:modelValue', resolvedValue);
+                    this.$emit('change', resolvedValue);
+                },
                 ...this.$attrs,
             },
             children
@@ -134,7 +162,7 @@ const BFormCheckbox = defineComponent({
         switch: Boolean,
         disabled: Boolean,
     },
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'change'],
     render() {
         return h('label', { class: 'form-check', ...this.$attrs }, [
             h('input', {
@@ -145,14 +173,17 @@ const BFormCheckbox = defineComponent({
                 disabled: this.disabled,
                 class: 'form-check-input',
                 onChange: (e) => {
+                    let nextValue;
                     if (Array.isArray(this.modelValue)) {
                         const newVal = [...this.modelValue];
                         if (e.target.checked) newVal.push(this.value);
                         else newVal.splice(newVal.indexOf(this.value), 1);
-                        this.$emit('update:modelValue', newVal);
+                        nextValue = newVal;
                     } else {
-                        this.$emit('update:modelValue', e.target.checked);
+                        nextValue = e.target.checked;
                     }
+                    this.$emit('update:modelValue', nextValue);
+                    this.$emit('change', nextValue);
                 },
             }),
             h('span', { class: 'form-check-label' }, this.$slots.default?.()),
@@ -176,29 +207,18 @@ const BTable = defineComponent({
     },
 });
 
-// Modal - basic pass-through
-const BModal = defineComponent({
-    name: 'BModal',
-    inheritAttrs: true,
-    props: {
-        id: String,
-        title: String,
-    },
-    render() {
-        return h('div', { class: 'modal', ...this.$attrs }, this.$slots.default?.());
-    },
-});
-
 export function registerBootstrapShims(app) {
     // Core components
     app.component('b-button', BButton);
     app.component('b-btn', BButton);
     app.component('b-form-input', BFormInput);
+    app.component('b-input', BFormInput);
     app.component('b-form-select', BFormSelect);
+    app.component('b-select', BFormSelect);
     app.component('b-form-select-option', BFormSelectOption);
     app.component('b-form-checkbox', BFormCheckbox);
+    app.component('b-checkbox', BFormCheckbox);
     app.component('b-table', BTable);
-    app.component('b-modal', BModal);
 
     // Layout pass-throughs (render as divs)
     const divComponents = [
@@ -223,13 +243,11 @@ export function registerBootstrapShims(app) {
         'b-skeleton',
         'b-overlay',
         'b-form-textarea',
-        'b-input',
         'b-form-datepicker',
         'b-dropdown-divider',
         'b-dropdown-item-button',
         'b-form-file',
         'b-card-group',
-        'b-select',
     ];
 
     divComponents.forEach((name) => {

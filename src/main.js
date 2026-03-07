@@ -7,9 +7,8 @@ import { createApp, defineAsyncComponent } from 'vue';
 import 'typeface-varela-round';
 
 // Load Tailwind and main style
-import 'bootstrap/dist/css/bootstrap.min.css';
 import './style/tailwind.css';
-import './style/style.scss';
+import './style/bootstrap-compat.css';
 
 // Sets up the routing and the base app (using vue-router)
 import router from './route.js';
