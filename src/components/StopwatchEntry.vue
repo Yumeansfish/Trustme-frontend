@@ -5,11 +5,11 @@ div
       span #[b {{event.data.label || 'No label'}}]
       span(style="color: #888") &nbsp;|&nbsp;
       span(v-if="event.data.running")
-        | Running for #[span(:title="event.timestamp") {{event.data.running ? (now - event.timestamp) / 1000 : event.duration | friendlyduration}}]
-        | &nbsp;(Started {{ event.timestamp | shorttime }})
+        | Running for #[span(:title="event.timestamp") {{ friendlyduration(event.data.running ? (now - event.timestamp) / 1000 : event.duration ) }}]
+        | &nbsp;(Started {{ shorttime(event.timestamp ) }})
       span(v-else)
-        | Started #[span(:title="event.timestamp") {{event.timestamp | friendlytime}}]
-        | &nbsp;({{event.data.running ? (now - event.timestamp) / 1000 : event.duration | friendlyduration}})
+        | Started #[span(:title="event.timestamp") {{ event.timestamp  ? new Date(event.timestamp ).toLocaleString() : "" }}]
+        | &nbsp;({{ friendlyduration(event.data.running ? (now - event.timestamp) / 1000 : event.duration ) }})
     div
       b-button.mx-1(v-if="event.data.running", @click="stop", variant="outline-primary", size="sm")
         icon.ml-0.mr-1(name="stop")
@@ -31,9 +31,6 @@ div
 
 <script lang="ts">
 import moment from 'moment';
-import 'vue-awesome/icons/edit';
-import 'vue-awesome/icons/stop';
-import 'vue-awesome/icons/play';
 
 import EventEditor from './EventEditor.vue';
 

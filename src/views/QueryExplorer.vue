@@ -35,6 +35,7 @@ div
 <style scoped lang="scss"></style>
 
 <script lang="ts">
+import { defineComponent } from 'vue';
 import moment from 'moment';
 import _ from 'lodash';
 import { useCategoryStore } from '~/stores/categories';
@@ -42,7 +43,7 @@ import { useCategoryStore } from '~/stores/categories';
 const today = moment().startOf('day');
 const tomorrow = moment(today).add(24, 'hours');
 
-export default {
+export default defineComponent({
   name: 'QueryExplorer',
   data() {
     // allow queries to be saved in a URL parameter
@@ -80,7 +81,7 @@ RETURN = sort_by_duration(merged_events);
     useCategoryStore().load();
   },
   methods: {
-    query: async function () {
+    async query() {
       let query = this.query_code;
 
       // replace magic string `__CATEGORIES__` in query text with latest category rule
@@ -108,5 +109,5 @@ RETURN = sort_by_duration(merged_events);
       }
     },
   },
-};
+});
 </script>

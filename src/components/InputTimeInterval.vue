@@ -61,7 +61,7 @@ div
         span.d-none.d-md-inline
           | Refresh
       div.mt-2.small(v-if="lastUpdate")
-        | Last update: #[time(:datetime="lastUpdate.format()") {{lastUpdate | friendlytime}}]
+        | Last update: {{ lastUpdate ? lastUpdate.fromNow() : '' }}
 </template>
 
 <style scoped lang="scss">
@@ -74,7 +74,6 @@ div
 
 <script lang="ts">
 import moment from 'moment';
-import 'vue-awesome/icons/sync';
 
 export default {
   name: 'input-timeinterval',
@@ -91,6 +90,10 @@ export default {
       type: Boolean,
       default: true,
     },
+    modelValue: {
+      type: Array,
+      default: null,
+    },
   },
   data() {
     return {
@@ -99,6 +102,7 @@ export default {
       start: null as string | null,
       end: null as string | null,
       lastUpdate: null as moment.Moment | null,
+      lastUpdateTimer: null as any,
       durations: [
         { seconds: 0.25 * 60 * 60, label: '&frac14;h' },
         { seconds: 0.5 * 60 * 60, label: '&frac12;h' },
@@ -135,7 +139,7 @@ export default {
   },
   mounted() {
     // Check if parent passed a valid daterange via v-model
-    const modelValue = this.$vnode?.data?.model?.value;
+    const modelValue = this.modelValue;
     if (
       Array.isArray(modelValue) &&
       moment.isMoment(modelValue[0]) &&
@@ -154,12 +158,10 @@ export default {
     }
 
     this.lastUpdateTimer = setInterval(() => {
-      const tmp = this.lastUpdate;
-      this.lastUpdate = null;
-      this.lastUpdate = tmp;
-    }, 500);
+      this.lastUpdate = moment();
+    }, 10 * 1000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     clearInterval(this.lastUpdateTimer);
   },
   methods: {
@@ -169,7 +171,7 @@ export default {
         (!this.emptyDaterange && !this.invalidDaterange && !this.daterangeTooLong)
       ) {
         this.lastUpdate = moment();
-        this.$emit('input', this.value);
+        this.$emit('update:modelValue', this.value);
       }
     },
     refresh() {

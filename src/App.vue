@@ -49,7 +49,9 @@ import { detectPreferredTheme } from '~/util/theme';
 //import darkCssUrl from '../static/dark.css?url';
 //import darkCssContent from '../static/dark.css?inline';
 
-export default {
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   data: function () {
     return {
       activityViews: [],
@@ -64,39 +66,31 @@ export default {
     },
   },
 
-  async beforeCreate() {
-    // Get Theme From LocalStorage
-    const settingsStore = useSettingsStore();
-    await settingsStore.ensureLoaded();
-    const theme = settingsStore.theme;
-    const detectedTheme = theme === 'auto' ? detectPreferredTheme() : theme;
+  async created() {
+    try {
+      // Get Theme From LocalStorage
+      const settingsStore = useSettingsStore();
+      await settingsStore.ensureLoaded();
+      const theme = settingsStore.theme;
+      const detectedTheme = theme === 'auto' ? detectPreferredTheme() : theme;
 
-    // Apply the dark theme if detected
-    if (detectedTheme === 'dark') {
-      const method: 'link' | 'style' = 'link';
-
-      if (method === 'link') {
-        // Method 1: Create <link> Element
-        // Create Dark Theme Element
+      // Apply the dark theme if detected
+      if (detectedTheme === 'dark') {
         const themeLink = document.createElement('link');
-        themeLink.href = '/dark.css'; // darkCssUrl
+        themeLink.href = '/dark.css';
         themeLink.rel = 'stylesheet';
-        // Append Dark Theme Element
-        document.querySelector('head').appendChild(themeLink);
-      } else {
-        // Not supported for Webpack due to not supporting ?inline import in a cross-compatible way (afaik)
-        // Method 2: Create <style> Element
-        //const style = document.createElement('style');
-        //style.innerHTML = darkCssContent;
-        //theme === 'dark' ? document.querySelector('head').appendChild(style) : '';
+        document.querySelector('head')?.appendChild(themeLink);
       }
+    } catch (e) {
+      console.error('Failed to load settings or theme:', e);
+    } finally {
+      this.loaded = true;
     }
-    this.loaded = true;
   },
 
   mounted: async function () {
     const serverStore = useServerStore();
     await serverStore.getInfo();
   },
-};
+});
 </script>
