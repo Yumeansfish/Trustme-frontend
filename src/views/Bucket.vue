@@ -13,7 +13,7 @@ div
       td {{ bucket.hostname }}
     tr
       th Created:
-      td {{ bucket.created | iso8601 }}
+      td {{ iso8601(bucket.created ) }}
     tr(v-if="bucket.metadata")
       th First/last event:
       td

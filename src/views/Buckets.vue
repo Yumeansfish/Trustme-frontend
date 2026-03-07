@@ -26,19 +26,19 @@ div
               time(:style="{'color': isRecent(device.last_updated) ? 'green' : 'inherit'}",
                    :datetime="device.last_updated",
                    :title="device.last_updated")
-                | {{ device.last_updated | friendlytime }}
+                | {{ device.last_updated  ? new Date(device.last_updated ).toLocaleString() : "" }}
             div
               | First seen:&nbsp;
               time(:datetime="device.first_seen",
                    :title="device.first_seen")
-                | {{ device.first_seen | friendlytime }}
+                | {{ device.first_seen  ? new Date(device.first_seen ).toLocaleString() : "" }}
 
     b-row
       b-col
         b-table.mb-0(small, hover, :items="device.buckets", :fields="fields", responsive="md")
           template(v-slot:cell(last_updated)="data")
             small(v-if="data.item.last_updated", :style="{'color': isRecent(data.item.last_updated) ? 'green' : 'inherit'}")
-              | {{ data.item.last_updated | friendlytime }}
+              | {{ data.item.last_updated  ? new Date(data.item.last_updated ).toLocaleString() : "" }}
           template(v-slot:cell(actions)="data")
             b-button-toolbar.float-right
               b-button-group(size="sm", class="mx-1")
@@ -146,13 +146,6 @@ div
 </style>
 
 <script lang="ts">
-import 'vue-awesome/icons/trash';
-import 'vue-awesome/icons/download';
-import 'vue-awesome/icons/folder-open';
-import 'vue-awesome/icons/desktop';
-import 'vue-awesome/icons/mobile';
-import 'vue-awesome/icons/question';
-import 'vue-awesome/icons/exclamation-triangle';
 
 import _ from 'lodash';
 import Papa from 'papaparse';

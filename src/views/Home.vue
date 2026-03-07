@@ -10,7 +10,7 @@ div
     | Early users like you mean a lot to us, and we hope you'll reach out to us with any ideas you have for improvements!
   p
     | If you are a developer, we hope you can contribute by writing a watcher, visualization, or something else, and share it with us on the forum!
-  p
+  div.mt-3
     div Thank you for using ActivityWatch!
     small If you have a minute to spare, please take the time to fill out our #[a(href="https://forms.gle/q2N9K5RoERBV8kqPA") user survey] or #[a(href="https://forum.activitywatch.net/c/features") vote on features on the forum].
 
@@ -46,14 +46,13 @@ div
   div.row
     div.col-md-6
       h4 Resources
-      p
-        ul
-          li #[a(href="https://activitywatch.net/") Website]
-          li #[a(href="https://activitywatch.readthedocs.org/") Documentation]
-          li #[a(href="https://forum.activitywatch.net/") Forum]
-          li #[a(href="https://discord.gg/vDskV9q") Discord]
-          li #[a(href="https://github.com/ActivityWatch/activitywatch") GitHub]
-          li(v-if="!info.version.includes('rust')" ) #[a(href="/api/") API Browser]
+      ul
+        li #[a(href="https://activitywatch.net/") Website]
+        li #[a(href="https://activitywatch.readthedocs.org/") Documentation]
+        li #[a(href="https://forum.activitywatch.net/") Forum]
+        li #[a(href="https://discord.gg/vDskV9q") Discord]
+        li #[a(href="https://github.com/ActivityWatch/activitywatch") GitHub]
+        li(v-if="info?.version && !info.version.includes('rust')" ) #[a(href="/api/") API Browser]
 
     div.col-md-6
       h4 Want to know what we're working on?
@@ -70,13 +69,14 @@ div
 </template>
 
 <script lang="ts">
+import { defineComponent } from 'vue';
 import { mapState } from 'pinia';
 import { useServerStore } from '~/stores/server';
 
-export default {
+export default defineComponent({
   name: 'Home',
   computed: {
     ...mapState(useServerStore, ['info']),
   },
-};
+});
 </script>

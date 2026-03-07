@@ -72,21 +72,6 @@ div.aw-sidebar
 </template>
 
 <script lang="ts">
-// only import the icons you use to reduce bundle size
-import 'vue-awesome/icons/calendar-day';
-import 'vue-awesome/icons/calendar-week';
-import 'vue-awesome/icons/stream';
-import 'vue-awesome/icons/database';
-import 'vue-awesome/icons/search';
-import 'vue-awesome/icons/code';
-// TODO: use circle-nodes instead in the future
-//import 'vue-awesome/icons/cicle-nodes';
-
-import 'vue-awesome/icons/ellipsis-h';
-
-import 'vue-awesome/icons/mobile';
-import 'vue-awesome/icons/desktop';
-
 import _ from 'lodash';
 
 import { mapState } from 'pinia';
@@ -94,25 +79,28 @@ import { useSettingsStore } from '~/stores/settings';
 import { useBucketsStore } from '~/stores/buckets';
 import { IBucket } from '~/util/interfaces';
 
-export default {
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   name: 'Header',
   data() {
     return {
       // Make configurable?
-      fixedTopMenu: this.$isAndroid,
+      fixedTopMenu: (this as any).$isAndroid,
     };
   },
   computed: {
     ...mapState(useSettingsStore, ['devmode', 'deviceMappings']),
     ...mapState(useBucketsStore, ['buckets']),
     activityViews() {
-      const settingsStore = useSettingsStore();
-      if (!settingsStore.loaded || !this.buckets || this.buckets.length === 0) return [];
+      try {
+        const settingsStore = useSettingsStore();
+        if (!settingsStore.loaded || !this.buckets || this.buckets.length === 0) return [];
 
-      const types_by_host: Record<string, any> = {};
-      const views = [];
+        const types_by_host: Record<string, any> = {};
+        const views = [];
 
-      // Identify which watchers each host has
+        // Identify which watchers each host has
       _.each(this.buckets, v => {
         types_by_host[v.hostname] = types_by_host[v.hostname] || {};
         types_by_host[v.hostname].afk ||= v.type == 'afkstatus';
@@ -166,14 +154,18 @@ export default {
         }
       });
 
-      return views;
+        return views;
+      } catch (e) {
+        console.error('Error in Header.activityViews:', e);
+        return [];
+      }
     },
   },
   mounted: async function () {
     const bucketStore = useBucketsStore();
     await bucketStore.ensureLoaded();
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

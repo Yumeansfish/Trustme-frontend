@@ -89,7 +89,9 @@ import { useSettingsStore } from '~/stores/settings';
 import { useBucketsStore } from '~/stores/buckets';
 import { seconds_to_duration } from '~/util/time';
 
-export default {
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   name: 'Timeline',
   data() {
     return {
@@ -182,7 +184,7 @@ export default {
       this.buckets = bs;
     },
   },
-};
+});
 </script>
 
 <style scoped>

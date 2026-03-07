@@ -13,13 +13,15 @@ b-modal(v-if="event && event.id", :id="'edit-modal-' + event.id", ref="eventEdit
         td {{ event.id }}
       tr
         th Start
-        datetime(type="datetime" v-model="start")
+        td
+          datetime(type="datetime" v-model="start")
       tr
         th End
-        datetime(type="datetime" v-model="end")
+        td
+          datetime(type="datetime" v-model="end")
       tr
         th Duration
-        td {{ editedEvent.duration | friendlyduration }}
+        td {{ friendlyduration(editedEvent.duration ) }}
 
     hr
 
@@ -63,9 +65,6 @@ b-modal(v-if="event && event.id", :id="'edit-modal-' + event.id", ref="eventEdit
 
 import moment from 'moment';
 
-import 'vue-awesome/icons/times';
-import 'vue-awesome/icons/save';
-import 'vue-awesome/icons/trash';
 
 export default {
   name: 'EventEditor',
