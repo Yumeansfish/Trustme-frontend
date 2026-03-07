@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue2';
+import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
@@ -55,6 +56,7 @@ export default defineConfig(({ mode }) => {
       setCsp(),
       autoInject(),
       vue(),
+      tailwindcss(),
       VitePWA({
         devOptions: {
           enabled: false,

@@ -1,5 +1,4 @@
-import Vue from 'vue';
-import VueRouter from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 
 const Home = () => import('./views/Home.vue');
 
@@ -17,9 +16,9 @@ const Stopwatch = () => import('./views/Stopwatch.vue');
 const Search = () => import('./views/Search.vue');
 const Dev = () => import('./views/Dev.vue');
 const NotFound = () => import('./views/NotFound.vue');
-Vue.use(VueRouter);
 
-const router = new VueRouter({
+const router = createRouter({
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/',
@@ -29,22 +28,22 @@ const router = new VueRouter({
     },
     { path: '/home', component: Home },
     {
-      path: '/activity/:host(.*)',
+      path: '/activity/:host([^/]+)',
       component: Activity,
       props: true,
       children: [
         {
-          path: 'view/:view_id?',
+          path: ':periodLength?/:date?/:subview(view)?/:view_id?',
           meta: { subview: 'view' },
           name: 'activity-view',
           component: ActivityView,
           props: true,
         },
-        // Unspecified should redirect to summary view is the summary view
-        // (needs to be last since otherwise it'll always match first)
         {
           path: '',
-          redirect: 'view/',
+          redirect: to => {
+            return `${to.path}/day`;
+          },
         },
       ],
     },
@@ -55,10 +54,10 @@ const router = new VueRouter({
     { path: '/settings/category-builder', component: CategoryBuilder },
     { path: '/stopwatch', component: Stopwatch },
     { path: '/search', component: Search },
+    { path: '/query', component: QueryExplorer },
     { path: '/dev', component: Dev },
-    // NOTE: Will break with Vue 3: https://stackoverflow.com/questions/40193634/vue-router-redirect-on-page-not-found-404/64186073#64186073
     {
-      path: '*',
+      path: '/:pathMatch(.*)*',
       component: NotFound,
     },
   ],
