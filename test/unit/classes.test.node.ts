@@ -1,6 +1,11 @@
-import * as classes from '~/util/classes';
-import { IEvent } from '~/util/interfaces';
-import { Category } from '~/util/classes';
+import * as classes from '~/features/categorization/lib/classes';
+import { IEvent } from '~/shared/lib/interfaces';
+import { Category } from '~/features/categorization/lib/classes';
+import {
+  classifyEvents,
+  matchCategoryAgainstTexts,
+  UNCATEGORIZED_CATEGORY_NAME,
+} from '~/features/categorization/lib/categoryRules';
 
 const testClasses: Category[] = [
   { name: ['Test', 'Subtest'], rule: { type: 'regex', regex: 'subtest' } },
@@ -22,7 +27,7 @@ test('correctly flatten hierarchy', () => {
 });
 
 test('matches string to category', () => {
-  const cat = classes.matchString('subsubtest', testClasses);
+  const cat = matchCategoryAgainstTexts(['subsubtest'], testClasses);
   expect(cat).toEqual(testClasses[1]);
 });
 
@@ -32,8 +37,8 @@ test('matches events to category', () => {
     { timestamp: new Date().toISOString(), duration: 0, data: { title: 'subtest' } },
     { timestamp: new Date().toISOString(), duration: 0, data: { title: 'no matching' } },
   ];
-  events = classes.classifyEvents(events, testClasses);
+  events = classifyEvents(events, testClasses);
   expect(events[0].data.$category).toEqual(testClasses[1].name);
   expect(events[1].data.$category).toEqual(testClasses[0].name);
-  expect(events[2].data.$category).toEqual(['Uncategorized']);
+  expect(events[2].data.$category).toEqual([...UNCATEGORIZED_CATEGORY_NAME]);
 });

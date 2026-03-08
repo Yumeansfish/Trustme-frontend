@@ -1,4 +1,4 @@
-const color = require('~/util/color');
+const color = require('~/features/categorization/lib/color');
 
 const testClasses = [
   {

@@ -1,8 +1,8 @@
 import { isEqual } from 'lodash';
 import { setActivePinia, createPinia } from 'pinia';
 
-import { useCategoryStore } from '~/stores/categories';
-import { createMissingParents, defaultCategories, Category } from '~/util/classes';
+import { useCategoryStore } from '~/features/categorization/store/categories';
+import { createMissingParents, defaultCategories, Category } from '~/features/categorization/lib/classes';
 
 describe('categories store', () => {
   setActivePinia(createPinia());
@@ -43,6 +43,19 @@ describe('categories store', () => {
     expect(categoryStore.classes).toHaveLength(0);
     categoryStore.load([{ name: ['Test'], rule: { type: 'none' } }]);
     expect(categoryStore.all_categories).toHaveLength(1);
+  });
+
+  test('exposes query rules separately from stored classes', () => {
+    categoryStore.load([
+      { name: ['Work'], rule: { type: 'none' } },
+      { name: ['Work', 'Docs'], rule: { type: 'regex', regex: 'docs' } },
+      { name: ['Uncategorized'], rule: { type: null } },
+    ]);
+
+    expect(categoryStore.queryRules).toEqual([
+      [['Work'], { type: 'none' }],
+      [['Work', 'Docs'], { type: 'regex', regex: 'docs' }],
+    ]);
   });
 
   test('get category hierarchy', () => {
