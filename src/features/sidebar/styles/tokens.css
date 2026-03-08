@@ -1,0 +1,9 @@
+@layer base {
+  :root {
+    --sidebar-width-collapsed: 3.5rem;
+    --sidebar-width-expanded: 12.5rem;
+    --sidebar-section-open-max: 24rem;
+    --sidebar-tools-open-max: 10rem;
+    --sidebar-indicator-width: 0.25rem;
+  }
+}
