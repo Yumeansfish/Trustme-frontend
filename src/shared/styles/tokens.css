@@ -1,0 +1,98 @@
+@layer base {
+  :root {
+    --background: 248 250 252;
+    --foreground: 51 65 85;
+    --foreground-strong: 15 23 42;
+    --foreground-strong-hover: 30 41 59;
+    --foreground-muted: 100 116 139;
+    --foreground-subtle: 148 163 184;
+
+    --surface: 255 255 255;
+    --surface-muted: 248 250 252;
+    --surface-subtle: 241 245 249;
+
+    --border: 226 232 240;
+    --border-strong: 203 213 225;
+    --border-muted: 241 245 249;
+
+    --primary: 124 58 237;
+    --primary-hover: 109 40 217;
+    --primary-soft: 245 243 255;
+    --primary-foreground: 255 255 255;
+    --primary-ring: 221 214 254;
+
+    --success: 5 150 105;
+    --success-hover: 4 120 87;
+    --success-soft: 236 253 245;
+    --success-border: 167 243 208;
+
+    --danger: 225 29 72;
+    --danger-hover: 190 18 60;
+    --danger-soft: 255 241 242;
+    --danger-border: 254 205 211;
+
+    --warning: 245 158 11;
+    --warning-hover: 217 119 6;
+    --warning-soft: 255 251 235;
+    --warning-border: 253 230 138;
+
+    --info: 29 78 216;
+    --info-hover: 30 64 175;
+    --info-soft: 239 246 255;
+    --info-border: 191 219 254;
+
+    --overlay: 15 23 42;
+    --scrollbar: 197 196 232;
+    --scrollbar-hover: 152 151 243;
+
+    --radius-control: 0.375rem;
+    --radius-panel: 0.75rem;
+    --radius-modal: 1rem;
+    --radius-pill: 9999px;
+
+    --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.06);
+    --shadow-lg:
+      0 10px 15px -3px rgb(15 23 42 / 0.12),
+      0 4px 6px -4px rgb(15 23 42 / 0.08);
+    --shadow-xl: 0 25px 50px -12px rgb(15 23 42 / 0.22);
+
+    --duration-fast: 150ms;
+    --duration-base: 200ms;
+
+    --tracking-section: 0.18em;
+    --tracking-nav: 0.05em;
+
+    --font-size-summary-pct: 0.9rem;
+    --font-size-summary-name: 0.92rem;
+    --font-size-summary-duration: 0.85rem;
+    --font-size-display-sm: 2rem;
+    --font-size-page-title: 1.45rem;
+    --font-size-score-meta: 0.7rem;
+    --font-size-score-value: 1.2rem;
+    --font-size-help-badge: 0.625rem;
+    --font-size-sunburst-parent: 0.8rem;
+    --font-size-sunburst-title: 1.5rem;
+
+    --size-summary-pct: 42px;
+    --size-summary-duration: 55px;
+    --size-summary-max-height: 25rem;
+    --size-activity-redirect-min-height: 15rem;
+    --size-event-list-max-height: 25rem;
+    --size-donut-chart: 13.75rem;
+    --size-timeline-barchart-height: 20.625rem;
+    --size-sunburst-clock-height: 38.75rem;
+    --size-sunburst-clock-legend-width: 6.25rem;
+    --size-sunburst-clock-max-width: 46.875rem;
+    --size-sunburst-clock-center-top: 16.25rem;
+    --size-sunburst-clock-center-width: 8.75rem;
+    --size-sunburst-overlay-width: 18.75rem;
+    --size-sunburst-overlay-offset-y: 4.375rem;
+    --size-visualization-min-height: 28.125rem;
+    --size-help-badge: 1rem;
+    --size-modal-content-max-height: 75vh;
+
+    --z-toast: 140;
+    --z-modal: 145;
+    --z-dialog: 150;
+  }
+}
