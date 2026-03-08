@@ -1,32 +1,27 @@
-<template lang="pug">
-  div
-    div#visualization.mt-2.mb-2.w-full.max-w-full.overflow-hidden.box-border
-
-    div.my-2.text-sm.text-slate-500(v-if="bucketsFromEither.length != 1")
-      i Buckets with no events in the queried range will be hidden.
-
-    div(v-if="editingEvent")
-      EventEditor(
-        :event="editingEvent"
-        :bucket_id="editingEventBucket"
-        :open="editorOpen"
-        @update:open="onEditorOpenChange"
-      )
+<template>
+<div>
+  <div class="mt-2 mb-2 w-full max-w-full overflow-hidden box-border" id="visualization"></div>
+  <div class="aw-caption my-2" v-if="bucketsFromEither.length != 1"><i>Buckets with no events in the queried range will be hidden.</i></div>
+  <div v-if="editingEvent">
+    <EventEditor :event="editingEvent" :bucket_id="editingEventBucket" :open="editorOpen" @update:open="onEditorOpenChange"></EventEditor>
+  </div>
+</div>
 </template>
 
 <script lang="ts">
 import _ from 'lodash';
 import moment from 'moment';
 import Color from 'color';
-import { buildTooltip } from '../util/tooltip.js';
-import { getCategoryColorFromEvent, getTitleAttr } from '../util/color';
-import { getSwimlane } from '../util/swimlane.js';
-import { IEvent } from '../util/interfaces';
-import { useToast } from '~/composables/useToast';
+import { buildTooltip } from '~/shared/lib/tooltip.js';
+import { getCategoryColorFromEvent, getTitleAttr } from '~/features/categorization/lib/color';
+import { getSwimlane } from '~/shared/lib/swimlane.js';
+import { IEvent } from '~/shared/lib/interfaces';
+import { useToast } from '~/shared/composables/useToast';
 
 import { Timeline } from 'vis-timeline/esnext';
 import 'vis-timeline/styles/vis-timeline-graph2d.css';
-import EventEditor from '~/components/EventEditor.vue';
+import EventEditor from '~/features/events/components/EventEditor.vue';
+import { ACTIVITY_QUERY_INTERVAL } from '~/features/activity/lib/visualizationTokens';
 
 let isAlertWarningShown = false;
 
@@ -253,7 +248,7 @@ export default {
             content: 'query',
             start: this.queriedInterval[0],
             end: this.queriedInterval[1],
-            style: 'background-color: #aaa; height: 10px',
+            style: `background-color: ${ACTIVITY_QUERY_INTERVAL}; height: 10px`,
             subgroup: ``,
           });
         }

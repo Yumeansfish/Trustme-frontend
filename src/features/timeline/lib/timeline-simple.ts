@@ -5,9 +5,9 @@ const Color = require('color');
 const _ = require('lodash');
 const moment = require('moment');
 
-import { getTitleAttr, getColorFromString } from '../util/color';
+import { getTitleAttr, getColorFromString } from '~/features/categorization/lib/color';
 
-const time = require('../util/time');
+const time = require('~/app/lib/time');
 
 function create(svg_el) {
   // Clear element

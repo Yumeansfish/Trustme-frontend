@@ -1,41 +1,48 @@
-<template lang="pug">
-div
-  h3 {{ id }}
-  table
-    tr
-      th Type:
-      td {{ bucket.type }}
-    tr
-      th Client:
-      td {{ bucket.client }}
-    tr
-      th Hostname:
-      td {{ bucket.hostname }}
-    tr
-      th Created:
-      td {{ iso8601(bucket.created ) }}
-    tr(v-if="bucket.metadata")
-      th First/last event:
-      td
-        | {{ bucket.metadata.start}} /
-        | {{ bucket.metadata.end }}
-    tr
-      th Eventcount:
-      td {{ eventcount }}
-    tr
-      th Data:
-      td {{ bucket.data }}
-
-  input-timeinterval(v-model="daterange", :maxDuration="maxDuration")
-
-  vis-timeline(:buckets="[bucket_with_events]", :showRowLabels="false")
-
-  aw-eventlist(:bucket_id="id", @save="updateEvent", :events="events" editable=true)
+<template>
+<div>
+  <h3>{{ id }}</h3>
+  <table>
+    <tr>
+      <th>Type:</th>
+      <td>{{ bucket.type }}</td>
+    </tr>
+    <tr>
+      <th>Client:</th>
+      <td>{{ bucket.client }}</td>
+    </tr>
+    <tr>
+      <th>Hostname:</th>
+      <td>{{ bucket.hostname }}</td>
+    </tr>
+    <tr>
+      <th>Created:</th>
+      <td>{{ iso8601(bucket.created ) }}</td>
+    </tr>
+    <tr v-if="bucket.metadata">
+      <th>First/last event:</th>
+      <td>
+        {{ bucket.metadata.start}} /
+        {{ bucket.metadata.end }}
+      </td>
+    </tr>
+    <tr>
+      <th>Eventcount:</th>
+      <td>{{ eventcount }}</td>
+    </tr>
+    <tr>
+      <th>Data:</th>
+      <td>{{ bucket.data }}</td>
+    </tr>
+  </table>
+  <input-timeinterval v-model="daterange" :maxDuration="maxDuration"></input-timeinterval>
+  <vis-timeline :buckets="[bucket_with_events]" :showRowLabels="false"></vis-timeline>
+  <aw-eventlist :bucket_id="id" @save="updateEvent" :events="events" editable></aw-eventlist>
+</div>
 </template>
 
 <script lang="ts">
-import { useBucketsStore } from '~/stores/buckets';
-import { getClient } from '~/util/awclient';
+import { useBucketsStore } from '~/features/buckets/store/buckets';
+import { getClient } from '~/app/lib/awclient';
 
 export default {
   name: 'Bucket',

@@ -7,9 +7,9 @@ import Color from 'color';
 import _ from 'lodash';
 import moment from 'moment';
 
-import { getColorFromString } from '../util/color';
-import { seconds_to_duration } from '../util/time';
-import { IEvent } from '../util/interfaces';
+import { getColorFromString } from '~/features/categorization/lib/color';
+import { seconds_to_duration } from '~/app/lib/time';
+import { IEvent } from '~/shared/lib/interfaces';
 
 function show_info(container: HTMLElement, elem_id: string): void {
   const title_event_box = container.querySelector('#' + elem_id) as HTMLElement;

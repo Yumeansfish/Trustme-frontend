@@ -1,38 +1,33 @@
-<template lang="pug">
-div.mx-3.space-y-3
-  div.grid.gap-3.rounded-xl.border.border-slate-200.bg-white.p-4.shadow-sm(class="md:grid-cols-3")
-    label.flex.flex-col.gap-1.text-sm.font-medium.text-slate-700
-      span Bucket
-      select.h-10.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
-        v-model="selectedBucket"
-        class="focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
-      )
-        option(v-for="bucket in buckets", :key="bucket.id", :value="bucket.id") {{ bucket.id }}
-
-    label.flex.flex-col.gap-1.text-sm.font-medium.text-slate-700
-      span Show
-      select.h-10.w-full.rounded-md.border.border-slate-300.bg-white.px-3.text-sm.text-slate-900.shadow-sm.outline-none.transition(
-        v-model="view"
-        class="focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
-      )
-        option(value="timeGridDay") Day
-        option(value="timeGridWeek") Week
-
-    label.flex.items-center.gap-2.self-end.text-sm.text-slate-700
-      input.h-4.w-4.rounded.border-slate-300.text-violet-600(type="checkbox" v-model="fitToActive" class="focus:ring-violet-400")
-      span Fit to active
-
-  FullCalendar(ref="fullCalendar", :options="calendarOptions")
+<template>
+<div class="mx-3 space-y-3">
+  <div class="aw-card grid gap-3 md:grid-cols-3">
+    <label class="flex flex-col gap-1"><span class="aw-label">Bucket</span>
+      <select class="aw-select" v-model="selectedBucket">
+        <option v-for="bucket in buckets" :key="bucket.id" :value="bucket.id">{{ bucket.id }}</option>
+      </select>
+    </label>
+    <label class="flex flex-col gap-1"><span class="aw-label">Show</span>
+      <select class="aw-select" v-model="view">
+        <option value="timeGridDay">Day</option>
+        <option value="timeGridWeek">Week</option>
+      </select>
+    </label>
+    <label class="flex items-center gap-2 self-end text-sm text-foreground">
+      <input class="aw-checkbox" type="checkbox" v-model="fitToActive"><span>Fit to active</span>
+    </label>
+  </div>
+  <FullCalendar ref="fullCalendar" :options="calendarOptions"></FullCalendar>
+</div>
 </template>
 
 <script>
 import '@fullcalendar/core';
 import FullCalendar from '@fullcalendar/vue3';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { getTitleAttr, getColorFromString } from '../util/color';
+import { getTitleAttr, getColorFromString } from '~/features/categorization/lib/color';
 import moment from 'moment';
 import _ from 'lodash';
-import { useToast } from '~/composables/useToast';
+import { useToast } from '~/shared/composables/useToast';
 
 // TODO: Use canonical timeline query, with flooding and categorization
 // TODO: Checkbox for toggling category-view, where adjacent events with same category are merged and the events are labeled by category

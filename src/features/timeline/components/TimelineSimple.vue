@@ -1,21 +1,12 @@
-<template lang="pug">
-svg
+<template>
+<svg class="block h-5 w-full"></svg>
 </template>
-
-<style scoped lang="scss">
-svg {
-  border: none;
-  width: 100%;
-  height: 20px;
-  display: block;
-}
-</style>
 
 <script lang="ts">
 // NOTE: This is just a Vue.js component wrapper for timeline-simple.js
 //       Code should generally go in the framework-independent file.
 
-import timeline_simple from './timeline-simple';
+import timeline_simple from '../lib/timeline-simple';
 
 export default {
   name: 'aw-timeline',

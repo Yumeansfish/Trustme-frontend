@@ -1,19 +1,12 @@
-<template lang="pug">
-div
+<template>
+<div class="aw-chart-frame"></div>
 </template>
-
-<style scoped lang="scss">
-svg {
-  border: 1px solid #999;
-  border-radius: 0.5em;
-}
-</style>
 
 <script lang="ts">
 // NOTE: This is just a Vue.js component wrapper for timeline.ts
 //       Code should generally go in the framework-independent file.
 
-import timeline from './timeline';
+import timeline from '../lib/timeline';
 
 export default {
   name: 'aw-timeline',
