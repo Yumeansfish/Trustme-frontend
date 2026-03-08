@@ -1,4 +1,4 @@
-import { seconds_to_duration } from '~/util/time';
+import { seconds_to_duration } from '~/app/lib/time';
 
 describe('seconds_to_duration', () => {
   test('should format 8145 seconds as "2h 15m 45s"', () => {
