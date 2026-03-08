@@ -1,0 +1,45 @@
+<template>
+<div>
+  <aw-alert variant="danger" v-for="error in errors" :key="error.time" :show="!error.dismissed" dismissible @dismissed="error.dismissed = false">{{ error.msg }}</aw-alert>
+  <slot></slot>
+</div>
+</template>
+
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+// Based on: https://medium.com/@dillonchanis/handling-errors-in-vue-with-error-boundaries-91f6ead0093b
+export default defineComponent({
+  name: 'ErrorBoundary',
+  data() {
+    return {
+      errors: [] as any[],
+    };
+  },
+  errorCaptured(err: any, _vm: any, _info: any) {
+    // console.error("Error captured!");
+    // console.error(err, vm, info);
+
+    // Ignore request cancellation errors
+    if (err.code === 'ERR_CANCELED') {
+      return;
+    }
+
+    // fallback
+    let msg = err;
+    // use server error response if available; err.isAxiosError doesn't help much here…
+    if (err.response && err.response.data && err.response.data.message) {
+      msg = err.response.data.message;
+    } else if (err.name && err.message) {
+      msg = `${err.name}: ${err.message}.
+				See dev console (F12) and/or server logs for more info.`;
+    }
+
+    this.errors.push({
+      msg: msg,
+      time: new Date().toISOString(),
+      dismissed: false,
+    });
+  },
+});
+</script>
