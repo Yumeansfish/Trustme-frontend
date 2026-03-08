@@ -1,4 +1,4 @@
-const queries = require('~/queries');
+const queries = require('~/app/lib/queries');
 
 // test data
 const hostname = 'testhost';

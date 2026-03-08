@@ -2,11 +2,11 @@ import { defineStore } from 'pinia';
 import moment from 'moment';
 import * as _ from 'lodash';
 import { map, filter, values, groupBy, sortBy, flow, reverse } from 'lodash/fp';
-import { IEvent } from '~/util/interfaces';
+import { IEvent } from '~/shared/lib/interfaces';
 
-import { window_events } from '~/util/fakedata';
-import queries from '~/queries';
-import { get_day_start_with_offset } from '~/util/time';
+import { window_events } from '~/features/activity/lib/fakedata';
+import queries from '~/app/lib/queries';
+import { get_day_start_with_offset } from '~/app/lib/time';
 import {
   TimePeriod,
   dateToTimeperiod,
@@ -15,13 +15,13 @@ import {
   timeperiodsDaysOfPeriod,
   timeperiodsMonthsOfPeriod,
   timeperiodsAroundTimeperiod,
-} from '~/util/timeperiod';
+} from '~/app/lib/timeperiod';
 
-import { useSettingsStore } from '~/stores/settings';
-import { useBucketsStore } from '~/stores/buckets';
-import { useCategoryStore } from '~/stores/categories';
+import { useSettingsStore } from '~/features/settings/store/settings';
+import { useBucketsStore } from '~/features/buckets/store/buckets';
+import { useCategoryStore } from '~/features/categorization/store/categories';
 
-import { getClient } from '~/util/awclient';
+import { getClient } from '~/app/lib/awclient';
 
 function timeperiodsStrsHoursOfPeriod(timeperiod: TimePeriod): string[] {
   return timeperiodsHoursOfPeriod(timeperiod).map(timeperiodToStr);
@@ -70,44 +70,113 @@ export interface QueryOptions {
   always_active_pattern?: string;
 }
 
+type MaybeLoadedList<T> = T[] | null;
+type CategoryPeriodData = Record<string, { cat_events: IEvent[] }>;
+
+interface WindowQueryResult {
+  app_events?: IEvent[] | null;
+  title_events?: IEvent[] | null;
+  cat_events?: IEvent[] | null;
+  active_events?: IEvent[] | null;
+  duration?: number | null;
+}
+
+interface BrowserQueryResult {
+  domains?: IEvent[] | null;
+  urls?: IEvent[] | null;
+  titles?: IEvent[] | null;
+  duration?: number | null;
+}
+
+interface StopwatchQueryResult {
+  stopwatch_events?: IEvent[] | null;
+}
+
+interface EditorQueryResult {
+  duration?: number | null;
+  files?: IEvent[] | null;
+  languages?: IEvent[] | null;
+  projects?: IEvent[] | null;
+}
+
+function ensureEventList(events: unknown): IEvent[] {
+  return Array.isArray(events) ? [...events] : [];
+}
+
+function ensureDuration(duration: unknown): number {
+  return typeof duration === 'number' && Number.isFinite(duration) ? duration : 0;
+}
+
+function ensureActiveHistory(
+  active_history: unknown
+): Record<string, IEvent[]> {
+  if (!active_history || typeof active_history !== 'object' || Array.isArray(active_history)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(active_history as Record<string, unknown>).map(([key, value]) => [
+      key,
+      ensureEventList(value),
+    ])
+  );
+}
+
+function ensureByPeriod(by_period: unknown): CategoryPeriodData {
+  if (!by_period || typeof by_period !== 'object' || Array.isArray(by_period)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(by_period as Record<string, unknown>).map(([key, value]) => {
+      const cat_events =
+        value && typeof value === 'object' && !Array.isArray(value)
+          ? ensureEventList((value as { cat_events?: unknown }).cat_events)
+          : [];
+
+      return [key, { cat_events }];
+    })
+  );
+}
+
 interface State {
   loaded: boolean;
 
   window: {
     available: boolean;
-    top_apps: IEvent[];
-    top_titles: IEvent[];
+    top_apps: MaybeLoadedList<IEvent>;
+    top_titles: MaybeLoadedList<IEvent>;
   };
 
   browser: {
     available: boolean;
     duration: number;
-    top_urls: IEvent[];
-    top_domains: IEvent[];
-    top_titles: IEvent[];
+    top_urls: MaybeLoadedList<IEvent>;
+    top_domains: MaybeLoadedList<IEvent>;
+    top_titles: MaybeLoadedList<IEvent>;
   };
 
   editor: {
     available: boolean;
     duration: number;
-    top_files: IEvent[];
-    top_projects: IEvent[];
-    top_languages: IEvent[];
+    top_files: MaybeLoadedList<IEvent>;
+    top_projects: MaybeLoadedList<IEvent>;
+    top_languages: MaybeLoadedList<IEvent>;
   };
 
   category: {
     available: boolean;
-    by_period: IEvent[];
-    top: IEvent[];
+    by_period: CategoryPeriodData | null;
+    top: MaybeLoadedList<IEvent>;
   };
 
   active: {
     available: boolean;
-    duration: number;
+    duration: number | null;
     // non-afk events (no detail data) for the current period
-    events: IEvent[];
+    events: MaybeLoadedList<IEvent>;
     // Aggregated events for current and past periods
-    history: Record<any, IEvent[]>;
+    history: Record<string, IEvent[]>;
   };
 
   android: {
@@ -163,7 +232,7 @@ export const useActivityStore = defineStore('activity', {
 
     category: {
       available: false,
-      by_period: [],
+      by_period: {},
       top: [],
     },
 
@@ -320,11 +389,11 @@ export const useActivityStore = defineStore('activity', {
       const categoryStore = useCategoryStore();
       const q = queries.appQuery(
         this.buckets.android[0],
-        categoryStore.classes_for_query,
+        categoryStore.queryRules,
         filter_categories
       );
       const data = await getClient().query(periods, q).catch(this.errorHandler);
-      this.query_window_completed(data[0]);
+      this.query_window_completed(data?.[0]);
     },
 
     async reset() {
@@ -340,7 +409,7 @@ export const useActivityStore = defineStore('activity', {
       hosts: string[]
     ) {
       const periods = [timeperiodToStr(timeperiod)];
-      const categories = useCategoryStore().classes_for_query;
+      const categories = useCategoryStore().queryRules;
 
       const q = queries.multideviceQuery({
         hosts,
@@ -351,7 +420,7 @@ export const useActivityStore = defineStore('activity', {
         always_active_pattern,
       });
       const data = await getClient().query(periods, q, { name: 'multidevice', verbose: true });
-      this.query_window_completed(data[0].window);
+      this.query_window_completed(data?.[0]?.window);
     },
 
     async query_desktop_full({
@@ -363,7 +432,7 @@ export const useActivityStore = defineStore('activity', {
       always_active_pattern,
     }: QueryOptions) {
       const periods = [timeperiodToStr(timeperiod)];
-      const categories = useCategoryStore().classes_for_query;
+      const categories = useCategoryStore().queryRules;
 
       const q = queries.fullDesktopQuery({
         bid_window: this.buckets.window[0],
@@ -383,10 +452,10 @@ export const useActivityStore = defineStore('activity', {
         name: 'fullDesktopQuery',
         verbose: true,
       });
-      this.query_window_completed(data[0].window);
-      this.query_browser_completed(data[0].browser);
+      this.query_window_completed(data?.[0]?.window);
+      this.query_browser_completed(data?.[0]?.browser);
       if (include_stopwatch) {
-        this.query_stopwatch_completed(data[0].stopwatch);
+        this.query_stopwatch_completed(data?.[0]?.stopwatch);
       }
     },
 
@@ -397,7 +466,7 @@ export const useActivityStore = defineStore('activity', {
         name: 'editorActivityQuery',
         verbose: true,
       });
-      this.query_editor_completed(data[0]);
+      this.query_editor_completed(data?.[0]);
     },
 
     async query_active_history({ timeperiod, ...query_options }: QueryOptions) {
@@ -509,7 +578,7 @@ export const useActivityStore = defineStore('activity', {
         }
 
         const isAndroid = this.buckets.android[0] !== undefined;
-        const categories = useCategoryStore().classes_for_query;
+        const categories = useCategoryStore().queryRules;
         // TODO: Clean up call, pass QueryParams in fullDesktopQuery as well
         // TODO: Unify QueryOptions and QueryParams
         const query = queries.categoryQuery({
@@ -765,58 +834,46 @@ export const useActivityStore = defineStore('activity', {
       }
     },
 
-    query_window_completed(
-      this: State,
-      data = { app_events: [], title_events: [], cat_events: [], active_events: [], duration: 0 }
-    ) {
-      // Set $color and $score for categories
-      if (data.cat_events) {
-        data.cat_events = colorCategories(data.cat_events);
-        data.cat_events = scoreCategories(data.cat_events);
-      }
+    query_window_completed(this: State, data: WindowQueryResult | null = null) {
+      const cat_events = scoreCategories(colorCategories(ensureEventList(data?.cat_events)));
 
-      this.window.top_apps = [...data.app_events];
-      this.window.top_titles = [...data.title_events];
-      this.category.top = [...data.cat_events];
-      this.active.duration = data.duration;
-      this.active.events = [...data.active_events];
+      // Set $color and $score for categories
+      this.window.top_apps = ensureEventList(data?.app_events);
+      this.window.top_titles = ensureEventList(data?.title_events);
+      this.category.top = cat_events;
+      this.active.duration = ensureDuration(data?.duration);
+      this.active.events = ensureEventList(data?.active_events);
 
       console.log('ACTIVITY STORE: query_window_completed committed data');
     },
 
-    query_browser_completed(
-      this: State,
-      data = { domains: [], urls: [], titles: [], duration: 0 }
-    ) {
-      this.browser.top_domains = [...data.domains];
-      this.browser.top_urls = [...data.urls];
-      this.browser.top_titles = [...data.titles];
-      this.browser.duration = data.duration;
+    query_browser_completed(this: State, data: BrowserQueryResult | null = null) {
+      this.browser.top_domains = ensureEventList(data?.domains);
+      this.browser.top_urls = ensureEventList(data?.urls);
+      this.browser.top_titles = ensureEventList(data?.titles);
+      this.browser.duration = ensureDuration(data?.duration);
     },
 
-    query_stopwatch_completed(this: State, data = { stopwatch_events: [] }) {
-      this.stopwatch.top_stopwatches = [...data.stopwatch_events];
+    query_stopwatch_completed(this: State, data: StopwatchQueryResult | null = null) {
+      this.stopwatch.top_stopwatches = ensureEventList(data?.stopwatch_events);
     },
 
-    query_editor_completed(
-      this: State,
-      data = { duration: 0, files: [], languages: [], projects: [] }
-    ) {
-      this.editor.duration = data.duration;
-      this.editor.top_files = [...data.files];
-      this.editor.top_languages = [...data.languages];
-      this.editor.top_projects = [...data.projects];
+    query_editor_completed(this: State, data: EditorQueryResult | null = null) {
+      this.editor.duration = ensureDuration(data?.duration);
+      this.editor.top_files = ensureEventList(data?.files);
+      this.editor.top_languages = ensureEventList(data?.languages);
+      this.editor.top_projects = ensureEventList(data?.projects);
     },
 
     query_active_history_completed(this: State, { active_history } = { active_history: {} }) {
       this.active.history = {
         ...this.active.history,
-        ...active_history,
+        ...ensureActiveHistory(active_history),
       };
     },
 
-    query_category_time_by_period_completed(this: State, { by_period } = { by_period: [] }) {
-      this.category.by_period = Array.isArray(by_period) ? [...by_period] : { ...by_period };
+    query_category_time_by_period_completed(this: State, { by_period } = { by_period: {} }) {
+      this.category.by_period = ensureByPeriod(by_period);
       console.log('ACTIVITY STORE: query_category_time_by_period_completed committed by_period');
     },
   },

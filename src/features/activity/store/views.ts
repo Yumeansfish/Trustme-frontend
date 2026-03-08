@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { useSettingsStore } from './settings';
+import { useSettingsStore } from '~/features/settings/store/settings';
 
 interface IElement {
   type: string;

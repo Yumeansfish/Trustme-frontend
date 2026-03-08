@@ -1,8 +1,8 @@
 import { setActivePinia, createPinia } from 'pinia';
 
-import { useActivityStore } from '~/stores/activity';
-import { useCategoryStore } from '~/stores/categories';
-import { createClient } from '~/util/awclient';
+import { useActivityStore } from '~/features/activity/store/activity';
+import { useCategoryStore } from '~/features/categorization/store/categories';
+import { createClient } from '~/app/lib/awclient';
 
 describe('activity store', () => {
   setActivePinia(createPinia());

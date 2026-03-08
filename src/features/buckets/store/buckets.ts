@@ -1,9 +1,9 @@
 import _ from 'lodash';
 
-import { IBucket } from '~/util/interfaces';
+import { IBucket } from '~/shared/lib/interfaces';
 import { defineStore } from 'pinia';
-import { getClient } from '~/util/awclient';
-import { useServerStore } from '~/stores/server';
+import { getClient } from '~/app/lib/awclient';
+import { useServerStore } from '~/shared/stores/server';
 
 function select_buckets(
   buckets: IBucket[],

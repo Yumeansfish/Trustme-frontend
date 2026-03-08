@@ -1,44 +1,36 @@
-<template lang="pug">
-
-div
-  h3 Query Explorer
-
-  | See #[a(href="https://docs.activitywatch.net/en/latest/examples/querying-data.html") the documentation] for help on how to write queries.
-
-  hr
-
-  div.alert.alert-danger(v-if="error")
-    | {{error}}
-
-  form
-    div.form-row
-      div.form-group.col-md-6
-        | Start
-        input.form-control(type="date", :max="today", v-model="startdate")
-      div.form-group.col-md-6
-        | End
-        input.form-control(type="date", :max="tomorrow", v-model="enddate")
-
-    div.form-group
-      textarea.form-control(v-model="query_code", @keypress.ctrl.enter="query()" style="font-family: monospace", rows=10)
-    div.form-inline
-      div.form-group
-        button.btn.btn-success(type="button", @click="query()") Query
-      span(style="padding-left: 1em;")
-      | {{eventcount_str}}
-
-  hr
-
-  aw-selectable-eventview(:events="events", :event_type="event_type")
+<template>
+<div class="space-y-5">
+  <h3 class="aw-section-title">Query Explorer</h3>
+  <p class="aw-caption">See <a class="aw-link" href="https://docs.activitywatch.net/en/latest/examples/querying-data.html">the documentation</a> for help on how to write queries.</p>
+  <div class="aw-divider"></div>
+  <aw-alert v-if="error" variant="danger" show>{{error}}</aw-alert>
+  <form class="aw-card space-y-4">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <label class="flex flex-col gap-1"><span class="aw-label">Start</span>
+        <input class="aw-input" type="date" :max="today" v-model="startdate">
+      </label>
+      <label class="flex flex-col gap-1"><span class="aw-label">End</span>
+        <input class="aw-input" type="date" :max="tomorrow" v-model="enddate">
+      </label>
+    </div>
+    <label class="flex flex-col gap-1"><span class="aw-label">Query</span>
+      <textarea class="aw-textarea font-mono" v-model="query_code" @keypress.ctrl.enter="query()" rows="10"></textarea>
+    </label>
+    <div class="flex items-center gap-3">
+      <button class="aw-btn aw-btn-md aw-btn-success" type="button" @click="query()">Query</button><span class="text-foreground-muted text-sm">{{eventcount_str}}</span>
+    </div>
+  </form>
+  <div class="aw-divider"></div>
+  <aw-selectable-eventview :events="events" :event_type="event_type"></aw-selectable-eventview>
+</div>
 </template>
-
-<style scoped lang="scss"></style>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import moment from 'moment';
 import _ from 'lodash';
-import { useCategoryStore } from '~/stores/categories';
+import { useCategoryStore } from '~/features/categorization/store/categories';
+import { serializeQueryCategoryRules } from '~/features/categorization/lib/categoryRules';
 
 const today = moment().startOf('day');
 const tomorrow = moment(today).add(24, 'hours');
@@ -86,14 +78,14 @@ RETURN = sort_by_duration(merged_events);
 
       // replace magic string `__CATEGORIES__` in query text with latest category rule
       if (_.includes(query, '__CATEGORIES__')) {
-        const categoryRules = useCategoryStore().classes_for_query;
+        const categoryRules = useCategoryStore().queryRules;
 
-        if (useCategoryStore().classes_for_query.length === 0) {
+        if (useCategoryStore().queryRules.length === 0) {
           this.error = '__CATEGORIES__ was used in query but no categories have been defined yet.';
           return;
         }
 
-        query = query.replace('__CATEGORIES__', JSON.stringify(categoryRules));
+        query = query.replace('__CATEGORIES__', serializeQueryCategoryRules(categoryRules));
       }
 
       // the aw-client expects an array of commands with whitespace cleaned up

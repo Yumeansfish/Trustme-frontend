@@ -53,7 +53,7 @@
  *             (Flatpak app ID retained: 'one.ablaze.floorp')
  */
 
-import { browser_appname_regex } from '~/queries';
+import { browser_appname_regex } from '~/app/lib/queries';
 
 // Convert ActivityWatch (?i) patterns to JS RegExp with i flag for testing.
 // AW server uses Python-style (?i) inline flag; JS uses RegExp 'i' flag instead.

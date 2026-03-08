@@ -1,5 +1,5 @@
 import { setActivePinia, createPinia } from 'pinia';
-import { useViewsStore } from '~/stores/views';
+import { useViewsStore } from '~/features/activity/store/views';
 
 describe('views store', () => {
   setActivePinia(createPinia());
