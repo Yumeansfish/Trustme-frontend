@@ -1,0 +1,15 @@
+export const ACTIVITY_PRIMARY_BAR = '#6699ff';
+export const ACTIVITY_AXIS_COLOR = '#a0aab2';
+export const ACTIVITY_GRID_COLOR = '#f0f0f0';
+export const ACTIVITY_QUERY_INTERVAL = '#aaaaaa';
+export const ACTIVITY_SUNBURST_TICK = '#cccccc';
+export const ACTIVITY_SUNBURST_LABEL = '#999999';
+export const ACTIVITY_SUNBURST_TRAIL_LABEL = '#000000';
+export const ACTIVITY_FORCEGRAPH_NODE_STROKE = '#ffffff';
+export const ACTIVITY_FORCEGRAPH_LINK_STROKE = '#999999';
+export const ACTIVITY_TIMESPIRAL_ACTIVE = '#00dd00';
+export const ACTIVITY_TIMESPIRAL_IDLE = '#cccccc';
+export const ACTIVITY_TIMESPIRAL_LABEL = '#888888';
+export const ACTIVITY_TIMESPIRAL_TRACK = '#aaaaaa';
+export const ACTIVITY_TIMESPIRAL_TEXT = '#555555';
+export const ACTIVITY_TIMESPIRAL_INNER_STROKE = '#ffffff';

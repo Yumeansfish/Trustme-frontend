@@ -1,0 +1,150 @@
+'use strict';
+
+import _ from 'lodash';
+
+import { useCategoryStore } from '~/features/categorization/store/categories';
+import { getCategoryColorFromString } from '~/features/categorization/lib/color';
+import { IEvent } from '~/shared/lib/interfaces';
+import { SUMMARY_BAR_BG_COLOR, SUMMARY_BAR_COLOR } from '~/features/insights/lib/visualizationTokens';
+
+function create(container: HTMLElement) {
+  container.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'aw-summary-list';
+  container.appendChild(list);
+}
+
+function set_status(container: HTMLElement, msg: string) {
+  const list = container.querySelector('.aw-summary-list') as HTMLElement;
+  if (!list) return;
+  list.innerHTML = `<div class="aw-summary-empty">${msg}</div>`;
+}
+
+interface Entry {
+  name: string;
+  hovertext: string;
+  duration: number;
+  color?: string;
+  colorKey?: string | string[];
+  link?: string;
+  category?: string;
+}
+
+function formatMinutes(seconds: number): string {
+  const mins = Math.round(seconds / 60);
+  if (mins < 1) return '< 1 min';
+  return `${mins} min`;
+}
+
+function update(container: HTMLElement, apps: Entry[]) {
+  const list = container.querySelector('.aw-summary-list') as HTMLElement;
+  if (!list) return container;
+
+  if (apps.length <= 0) {
+    list.innerHTML = `<div class="aw-summary-empty">No data</div>`;
+    return container;
+  }
+
+  apps = apps.filter(app => app.duration !== undefined);
+
+  if (apps.length === 0) {
+    list.innerHTML = `<div class="aw-summary-empty">No data with duration</div>`;
+    return container;
+  }
+
+  const longest_duration = apps[0].duration;
+  const total_duration = apps.reduce((sum, app) => sum + app.duration, 0);
+
+  list.innerHTML = '';
+
+  _.each(apps, app => {
+    const pct = total_duration > 0 ? Math.round((app.duration / total_duration) * 100) : 0;
+    const barWidth = longest_duration > 0 ? (app.duration / longest_duration) * 100 : 0;
+
+    // Rize indigo color
+    const barColor = SUMMARY_BAR_COLOR;
+    const barBgColor = SUMMARY_BAR_BG_COLOR;
+
+    // Row wrapper
+    const row = app.link ? document.createElement('a') : document.createElement('div');
+    if (app.link && row instanceof HTMLAnchorElement) {
+      row.href = app.link;
+    }
+    row.className = 'aw-row';
+    row.title = app.hovertext;
+
+    // 1. Percentage
+    const pctEl = document.createElement('span');
+    pctEl.className = 'aw-row-pct';
+    pctEl.textContent = `${pct}%`;
+
+    // 2. Mini progress bar
+    const barWrap = document.createElement('div');
+    barWrap.className = 'aw-row-bar-wrap';
+    barWrap.style.backgroundColor = barBgColor;
+
+    const barFill = document.createElement('div');
+    barFill.className = 'aw-row-bar-fill';
+    barFill.style.width = `${barWidth}%`;
+    barFill.style.backgroundColor = barColor;
+    barWrap.appendChild(barFill);
+
+    // 3. Name
+    const nameEl = document.createElement('span');
+    nameEl.className = 'aw-row-name';
+    nameEl.textContent = app.name;
+    nameEl.title = app.name;
+
+    // 4. Duration (min format)
+    const durEl = document.createElement('span');
+    durEl.className = 'aw-row-duration';
+    durEl.textContent = formatMinutes(app.duration);
+
+    // 5. Edit icon (SVG pencil)
+    const editEl = document.createElement('span');
+    editEl.className = 'aw-row-edit';
+    editEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+
+    row.appendChild(pctEl);
+    row.appendChild(barWrap);
+    row.appendChild(nameEl);
+    row.appendChild(durEl);
+    row.appendChild(editEl);
+
+    list.appendChild(row);
+  });
+
+  return container;
+}
+
+function updateSummedEvents(
+  container: HTMLElement,
+  summedEvents: IEvent[],
+  titleKeyFunc: (event: IEvent) => string,
+  hoverKeyFunc: (event: IEvent) => string,
+  colorKeyFunc: (event: IEvent) => string,
+  linkKeyFunc: (event: IEvent) => string = () => null
+) {
+  if (hoverKeyFunc == null) {
+    hoverKeyFunc = titleKeyFunc;
+  }
+  const apps = _.map(summedEvents, e => {
+    return {
+      name: titleKeyFunc(e),
+      hovertext: hoverKeyFunc(e),
+      duration: e.duration,
+      color: e.data['$color'],
+      colorKey: colorKeyFunc(e),
+      link: linkKeyFunc(e),
+      category: e.data['$category'],
+    } as Entry;
+  });
+  update(container, apps);
+}
+
+export default {
+  create: create,
+  update: update,
+  updateSummedEvents: updateSummedEvents,
+  set_status: set_status,
+};
