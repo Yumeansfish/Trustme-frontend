@@ -1,12 +1,12 @@
 <template>
 <div class="space-y-4">
   <div>
-    <select class="aw-select-sm max-w-xs" v-model="vis_method">
+    <ui-select class="aw-select-sm max-w-xs" v-model="vis_method">
       <option value="eventlist">Event List</option>
       <option value="timeline">Timeline</option>
       <option value="summary">Summary</option>
       <option value="raw">Raw JSON</option>
-    </select>
+    </ui-select>
   </div>
   <div v-if="vis_method == 'timeline'">
     <vis-timeline :buckets="[{'id': 'search', 'type': 'search', 'events': events}]"></vis-timeline>
@@ -15,7 +15,7 @@
     <aw-eventlist :events="events"></aw-eventlist>
   </div>
   <div v-if="vis_method == 'summary'">
-    <input class="aw-input mb-4" type="text" v-model.lazy.trim="summaryKey" placeholder="data key">
+    <ui-input class="aw-input mb-4" type="text" v-model.lazy.trim="summaryKey" placeholder="data key" />
     <aw-summary :fields="events" :colorfunc="colorfunc" :namefunc="namefunc"></aw-summary>
   </div>
   <div v-if="vis_method == 'raw'">

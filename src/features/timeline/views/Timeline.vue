@@ -5,14 +5,14 @@
   <div class="flex flex-wrap items-start gap-3">
     <div class="aw-chip">Events shown: {{ num_events }}</div>
     <label class="aw-card flex items-center gap-2 px-3 py-2 text-sm text-foreground"><span class="font-medium">Swimlanes</span>
-      <select class="aw-select-sm" v-model="swimlane">
+      <ui-select class="aw-select-sm" v-model="swimlane">
         <option :value="null">None</option>
         <option value="category">Categories</option>
         <option value="bucketType">Bucket specific</option>
-      </select>
+      </ui-select>
     </label>
     <label class="aw-card flex items-center gap-2 px-3 py-2 text-sm text-foreground"><span class="font-medium">Duration</span>
-      <select class="aw-select-sm" v-model="filter_duration">
+      <ui-select class="aw-select-sm" v-model="filter_duration">
         <option :value="null">All</option>
         <option :value="2">2+ secs</option>
         <option :value="5">5+ secs</option>
@@ -25,25 +25,27 @@
         <option :value="30 * 60">30+ mins</option>
         <option :value="1 * 60 * 60">1+ hrs</option>
         <option :value="2 * 60 * 60">2+ hrs</option>
-      </select>
+      </ui-select>
     </label>
-    <details class="aw-card-muted max-w-xl">
-      <summary class="cursor-pointer list-none text-sm font-medium text-foreground"><span>Filters: {{ filter_summary }}</span></summary>
-      <div class="mt-3 grid gap-3 sm:grid-cols-2">
+    <ui-collapsible class="aw-card-muted max-w-xl" summary-class="cursor-pointer list-none text-sm font-medium text-foreground" content-class="mt-3 grid gap-3 sm:grid-cols-2">
+      <template #summary>
+        <span>Filters: {{ filter_summary }}</span>
+      </template>
+      <div class="contents">
         <label class="flex flex-col gap-1"><span class="aw-label">Host</span>
-          <select class="aw-select-sm" v-model="filter_hostname">
+          <ui-select class="aw-select-sm" v-model="filter_hostname">
             <option :value="null">All</option>
             <option v-for="host in hosts" :key="host" :value="host">{{ host }}</option>
-          </select>
+          </ui-select>
         </label>
         <label class="flex flex-col gap-1"><span class="aw-label">Client</span>
-          <select class="aw-select-sm" v-model="filter_client">
+          <ui-select class="aw-select-sm" v-model="filter_client">
             <option :value="null">All</option>
             <option v-for="client in clients" :key="client" :value="client">{{ client }}</option>
-          </select>
+          </ui-select>
         </label>
       </div>
-    </details>
+    </ui-collapsible>
     <p class="ml-auto pt-2 text-sm text-foreground-subtle">Drag to pan and scroll to zoom</p>
   </div>
   <aw-alert class="mt-2" v-if="num_events === 0" variant="warning" show>No events match selected criteria. Timeline is not updated.</aw-alert>

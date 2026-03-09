@@ -4,15 +4,15 @@
   <aw-alert variant="warning" show>This feature is still in early development.</aw-alert>
   <aw-alert v-if="error" show variant="danger">{{error}}</aw-alert>
   <div class="aw-card flex flex-col gap-3 sm:flex-row sm:items-center">
-    <input class="aw-input h-11" v-model="pattern" type="text" placeholder="Regex pattern to search for" @keyup.enter="search()">
-    <button class="aw-btn aw-btn-lg aw-btn-success" type="button" @click="search()">
+    <ui-input class="aw-input h-11" v-model="pattern" type="text" placeholder="Regex pattern to search for" @keyup.enter="search()" />
+    <ui-button class="aw-btn aw-btn-lg aw-btn-success" type="button" @click="search()">
       <icon name="search"></icon><span>Search</span>
-    </button>
+    </ui-button>
   </div>
   <div class="flex items-center justify-between gap-3"><span class="text-sm text-foreground-muted">Hostname: {{queryOptions.hostname}}</span>
-    <button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="show_options = !show_options"><span v-if="!show_options">
+    <ui-button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="show_options = !show_options"><span v-if="!show_options">
         <icon name="angle-double-down"></icon> Show options</span><span v-else>
-        <icon name="angle-double-up"></icon> Hide options</span></button>
+        <icon name="angle-double-up"></icon> Hide options</span></ui-button>
   </div>
   <div class="aw-card-muted space-y-3" v-show="show_options">
     <h4 class="aw-subtitle">Options</h4>
@@ -27,7 +27,7 @@
     <div class="aw-divider"></div>
     <aw-selectable-eventview :events="events"></aw-selectable-eventview>
     <div class="text-sm text-foreground">Didn't find what you were looking for?<br>Add a week to the search:
-      <button class="aw-btn aw-btn-sm aw-btn-secondary ml-2" type="button" @click="queryOptions.start = moment(queryOptions.start).subtract(1, 'week'); search()">+1 week</button>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-secondary ml-2" type="button" @click="queryOptions.start = moment(queryOptions.start).subtract(1, 'week'); search()">+1 week</ui-button>
     </div>
   </div>
 </div>

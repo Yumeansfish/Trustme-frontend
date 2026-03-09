@@ -6,10 +6,10 @@
   </div>
   <aw-alert show>This is an early experiment. Data entered here is not shown in the Activity view, yet.</aw-alert>
   <div class="aw-card flex flex-col gap-3 sm:flex-row sm:items-center">
-    <input class="aw-input h-11" v-model="label" type="text" placeholder="What are you working on?" @keyup.enter="startTimer(label)">
-    <button class="aw-btn aw-btn-lg aw-btn-success" type="button" @click="startTimer(label)">
+    <ui-input class="aw-input h-11" v-model="label" type="text" placeholder="What are you working on?" @keyup.enter="startTimer(label)" />
+    <ui-button class="aw-btn aw-btn-lg aw-btn-success" type="button" @click="startTimer(label)">
       <icon name="play"></icon><span>Start</span>
-    </button>
+    </ui-button>
   </div>
   <div class="aw-divider"></div>
   <div class="aw-card p-5" v-if="loading"><span class="text-sm text-foreground-muted">Loading...</span></div>

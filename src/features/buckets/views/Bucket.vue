@@ -1,7 +1,7 @@
 <template>
 <div>
   <h3>{{ id }}</h3>
-  <table>
+  <ui-table>
     <tr>
       <th>Type:</th>
       <td>{{ bucket.type }}</td>
@@ -33,7 +33,7 @@
       <th>Data:</th>
       <td>{{ bucket.data }}</td>
     </tr>
-  </table>
+  </ui-table>
   <input-timeinterval v-model="daterange" :maxDuration="maxDuration"></input-timeinterval>
   <vis-timeline :buckets="[bucket_with_events]" :showRowLabels="false"></vis-timeline>
   <aw-eventlist :bucket_id="id" @save="updateEvent" :events="events" editable></aw-eventlist>

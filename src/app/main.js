@@ -39,8 +39,30 @@ app.config.globalProperties.friendlyperiod = friendlyperiod;
 
 import Icon from '../shared/ui/Icon.vue';
 import BAlert from '../shared/ui/BAlert.vue';
+import UiButton from '../shared/ui/Button.vue';
+import UiCheckbox from '../shared/ui/Checkbox.vue';
+import UiCollapsible from '../shared/ui/Collapsible.vue';
+import UiInput from '../shared/ui/Input.vue';
+import UiLink from '../shared/ui/Link.vue';
+import UiRadioItem from '../shared/ui/RadioItem.vue';
+import UiSelect from '../shared/ui/Select.vue';
+import UiSeparator from '../shared/ui/Separator.vue';
+import UiSwitch from '../shared/ui/Switch.vue';
+import UiTable from '../shared/ui/Table.vue';
+import UiTextarea from '../shared/ui/Textarea.vue';
 app.component('icon', Icon);
 app.component('aw-alert', BAlert);
+app.component('ui-button', UiButton);
+app.component('ui-checkbox', UiCheckbox);
+app.component('ui-collapsible', UiCollapsible);
+app.component('ui-input', UiInput);
+app.component('ui-link', UiLink);
+app.component('ui-radio-item', UiRadioItem);
+app.component('ui-select', UiSelect);
+app.component('ui-separator', UiSeparator);
+app.component('ui-switch', UiSwitch);
+app.component('ui-table', UiTable);
+app.component('ui-textarea', UiTextarea);
 
 app.component(
   'error-boundary',

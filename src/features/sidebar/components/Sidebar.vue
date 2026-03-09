@@ -9,7 +9,7 @@
       </div>
 
       <div class="flex-1 overflow-hidden">
-        <router-link
+        <ui-link
           v-if="activityViews && activityViews.length === 1"
           v-for="view in activityViews"
           :key="view.name"
@@ -19,7 +19,7 @@
         >
           <icon class="h-4 w-4 shrink-0" name="calendar-day"></icon>
           <span class="aw-sidebar-copy">Activity</span>
-        </router-link>
+        </ui-link>
 
         <div v-if="!activityViews || activityViews.length !== 1" class="flex flex-col">
           <div class="flex h-11 items-center px-4 text-foreground-subtle">
@@ -37,7 +37,7 @@
             >
               <span class="aw-sidebar-copy ml-7">No activity available</span>
             </div>
-            <router-link
+            <ui-link
               v-for="view in activityViews"
               :key="view.name"
               :to="`/activity/${view.hostname}`"
@@ -46,27 +46,36 @@
             >
               <icon :name="view.icon" class="h-3.5 w-3.5 shrink-0"></icon>
               <span class="aw-sidebar-copy">{{ view.name }}</span>
-            </router-link>
+            </ui-link>
           </div>
         </div>
 
-        <router-link
+        <ui-link
+          to="/streamdeck"
+          active-class="aw-sidebar-link-active"
+          class="aw-sidebar-link h-11 px-4"
+        >
+          <icon class="h-4 w-4 shrink-0" name="list"></icon>
+          <span class="aw-sidebar-copy">Streamdeck</span>
+        </ui-link>
+
+        <ui-link
           to="/timeline"
           active-class="aw-sidebar-link-active"
           class="aw-sidebar-link h-11 px-4"
         >
           <icon class="h-4 w-4 shrink-0" name="stream"></icon>
           <span class="aw-sidebar-copy">Timeline</span>
-        </router-link>
+        </ui-link>
 
-        <router-link
+        <ui-link
           to="/stopwatch"
           active-class="aw-sidebar-link-active"
           class="aw-sidebar-link h-11 px-4"
         >
           <icon class="h-4 w-4 shrink-0" name="stopwatch"></icon>
           <span class="aw-sidebar-copy">Stopwatch</span>
-        </router-link>
+        </ui-link>
       </div>
 
       <div class="mx-3 my-2 aw-sidebar-divider"></div>
@@ -77,42 +86,42 @@
           <span class="aw-sidebar-section-title">Tools</span>
         </div>
         <div class="aw-sidebar-section-panel aw-sidebar-tools-panel">
-          <router-link
+          <ui-link
             to="/search"
             active-class="aw-sidebar-link-subactive"
             class="aw-sidebar-link h-9 px-5"
           >
             <icon class="h-3.5 w-3.5 shrink-0" name="search"></icon>
             <span class="aw-sidebar-copy">Search</span>
-          </router-link>
-          <router-link
+          </ui-link>
+          <ui-link
             to="/query"
             active-class="aw-sidebar-link-subactive"
             class="aw-sidebar-link h-9 px-5"
           >
             <icon class="h-3.5 w-3.5 shrink-0" name="code"></icon>
             <span class="aw-sidebar-copy">Query</span>
-          </router-link>
+          </ui-link>
         </div>
       </div>
 
       <div class="mt-auto border-t border-base pt-2">
-        <router-link
+        <ui-link
           to="/buckets"
           active-class="aw-sidebar-link-active"
           class="aw-sidebar-link h-11 px-4"
         >
           <icon class="h-4 w-4 shrink-0" name="database"></icon>
           <span class="aw-sidebar-copy">Raw Data</span>
-        </router-link>
-        <router-link
+        </ui-link>
+        <ui-link
           to="/settings"
           active-class="aw-sidebar-link-active"
           class="aw-sidebar-link h-11 px-4"
         >
           <icon class="h-4 w-4 shrink-0" name="cog"></icon>
           <span class="aw-sidebar-copy">Settings</span>
-        </router-link>
+        </ui-link>
       </div>
     </nav>
   </aside>

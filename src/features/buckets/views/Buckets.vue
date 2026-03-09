@@ -1,7 +1,7 @@
 <template>
 <div class="space-y-6">
   <h2 class="aw-section-title">Buckets</h2>
-  <aw-alert show>Are you looking to collect more data? Check out <a class="aw-link" href="https://activitywatch.readthedocs.io/en/latest/watchers.html">the docs</a> for more watchers.</aw-alert>
+  <aw-alert show>Are you looking to collect more data? Check out <ui-link class="aw-link" href="https://activitywatch.readthedocs.io/en/latest/watchers.html">the docs</ui-link> for more watchers.</aw-alert>
   <div class="aw-card space-y-4" v-for="device in bucketsStore.bucketsByDevice" :key="device.hostname || device.device_id">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div class="flex items-start gap-3">
@@ -27,7 +27,7 @@
       </div>
     </div>
     <div class="overflow-x-auto">
-      <table class="aw-table">
+      <ui-table class="aw-table">
         <thead>
           <tr>
             <th>Bucket ID</th>
@@ -43,27 +43,27 @@
             <td><span :class="isRecent(bucket.last_updated) ? 'text-success' : ''">{{ bucket.last_updated ? new Date(bucket.last_updated).toLocaleString() : "" }}</span></td>
             <td>
               <div class="flex flex-wrap justify-end gap-2">
-                <router-link class="aw-btn aw-btn-sm aw-btn-primary" :to="'/buckets/' + bucket.id">
+                <ui-link class="aw-btn aw-btn-sm aw-btn-primary" :to="'/buckets/' + bucket.id">
                   <icon name="folder-open"></icon>
                   Open
-                </router-link>
-                <a class="aw-btn aw-btn-sm aw-btn-secondary" :href="$aw.baseURL + '/api/0/buckets/' + bucket.id + '/export'" :download="'aw-bucket-export-' + bucket.id + '.json'" title="Export bucket to JSON">
+                </ui-link>
+                <ui-link class="aw-btn aw-btn-sm aw-btn-secondary" :href="$aw.baseURL + '/api/0/buckets/' + bucket.id + '/export'" :download="'aw-bucket-export-' + bucket.id + '.json'" title="Export bucket to JSON">
                   <icon name="download"></icon>
                   JSON
-                </a>
-                <button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="export_csv(bucket.id)">
+                </ui-link>
+                <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="export_csv(bucket.id)">
                   <icon name="download"></icon>
                   CSV
-                </button>
-                <button class="aw-btn aw-btn-sm aw-btn-danger" type="button" @click="openDeleteBucketModal(bucket.id)">
+                </ui-button>
+                <ui-button class="aw-btn aw-btn-sm aw-btn-danger" type="button" @click="openDeleteBucketModal(bucket.id)">
                   <icon name="trash"></icon>
                   Delete
-                </button>
+                </ui-button>
               </div>
             </td>
           </tr>
         </tbody>
-      </table>
+      </ui-table>
     </div>
     <div class="space-y-2" v-if="runChecks(device).length > 0">
       <div class="text-foreground flex items-start gap-2 text-sm" v-for="msg in runChecks(device)">
@@ -78,7 +78,7 @@
       <div class="aw-card space-y-3">
         <h4 class="text-foreground-strong text-base font-semibold">Import buckets</h4>
         <aw-alert v-if="import_error" show variant="danger" dismissible>{{ import_error }}</aw-alert>
-        <input class="aw-input" type="file" accept="application/json" @change="import_file = $event.target.files?.[0] || null">
+        <ui-input class="aw-input" type="file" accept="application/json" @change="import_file = $event.target.files?.[0] || null" />
         <div class="text-foreground-muted flex items-center gap-2 text-sm" v-if="import_file">
           <icon name="spinner" pulse></icon>
           <span>Importing selected file…</span>
@@ -90,10 +90,10 @@
       </div>
       <div class="aw-card space-y-3">
         <h4 class="text-foreground-strong text-base font-semibold">Export buckets</h4>
-        <a class="aw-btn aw-btn-md aw-btn-secondary" :href="$aw.baseURL + '/api/0/export'" :download="'aw-bucket-export.json'" title="Export bucket to JSON">
+        <ui-link class="aw-btn aw-btn-md aw-btn-secondary" :href="$aw.baseURL + '/api/0/export'" :download="'aw-bucket-export.json'" title="Export bucket to JSON">
           <icon name="download"></icon>
           Export all buckets as JSON
-        </a>
+        </ui-link>
       </div>
     </div>
   </div>

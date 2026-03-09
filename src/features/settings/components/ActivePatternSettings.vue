@@ -9,7 +9,7 @@
       Example expression:&nbsp;<code class="aw-code-inline">Zoom Meeting|Google Meet|Microsoft Teams</code></small>
   </div>
   <div class="w-full space-y-2 sm:max-w-md">
-    <input class="aw-input-sm" v-model="always_active_pattern_editing" type="text" placeholder="Zoom Meeting|Google Meet|Microsoft Teams" :class="enabled && !valid ? 'aw-input-invalid' : ''"><small class="block text-right text-sm">
+    <ui-input class="aw-input-sm" v-model="always_active_pattern_editing" type="text" placeholder="Zoom Meeting|Google Meet|Microsoft Teams" :class="enabled && !valid ? 'aw-input-invalid' : ''" /><small class="block text-right text-sm">
       <div class="text-success" v-if="enabled && valid">Enabled</div>
       <div class="text-danger" v-else-if="enabled">Invalid pattern</div>
       <div class="text-foreground-muted" v-else>Disabled</div>

@@ -5,32 +5,28 @@
       <span class="aw-page-title">{{ customFormattedDate }}</span>
     </div>
     <div class="flex flex-wrap items-center gap-3">
-      <button class="aw-icon-button h-9 w-9" @click="refresh(true)" title="Refresh" type="button">
+      <ui-button class="aw-icon-button h-9 w-9" @click="refresh(true)" title="Refresh" type="button">
         <icon class="h-4 w-4" name="sync"></icon>
-      </button>
+      </ui-button>
       <div class="aw-segmented-control hidden md:inline-flex">
-        <button class="aw-segmented-item" v-for="(label, value) in periodLengths" :key="value" :class="periodLength === value ? 'aw-segmented-item-active' : ''" @click="setDate(_date, value)" type="button">{{ label.charAt(0).toUpperCase() + label.slice(1) }}</button>
+        <ui-button class="aw-segmented-item" v-for="(label, value) in periodLengths" :key="value" :class="periodLength === value ? 'aw-segmented-item-active' : ''" @click="setDate(_date, value)" type="button">{{ label.charAt(0).toUpperCase() + label.slice(1) }}</ui-button>
       </div>
       <div class="aw-pill-control">
-        <router-link :to="buildActivityRoute(previousPeriod())" custom v-slot="{ navigate, href }">
-          <button class="aw-icon-button h-7 w-7 rounded-full" @click="navigate" :href="href" type="button">
-            <icon class="h-3 w-3" name="chevron-left"></icon>
-          </button>
-        </router-link>
+        <ui-button class="aw-icon-button h-7 w-7 rounded-full" @click="$router.push(buildActivityRoute(previousPeriod()))" type="button">
+          <icon class="h-3 w-3" name="chevron-left"></icon>
+        </ui-button>
         <label class="text-foreground-muted hover:text-foreground-strong relative inline-flex h-7 w-9 cursor-pointer items-center justify-center transition">
           <icon class="h-3.5 w-3.5" name="calendar"></icon>
-          <input class="absolute inset-0 cursor-pointer opacity-0" type="date" :value="_date" :max="today" @change="setDate($event.target.value, periodLength)">
+          <ui-input class="absolute inset-0 cursor-pointer opacity-0" type="date" :value="_date" :max="today" @change="setDate($event.target.value, periodLength)" />
         </label>
-        <router-link :to="buildActivityRoute(nextPeriod())" custom v-slot="{ navigate, href }">
-          <button class="aw-icon-button h-7 w-7 rounded-full disabled:cursor-not-allowed disabled:opacity-40" @click="navigate" :href="href" :disabled="nextPeriod() > today" type="button">
-            <icon class="h-3 w-3" name="chevron-right"></icon>
-          </button>
-        </router-link>
+        <ui-button class="aw-icon-button h-7 w-7 rounded-full disabled:cursor-not-allowed disabled:opacity-40" @click="$router.push(buildActivityRoute(nextPeriod()))" :disabled="nextPeriod() > today" type="button">
+          <icon class="h-3 w-3" name="chevron-right"></icon>
+        </ui-button>
       </div>
-      <button class="aw-icon-button relative h-9 w-9" :class="showOptions ? 'bg-primary-soft text-primary' : ''" @click="showOptions = !showOptions" title="Filters" type="button">
+      <ui-button class="aw-icon-button relative h-9 w-9" :class="showOptions ? 'bg-primary-soft text-primary' : ''" @click="showOptions = !showOptions" title="Filters" type="button">
         <icon class="h-4 w-4" name="filter"></icon>
         <span class="aw-count-badge" v-if="filters_set > 0">{{ filters_set }}</span>
-      </button>
+      </ui-button>
     </div>
   </div>
   <div class="aw-card-muted space-y-4" v-if="showOptions">
@@ -38,7 +34,7 @@
     <div class="grid gap-4 lg:grid-cols-2">
       <div class="space-y-3">
         <label class="aw-filter-tile">
-          <input class="aw-checkbox mt-0.5" v-model="filter_afk" type="checkbox">
+          <ui-checkbox class="aw-checkbox mt-0.5" v-model="filter_afk" />
           <span class="flex-1">
             <span class="font-medium">Exclude AFK time</span>
             <span class="text-foreground-subtle ml-2 inline-flex" title="Filter away time where the AFK watcher didn't detect any input.">
@@ -47,7 +43,7 @@
           </span>
         </label>
         <label class="aw-filter-tile">
-          <input class="aw-checkbox mt-0.5" v-model="include_audible" :disabled="!filter_afk" type="checkbox">
+          <ui-checkbox class="aw-checkbox mt-0.5" v-model="include_audible" :disabled="!filter_afk" />
           <span class="flex-1">
             <span class="font-medium">Count audible browser tab as active</span>
             <span class="text-foreground-subtle ml-2 inline-flex" title="If the active window is an audible browser tab, count as active. Requires a browser watcher.">
@@ -56,7 +52,7 @@
           </span>
         </label>
         <label class="aw-filter-tile" v-if="devmode">
-          <input class="aw-checkbox mt-0.5" v-model="include_stopwatch" type="checkbox">
+          <ui-checkbox class="aw-checkbox mt-0.5" v-model="include_stopwatch" />
           <span class="flex-1">
             <span class="font-medium">Include manually logged events (stopwatch)</span>
             <span class="aw-filter-tile-note"><span class="font-semibold">Note:</span> WIP. Stopwatch events shadow other events when overlapping with them. Only shown in devmode.</span>
@@ -65,40 +61,40 @@
       </div>
       <label class="aw-label flex flex-col gap-1">
         <span>Show category</span>
-        <select class="aw-select-sm" v-model="filter_category">
+        <ui-select class="aw-select-sm" v-model="filter_category">
           <option :value="null">All categories</option>
           <option v-for="category in categoryStore.category_select(true)" :key="Array.isArray(category.value) ? category.value.join('>') : String(category.value)" :value="category.value">{{ category.text }}</option>
-        </select>
+        </ui-select>
       </label>
     </div>
   </div>
   <div class="border-base flex flex-wrap items-center gap-2 border-b pb-2">
-    <router-link class="aw-tab-link" v-for="view in views" :key="view.id" :to="{ name: 'activity-view', params: {...$route.params, view_id: view.id}, query: $route.query}" :class="currentView.id == view.id ? 'aw-tab-link-active' : ''">{{ view.name }}</router-link>
-    <button class="aw-btn aw-btn-md aw-btn-secondary ml-auto" type="button" @click="openNewViewModal">
+    <ui-link class="aw-tab-link" v-for="view in views" :key="view.id" :to="{ name: 'activity-view', params: {...$route.params, view_id: view.id}, query: $route.query}" :class="currentView.id == view.id ? 'aw-tab-link-active' : ''">{{ view.name }}</ui-link>
+    <ui-button class="aw-btn aw-btn-md aw-btn-secondary ml-auto" type="button" @click="openNewViewModal">
       <icon class="h-4 w-4" name="plus"></icon>
       <span class="hidden md:inline">New view</span>
-    </button>
+    </ui-button>
   </div>
   <app-modal :open="isNewViewModalOpen" title="New view" panel-class="max-w-md" @update:open="onNewViewModalChange">
     <div class="space-y-3">
       <label class="aw-label flex flex-col gap-1">
         <span>ID</span>
-        <input class="aw-input" v-model="new_view.id" type="text" placeholder="default">
+        <ui-input class="aw-input" v-model="new_view.id" type="text" placeholder="default" />
       </label>
       <label class="aw-label flex flex-col gap-1">
         <span>Name</span>
-        <input class="aw-input" v-model="new_view.name" type="text" placeholder="My view" @keydown.enter.prevent="handleSubmit">
+        <ui-input class="aw-input" v-model="new_view.name" type="text" placeholder="My view" @keydown.enter.prevent="handleSubmit" />
       </label>
     </div>
     <template #footer>
-      <button class="aw-btn aw-btn-secondary" type="button" @click="closeNewViewModal">Cancel</button>
-      <button class="aw-btn aw-btn-primary" type="button" @click="handleSubmit">Create view</button>
+      <ui-button class="aw-btn aw-btn-secondary" type="button" @click="closeNewViewModal">Cancel</ui-button>
+      <ui-button class="aw-btn aw-btn-primary" type="button" @click="handleSubmit">Create view</ui-button>
     </template>
   </app-modal>
   <div>
     <router-view></router-view>
     <aw-devonly>
-      <button class="aw-btn aw-btn-secondary" id="load-demo" @click="load_demo" type="button">Load demo data</button>
+      <ui-button class="aw-btn aw-btn-secondary" id="load-demo" @click="load_demo" type="button">Load demo data</ui-button>
     </aw-devonly>
   </div>
 </div>

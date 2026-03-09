@@ -21,38 +21,38 @@
       </div>
       <div class="grid gap-3">
         <label class="flex flex-col gap-1"><span class="aw-label">Start</span>
-          <input class="aw-input" v-model="start" type="datetime-local">
+          <ui-input class="aw-input" v-model="start" type="datetime-local" />
         </label>
         <label class="flex flex-col gap-1"><span class="aw-label">End</span>
-          <input class="aw-input" v-model="end" type="datetime-local">
+          <ui-input class="aw-input" v-model="end" type="datetime-local" />
         </label>
       </div>
     </div>
     <div class="space-y-3">
       <h4 class="aw-eyebrow">Event data</h4>
       <div class="aw-form-kv-grid" v-for="(value, key) in editedEvent.data" :key="key">
-        <input class="h-10 w-full rounded-md border border-base bg-surface-muted px-3 text-sm text-foreground" :value="key" disabled type="text">
+        <ui-input class="h-10 w-full rounded-md border border-base bg-surface-muted px-3 text-sm text-foreground" :value="key" disabled type="text" />
         <div>
           <label class="flex items-center gap-2 text-sm text-foreground" v-if="typeof value === 'boolean'">
-            <input class="aw-checkbox" v-model="editedEvent.data[key]" type="checkbox"><span>Enabled</span>
+            <ui-checkbox class="aw-checkbox" v-model="editedEvent.data[key]"  /><span>Enabled</span>
           </label>
-          <input class="aw-input" v-else-if="typeof value === 'string'" v-model="editedEvent.data[key]" type="text">
-          <input class="aw-input" v-else-if="typeof value === 'number'" v-model.number="editedEvent.data[key]" type="number">
-          <textarea class="aw-textarea min-h-24" v-else :value="formatComplexValue(value)" readonly></textarea>
+          <ui-input class="aw-input" v-else-if="typeof value === 'string'" v-model="editedEvent.data[key]" type="text" />
+          <ui-input class="aw-input" v-else-if="typeof value === 'number'" v-model.number="editedEvent.data[key]" type="number" />
+          <ui-textarea class="aw-textarea min-h-24" v-else :value="formatComplexValue(value)" readonly></ui-textarea>
         </div>
       </div>
     </div>
   </div>
   <template #footer>
-    <button class="aw-btn aw-btn-md aw-btn-danger mr-auto" type="button" @click="deleteAndClose">
+    <ui-button class="aw-btn aw-btn-md aw-btn-danger mr-auto" type="button" @click="deleteAndClose">
       <icon name="trash"></icon><span>Delete</span>
-    </button>
-    <button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="close">
+    </ui-button>
+    <ui-button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="close">
       <icon name="times"></icon><span>Cancel</span>
-    </button>
-    <button class="aw-btn aw-btn-md aw-btn-primary" type="button" @click="saveAndClose">
+    </ui-button>
+    <ui-button class="aw-btn aw-btn-md aw-btn-primary" type="button" @click="saveAndClose">
       <icon name="save"></icon><span>Save</span>
-    </button>
+    </ui-button>
   </template>
 </app-modal>
 </template>

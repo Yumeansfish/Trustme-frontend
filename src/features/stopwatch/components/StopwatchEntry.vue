@@ -14,18 +14,18 @@
       </span>
     </div>
     <div class="flex items-center gap-2">
-      <button class="aw-btn aw-btn-sm aw-btn-secondary" v-if="event.data.running" type="button" @click="stop">
+      <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" v-if="event.data.running" type="button" @click="stop">
         <icon name="stop"></icon>
         Stop
-      </button>
-      <button class="aw-btn aw-btn-sm aw-btn-secondary" v-if="!event.data.running" type="button" @click="$emit('new')">
+      </ui-button>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" v-if="!event.data.running" type="button" @click="$emit('new')">
         <icon name="play"></icon>
         Start new
-      </button>
-      <button class="aw-btn aw-btn-sm aw-btn-outline" type="button" @click="isEditorOpen = true">
+      </ui-button>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-outline" type="button" @click="isEditorOpen = true">
         <icon name="edit"></icon>
         Edit
-      </button>
+      </ui-button>
     </div>
   </div>
   <event-editor :event="event" :bucket_id="bucket_id" :open="isEditorOpen" @update:open="isEditorOpen = $event" @save="save" @delete="delete_"></event-editor>

@@ -45,7 +45,7 @@ function update(container: HTMLElement, apps: Entry[]) {
     return container;
   }
 
-  apps = apps.filter(app => app.duration !== undefined);
+  apps = apps.filter(app => typeof app.duration === 'number' && app.duration > 0);
 
   if (apps.length === 0) {
     list.innerHTML = `<div class="aw-summary-empty">No data with duration</div>`;
@@ -76,7 +76,7 @@ function update(container: HTMLElement, apps: Entry[]) {
     // 1. Percentage
     const pctEl = document.createElement('span');
     pctEl.className = 'aw-row-pct';
-    pctEl.textContent = `${pct}%`;
+    pctEl.textContent = pct > 0 ? `${pct}%` : '<1%';
 
     // 2. Mini progress bar
     const barWrap = document.createElement('div');

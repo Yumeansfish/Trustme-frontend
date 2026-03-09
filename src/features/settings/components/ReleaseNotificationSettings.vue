@@ -3,9 +3,7 @@
   <div class="space-y-1">
     <h5 class="text-sm font-semibold text-foreground-strong">New release notification</h5><small class="aw-caption">We will send you a notification if there is a new release available for download, this check will happen at most once per day.</small>
   </div>
-  <label class="aw-switch">
-    <input class="aw-switch-input" type="checkbox" v-model="isEnabled"><span class="aw-switch-track"><span class="aw-switch-thumb"></span></span>
-  </label>
+  <ui-switch v-model="isEnabled"></ui-switch>
 </div>
 </template>
 

@@ -9,9 +9,9 @@
   <div class="grid gap-4 md:grid-cols-2">
     <div class="space-y-2">
       <h4 class="text-foreground-strong text-sm font-semibold">Bucket from</h4>
-      <select class="aw-select" v-model="bucket_from" :disabled="buckets.length === 0">
+      <ui-select class="aw-select" v-model="bucket_from" :disabled="buckets.length === 0">
         <option v-for="bucket in buckets" :key="bucket.value" :value="bucket.value">{{ bucket.text }}</option>
-      </select>
+      </ui-select>
       <p class="aw-caption">
         Select the bucket from which you want to merge the events.
         This bucket will be deleted after the merge.
@@ -20,9 +20,9 @@
     </div>
     <div class="space-y-2">
       <h4 class="text-foreground-strong text-sm font-semibold">Bucket to</h4>
-      <select class="aw-select" v-model="bucket_to" :disabled="buckets.length === 0">
+      <ui-select class="aw-select" v-model="bucket_to" :disabled="buckets.length === 0">
         <option v-for="bucket in buckets" :key="bucket.value" :value="bucket.value">{{ bucket.text }}</option>
-      </select>
+      </ui-select>
       <p class="aw-caption">
         Select the bucket to which you want to merge the events.
         This bucket will remain after the merge.
@@ -43,7 +43,7 @@
       </ul>
     </div>
   </div>
-  <button class="aw-btn aw-btn-md aw-btn-success" type="button" :disabled="!validate" @click="merge()">Merge</button>
+  <ui-button class="aw-btn aw-btn-md aw-btn-success" type="button" :disabled="!validate" @click="merge()">Merge</ui-button>
 </div>
 </template>
 

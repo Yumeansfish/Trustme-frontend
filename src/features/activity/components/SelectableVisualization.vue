@@ -6,12 +6,12 @@
       {{ visualizations[type].title }}
     </h5>
     <div class="flex items-center gap-2" v-if="editable">
-      <select class="aw-select-sm min-w-44" :value="type" @change="$emit('onTypeChange', id, $event.target.value)">
+      <ui-select class="aw-select-sm min-w-44" :value="type" @change="$emit('onTypeChange', id, $event.target.value)">
         <option v-for="t in types" :key="t" :value="t">{{ visualizations[t].title }}{{ visualizations[t].available ? '' : ' (no data)' }}</option>
-      </select>
-      <button class="aw-btn aw-btn-sm aw-btn-danger" type="button" @click="$emit('onRemove', id)">
+      </ui-select>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-danger" type="button" @click="$emit('onRemove', id)">
         <icon name="times"></icon>
-      </button>
+      </ui-button>
     </div>
   </div>
   <div v-if="!supports_period">
@@ -21,7 +21,7 @@
     <div v-if="!has_prerequisites">
       <aw-alert class="small px-2 py-1" show variant="warning">
         This feature is missing data from a required watcher.
-        You can find a list of all watchers in <a href="https://activitywatch.readthedocs.io/en/latest/watchers.html">the documentation</a>.
+        You can find a list of all watchers in <ui-link href="https://activitywatch.readthedocs.io/en/latest/watchers.html">the documentation</ui-link>.
       </aw-alert>
     </div>
     <div v-if="type == 'top_apps'">

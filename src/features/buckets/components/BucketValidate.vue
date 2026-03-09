@@ -4,20 +4,20 @@
   <p class="aw-caption">This is a small tool to check the validity of your buckets and their events.</p>
   <div class="space-y-2">
     <h4 class="text-foreground-strong text-sm font-semibold">Bucket</h4>
-    <select class="aw-select" v-model="bucket" :disabled="buckets.length === 0">
+    <ui-select class="aw-select" v-model="bucket" :disabled="buckets.length === 0">
       <option v-for="bucketOption in buckets" :key="bucketOption.value" :value="bucketOption.value">{{ bucketOption.text }}</option>
-    </select>
+    </ui-select>
     <p class="aw-caption">Select the bucket to validate.</p>
     <p class="aw-caption" v-if="events !== null">Events: {{ events.length }}</p>
   </div>
   <div v-if="duplicateEvents !== null">
-    <details>
-      <summary class="text-foreground-strong flex cursor-pointer items-center gap-2 text-sm font-medium">
+    <ui-collapsible summary-class="text-foreground-strong flex cursor-pointer items-center gap-2 text-sm font-medium" content-class="text-foreground space-y-2 p-2 text-sm">
+      <template #summary>
         <icon class="text-success" name="check" v-if="duplicateEvents.length === 0"></icon>
         <icon class="text-warning" name="exclamation-triangle" v-else></icon>
         Duplicates: {{ duplicateEvents.length }}
-      </summary>
-      <div class="text-foreground space-y-2 p-2 text-sm">
+      </template>
+      <div>
         <p v-if="duplicateEvents.length === 0">No duplicate events found.</p>
         <template v-else>
           <p>The following {{ duplicateEvents.length }} duplicates were found.</p>
@@ -26,16 +26,16 @@
           </ul>
         </template>
       </div>
-    </details>
+    </ui-collapsible>
   </div>
   <div v-if="overlappingEvents !== null">
-    <details>
-      <summary class="text-foreground-strong flex cursor-pointer items-center gap-2 text-sm font-medium">
+    <ui-collapsible summary-class="text-foreground-strong flex cursor-pointer items-center gap-2 text-sm font-medium" content-class="text-foreground space-y-2 p-2 text-sm">
+      <template #summary>
         <icon class="text-success" name="check" v-if="overlappingEvents.length === 0"></icon>
         <icon class="text-warning" name="exclamation-triangle" v-else></icon>
         Overlaps: {{ overlappingEvents.length }}x with a total duration of {{ friendlyduration(overlapDuration / 1000 ) }}
-      </summary>
-      <div class="text-foreground space-y-2 p-2 text-sm">
+      </template>
+      <div>
         <p v-if="overlappingEvents.length === 0">No overlapping events found.</p>
         <template v-else>
           <p>The following {{ overlappingEvents.length }} overlaps were found.</p>
@@ -48,16 +48,16 @@
           </div>
         </template>
       </div>
-    </details>
+    </ui-collapsible>
   </div>
   <div v-if="zeroDurationEvents !== null">
-    <details>
-      <summary class="text-foreground-strong flex cursor-pointer items-center gap-2 text-sm font-medium">
+    <ui-collapsible summary-class="text-foreground-strong flex cursor-pointer items-center gap-2 text-sm font-medium" content-class="text-foreground space-y-2 p-2 text-sm">
+      <template #summary>
         <icon class="text-success" name="check" v-if="zeroDurationEvents.length === 0"></icon>
         <icon class="text-info" name="info-circle" v-else></icon>
         Zero-duration events: {{ zeroDurationEvents.length }}
-      </summary>
-      <div class="text-foreground space-y-2 p-2 text-sm">
+      </template>
+      <div>
         <p v-if="zeroDurationEvents.length === 0">No zero-duration events found.</p>
         <template v-else>
           <p>The following {{ zeroDurationEvents.length }} zero-duration events were found:</p>
@@ -66,7 +66,7 @@
           </ul>
         </template>
       </div>
-    </details>
+    </ui-collapsible>
   </div>
 </div>
 </template>

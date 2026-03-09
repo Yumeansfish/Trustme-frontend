@@ -13,7 +13,7 @@
             <div class="text-sm font-semibold text-foreground-strong">{{ groupName }}</div>
             <div class="text-sm text-foreground-muted">{{ hosts.join(', ') }}</div>
           </div>
-          <button class="aw-btn aw-btn-outline aw-btn-sm" type="button" @click="removeGroup(groupName)">Remove</button>
+          <ui-button class="aw-btn aw-btn-outline aw-btn-sm" type="button" @click="removeGroup(groupName)">Remove</ui-button>
         </div>
       </div>
       <div class="mt-3 text-sm italic text-foreground-muted" v-else>No custom device groups defined yet.</div>
@@ -22,16 +22,16 @@
       <h6 class="text-sm font-semibold text-foreground-strong">Create New Group</h6>
       <form class="space-y-4" @submit.prevent="addGroup">
         <label class="flex flex-col gap-1"><span class="aw-label">Group Name (e.g. "My MacBook")</span>
-          <input class="aw-input" v-model="newGroupName" required placeholder="Enter a clean device name">
+          <ui-input class="aw-input" v-model="newGroupName" required placeholder="Enter a clean device name" />
         </label>
         <div class="space-y-2">
           <label class="aw-label">Select Hostnames to Merge</label>
           <label class="flex items-center gap-3 rounded-lg border border-base bg-surface p-3 text-sm text-foreground" v-for="host in availableHosts" :key="host">
-            <input class="aw-checkbox" type="checkbox" :id="`host-${host}`" :value="host" v-model="newGroupHosts"><span>{{ host }}</span>
+            <ui-checkbox class="aw-checkbox" :id="`host-${host}`" :value="host" v-model="newGroupHosts"  /><span>{{ host }}</span>
           </label>
           <div class="text-sm text-foreground-muted" v-if="availableHosts.length === 0">All detected hosts are already grouped!</div>
         </div>
-        <button class="aw-btn aw-btn-primary" type="submit" :disabled="!newGroupName || newGroupHosts.length === 0">Create Group</button>
+        <ui-button class="aw-btn aw-btn-primary" type="submit" :disabled="!newGroupName || newGroupHosts.length === 0">Create Group</ui-button>
       </form>
     </div>
   </div>

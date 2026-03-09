@@ -2,11 +2,11 @@
 <div class="space-y-3">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h5 class="m-0 text-base font-semibold text-foreground-strong">Theme</h5>
-    <select class="aw-select-sm w-full sm:w-40" v-if="_loaded" :value="theme" @change="theme = $event.target.value">
+    <ui-select class="aw-select-sm w-full sm:w-40" v-if="_loaded" :value="theme" @change="theme = $event.target.value">
       <option value="auto">Auto (System)</option>
       <option value="light">Light</option>
       <option value="dark">Dark</option>
-    </select><span class="text-sm text-foreground-muted" v-else>Loading...</span>
+    </ui-select><span class="text-sm text-foreground-muted" v-else>Loading...</span>
   </div><small class="text-sm text-foreground-muted">Change color theme of the application (you need to change categories colors manually to be suitable with dark mode).</small>
 </div>
 </template>

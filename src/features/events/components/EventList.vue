@@ -9,7 +9,7 @@
         <h4 class="aw-card-title">Events</h4>
         <p class="aw-card-subtitle">Showing {{ displayed_events.length }} events <span v-if="events.length > displayed_events.length">(out of {{ events.length }})</span></p>
       </div>
-      <button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="expandList"><span v-if="!isListExpanded">Expand list</span><span v-else>Condense list</span></button>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="expandList"><span v-if="!isListExpanded">Expand list</span><span v-else>Condense list</span></ui-button>
     </div>
     <ul class="aw-list-scroll" :class="isListExpanded ? 'aw-list-scroll-expanded' : ''">
       <li class="border-muted border-b px-4 py-3 last:border-b-0" v-for="event in displayed_events">
@@ -17,9 +17,9 @@
             <icon name="calendar"></icon>{{ event.timestamp  ? new Date(event.timestamp ).toLocaleString() : "" }}</span><span class="aw-chip">
             <icon name="clock"></icon>{{ friendlyduration(event.duration ) }}</span><span class="aw-chip" v-for="(val, key) in event.data">
             <icon name="tags"></icon>{{ key }}: {{ val }}</span>
-          <button class="aw-btn aw-btn-sm aw-btn-outline" v-if="editable" type="button" @click="editEvent(event)">
+          <ui-button class="aw-btn aw-btn-sm aw-btn-outline" v-if="editable" type="button" @click="editEvent(event)">
             <icon name="edit"></icon>Edit
-          </button>
+          </ui-button>
         </div>
       </li>
     </ul>

@@ -2,18 +2,18 @@
 <div class="mx-3 space-y-3">
   <div class="aw-card grid gap-3 md:grid-cols-3">
     <label class="flex flex-col gap-1"><span class="aw-label">Bucket</span>
-      <select class="aw-select" v-model="selectedBucket">
+      <ui-select class="aw-select" v-model="selectedBucket">
         <option v-for="bucket in buckets" :key="bucket.id" :value="bucket.id">{{ bucket.id }}</option>
-      </select>
+      </ui-select>
     </label>
     <label class="flex flex-col gap-1"><span class="aw-label">Show</span>
-      <select class="aw-select" v-model="view">
+      <ui-select class="aw-select" v-model="view">
         <option value="timeGridDay">Day</option>
         <option value="timeGridWeek">Week</option>
-      </select>
+      </ui-select>
     </label>
     <label class="flex items-center gap-2 self-end text-sm text-foreground">
-      <input class="aw-checkbox" type="checkbox" v-model="fitToActive"><span>Fit to active</span>
+      <ui-checkbox class="aw-checkbox" v-model="fitToActive"  /><span>Fit to active</span>
     </label>
   </div>
   <FullCalendar ref="fullCalendar" :options="calendarOptions"></FullCalendar>

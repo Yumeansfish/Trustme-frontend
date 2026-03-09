@@ -9,6 +9,7 @@ const Buckets = () => import('../features/buckets/views/Buckets.vue');
 const Bucket = () => import('../features/buckets/views/Bucket.vue');
 const QueryExplorer = () => import('../features/query/views/QueryExplorer.vue');
 const Timeline = () => import('../features/timeline/views/Timeline.vue');
+const Streamdeck = () => import('../features/streamdeck/views/Streamdeck.vue');
 const Settings = () => import('../features/settings/views/Settings.vue');
 const CategoryBuilder = () => import('../features/categorization/views/CategoryBuilder.vue');
 const Stopwatch = () => import('../features/stopwatch/views/Stopwatch.vue');
@@ -63,6 +64,7 @@ const router = createRouter({
     { path: '/buckets', component: Buckets },
     { path: '/buckets/:id', component: Bucket, props: true },
     { path: '/timeline', component: Timeline, meta: { fullContainer: true } },
+    { path: '/streamdeck/:date?', component: Streamdeck, props: true, meta: { fullContainer: true } },
     { path: '/settings', component: Settings },
     { path: '/settings/category-builder', component: CategoryBuilder },
     { path: '/stopwatch', component: Stopwatch },

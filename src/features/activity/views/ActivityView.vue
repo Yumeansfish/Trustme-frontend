@@ -9,39 +9,39 @@
       </div>
     </template>
     <div class="w-full p-3 md:w-1/2 lg:w-1/3" v-if="editing">
-      <button class="aw-btn aw-btn-lg aw-btn-secondary w-full" type="button" @click="addVisualization">
+      <ui-button class="aw-btn aw-btn-lg aw-btn-secondary w-full" type="button" @click="addVisualization">
         <icon name="plus"></icon>
         <span>Add visualization</span>
-      </button>
+      </ui-button>
     </div>
   </draggable>
   <div class="mt-2 flex flex-col gap-2" v-if="editing">
     <div class="flex flex-wrap justify-end gap-2">
-      <button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="discard(); editing = !editing;">
+      <ui-button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="discard(); editing = !editing;">
         <icon name="times"></icon>
         <span>Cancel</span>
-      </button>
-      <button class="aw-btn aw-btn-md aw-btn-success" type="button" @click="save(); editing = !editing;">
+      </ui-button>
+      <ui-button class="aw-btn aw-btn-md aw-btn-success" type="button" @click="save(); editing = !editing;">
         <icon name="save"></icon>
         <span>Save</span>
-      </button>
+      </ui-button>
     </div>
     <div class="flex flex-wrap justify-end gap-2">
-      <button class="aw-btn aw-btn-sm aw-btn-danger" type="button" @click="remove();">
+      <ui-button class="aw-btn aw-btn-sm aw-btn-danger" type="button" @click="remove();">
         <icon name="trash"></icon>
         <span>Remove</span>
-      </button>
-      <button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="restoreDefaults();">
+      </ui-button>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="restoreDefaults();">
         <icon name="undo"></icon>
         <span>Restore defaults</span>
-      </button>
+      </ui-button>
     </div>
   </div>
   <div class="mt-2 flex justify-end" v-else>
-    <button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="editing = !editing">
+    <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="editing = !editing">
       <icon name="edit"></icon>
       <span>Edit view</span>
-    </button>
+    </ui-button>
   </div>
 </div>
 </template>

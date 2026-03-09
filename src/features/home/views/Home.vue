@@ -8,7 +8,7 @@
   </p>
   <p class="aw-caption">If you are a developer, we hope you can contribute by writing a watcher, visualization, or something else, and share it with us on the forum!</p>
   <div class="aw-card-muted">
-    <div>Thank you for using ActivityWatch!</div><small class="text-foreground-muted block mt-1">If you have a minute to spare, please take the time to fill out our <a class="aw-link" href="https://forms.gle/q2N9K5RoERBV8kqPA">user survey</a> or <a class="aw-link" href="https://forum.activitywatch.net/c/features">vote on features on the forum</a>.</small>
+    <div>Thank you for using ActivityWatch!</div><small class="text-foreground-muted block mt-1">If you have a minute to spare, please take the time to fill out our <ui-link class="aw-link" href="https://forms.gle/q2N9K5RoERBV8kqPA">user survey</ui-link> or <ui-link class="aw-link" href="https://forum.activitywatch.net/c/features">vote on features on the forum</ui-link>.</small>
   </div>
   <div class="aw-divider"></div>
   <div class="grid gap-6 lg:grid-cols-2">
@@ -19,10 +19,10 @@
         By sharing it you get us to make ActivityWatch even better!
       </p>
       <ul class="text-foreground list-disc space-y-1 pl-5 text-sm">
-        <li>Give us a like and a review on <a class="aw-link" href="https://alternativeto.net/software/activitywatch/">AlternativeTo</a></li>
-        <li>Vote on us at <a class="aw-link" href="https://www.producthunt.com/posts/activitywatch">ProductHunt</a></li>
-        <li>Follow us and spread the word on <a class="aw-link" href="https://twitter.com/ActivityWatchIt">Twitter</a> and <a class="aw-link" href="https://www.facebook.com/ActivityWatch">Facebook</a></li>
-        <li>Star us on <a class="aw-link" href="https://github.com/ActivityWatch/activitywatch">GitHub</a></li>
+        <li>Give us a like and a review on <ui-link class="aw-link" href="https://alternativeto.net/software/activitywatch/">AlternativeTo</ui-link></li>
+        <li>Vote on us at <ui-link class="aw-link" href="https://www.producthunt.com/posts/activitywatch">ProductHunt</ui-link></li>
+        <li>Follow us and spread the word on <ui-link class="aw-link" href="https://twitter.com/ActivityWatchIt">Twitter</ui-link> and <ui-link class="aw-link" href="https://www.facebook.com/ActivityWatch">Facebook</ui-link></li>
+        <li>Star us on <ui-link class="aw-link" href="https://github.com/ActivityWatch/activitywatch">GitHub</ui-link></li>
       </ul>
     </div>
     <div class="space-y-3">
@@ -32,12 +32,12 @@
         You can donate to us via:
       </p>
       <ul class="text-foreground list-disc space-y-1 pl-5 text-sm">
-        <li><a class="aw-link" href="https://www.patreon.com/erikbjare">Patreon</a></li>
-        <li><a class="aw-link" href="https://opencollective.com/activitywatch">Open Collective</a></li>
-        <li><a class="aw-link" href="https://liberapay.com/ActivityWatch/">Liberapay</a></li>
-        <li><a class="aw-link" href="https://activitywatch.net/donate/">Other methods</a> (incl. cryptocurrency)</li>
+        <li><ui-link class="aw-link" href="https://www.patreon.com/erikbjare">Patreon</ui-link></li>
+        <li><ui-link class="aw-link" href="https://opencollective.com/activitywatch">Open Collective</ui-link></li>
+        <li><ui-link class="aw-link" href="https://liberapay.com/ActivityWatch/">Liberapay</ui-link></li>
+        <li><ui-link class="aw-link" href="https://activitywatch.net/donate/">Other methods</ui-link> (incl. cryptocurrency)</li>
       </ul>
-      <p class="aw-caption">For more info, please visit the <a class="aw-link" href="https://activitywatch.net/donate/">donation page on the website</a>.</p>
+      <p class="aw-caption">For more info, please visit the <ui-link class="aw-link" href="https://activitywatch.net/donate/">donation page on the website</ui-link>.</p>
     </div>
   </div>
   <div class="aw-divider"></div>
@@ -45,22 +45,22 @@
     <div class="space-y-3">
       <h4>Resources</h4>
       <ul class="text-foreground list-disc space-y-1 pl-5 text-sm">
-        <li><a class="aw-link" href="https://activitywatch.net/">Website</a></li>
-        <li><a class="aw-link" href="https://activitywatch.readthedocs.org/">Documentation</a></li>
-        <li><a class="aw-link" href="https://forum.activitywatch.net/">Forum</a></li>
-        <li><a class="aw-link" href="https://discord.gg/vDskV9q">Discord</a></li>
-        <li><a class="aw-link" href="https://github.com/ActivityWatch/activitywatch">GitHub</a></li>
-        <li v-if="info?.version && !info.version.includes('rust')"><a class="aw-link" href="/api/">API Browser</a></li>
+        <li><ui-link class="aw-link" href="https://activitywatch.net/">Website</ui-link></li>
+        <li><ui-link class="aw-link" href="https://activitywatch.readthedocs.org/">Documentation</ui-link></li>
+        <li><ui-link class="aw-link" href="https://forum.activitywatch.net/">Forum</ui-link></li>
+        <li><ui-link class="aw-link" href="https://discord.gg/vDskV9q">Discord</ui-link></li>
+        <li><ui-link class="aw-link" href="https://github.com/ActivityWatch/activitywatch">GitHub</ui-link></li>
+        <li v-if="info?.version && !info.version.includes('rust')"><ui-link class="aw-link" href="/api/">API Browser</ui-link></li>
       </ul>
     </div>
     <div class="space-y-3">
       <h4>Want to know what we're working on?</h4>
-      <p class="aw-caption">Check out the <a class="aw-link" href="https://forum.activitywatch.net/c/news">development updates</a>!</p>
+      <p class="aw-caption">Check out the <ui-link class="aw-link" href="https://forum.activitywatch.net/c/news">development updates</ui-link>!</p>
     </div>
   </div>
   <div class="aw-divider"></div>
   <p class="text-foreground-muted text-sm"><small><i>You can change which page opens when you open ActivityWatch (instead of this page) in the 
-        <router-link class="aw-link" to="/settings">settings</router-link>.</i></small></p>
+        <ui-link class="aw-link" to="/settings">settings</ui-link>.</i></small></p>
 </div>
 </template>
 

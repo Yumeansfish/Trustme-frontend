@@ -3,19 +3,19 @@
   <div class="grid gap-4 md:grid-cols-2">
     <label class="flex flex-col gap-1">
       <span class="aw-label">Bucket</span>
-      <select class="aw-select" v-model="selectedBucketId" :disabled="bucketOptions.length === 0 || loading">
+      <ui-select class="aw-select" v-model="selectedBucketId" :disabled="bucketOptions.length === 0 || loading">
         <option v-for="option in bucketOptions" :key="option.value" :value="option.value">{{ option.text }}</option>
-      </select>
+      </ui-select>
     </label>
     <label class="flex flex-col gap-1">
       <span class="aw-label">
         Field in event data
         <span class="aw-help-badge ml-1" title="Field names come from event data. Dot notation is supported (e.g., data.title).">i</span>
       </span>
-      <select class="aw-select" v-model="selectedField" :disabled="!selectedBucketId || loading">
+      <ui-select class="aw-select" v-model="selectedField" :disabled="!selectedBucketId || loading">
         <option v-for="option in fieldSelectOptions" :key="option.value" :value="option.value">{{ option.text }}</option>
-      </select>
-      <input class="aw-input mt-2" v-if="selectedField === '__custom' || fieldOptions.length === 0" v-model="customField" placeholder="e.g. data.title" :disabled="loading">
+      </ui-select>
+      <ui-input class="aw-input mt-2" v-if="selectedField === '__custom' || fieldOptions.length === 0" v-model="customField" placeholder="e.g. data.title" :disabled="loading" />
     </label>
   </div>
   <aw-alert v-if="error" show variant="danger">{{ error }}</aw-alert>

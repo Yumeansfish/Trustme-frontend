@@ -3,9 +3,7 @@
   <div class="space-y-1">
     <h5 class="text-sm font-semibold text-foreground-strong">Use fallback colors</h5><small class="aw-caption">Uses the old coloring style for some visualizations when uncategorized or no category color.</small>
   </div>
-  <label class="aw-switch">
-    <input class="aw-switch-input" type="checkbox" v-model="useColorFallback"><span class="aw-switch-track"><span class="aw-switch-thumb"></span></span>
-  </label>
+  <ui-switch v-model="useColorFallback"></ui-switch>
 </div>
 </template>
 
