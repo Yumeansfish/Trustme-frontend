@@ -20,6 +20,9 @@ test/e2e/reports
 # platform-specific trash
 .DS_Store
 
+# local env
+.env
+
 # editor-specific
 *.swp
 .vscode
@@ -30,3 +33,5 @@ __pycache__
 # AI generated dev notes
 claude.md
 problemlist.md
+devlopmentguide/
+streamdeck/
