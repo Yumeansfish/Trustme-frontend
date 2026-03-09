@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "strategy": "single_dimension_activity_type",
+  "categories": [
+    {
+      "name": "Code",
+      "description": "Software development work: programming, debugging, terminals, Git, local dev tools, package managers, API clients, and technical coding websites."
+    },
+    {
+      "name": "Design",
+      "description": "Visual and product design work: UI design, graphics, mockups, illustration, photo editing, motion design, and design systems work."
+    },
+    {
+      "name": "Writing",
+      "description": "Writing and editing text: documents, notes, essays, specs, docs, markdown, wikis, and drafting content."
+    },
+    {
+      "name": "Research",
+      "description": "Intentional information gathering: reading documentation, papers, tutorials, comparison pages, issue threads, and technical or non-technical investigation."
+    },
+    {
+      "name": "Browsing",
+      "description": "General web browsing with weak intent or mixed intent: homepage surfing, random tabs, link hopping, forums, general internet use."
+    },
+    {
+      "name": "Messaging",
+      "description": "Chat and direct communication: instant messaging, team chat, social chat, and asynchronous message threads that are not email."
+    },
+    {
+      "name": "Meetings",
+      "description": "Live meetings and calls: video conferencing, voice calls, screen sharing, webinars, and meeting rooms."
+    },
+    {
+      "name": "Email",
+      "description": "Email-specific work: inbox triage, reading and writing email, and mail clients or mail web apps."
+    },
+    {
+      "name": "Planning",
+      "description": "Planning and coordination: calendar, tasks, project management boards, to-do apps, roadmaps, and scheduling."
+    },
+    {
+      "name": "Gaming",
+      "description": "Video games, game launchers, and gameplay-related tools."
+    },
+    {
+      "name": "Video",
+      "description": "Watching video content: streaming, recorded video, short-form video, lectures, and media players focused on video."
+    },
+    {
+      "name": "Music",
+      "description": "Listening to music or audio streams: music players, streaming music, radio, and audio-focused media apps."
+    },
+    {
+      "name": "Shopping",
+      "description": "Online shopping, e-commerce, product browsing for purchase, delivery tracking, and marketplace browsing."
+    },
+    {
+      "name": "Finance",
+      "description": "Banking, payments, accounting, investing, taxes, budgeting, expense management, and financial dashboards."
+    },
+    {
+      "name": "System",
+      "description": "Operating-system and device administration: file manager, installer dialogs, login windows, settings, permissions prompts, and system utilities."
+    },
+    {
+      "name": "Miscellaneous",
+      "description": "Fallback category for items that do not fit the taxonomy clearly enough to classify with confidence."
+    }
+  ]
+}
