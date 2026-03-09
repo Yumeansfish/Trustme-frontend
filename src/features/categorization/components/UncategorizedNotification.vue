@@ -5,7 +5,7 @@
     <p class="mb-0"><b>High uncategorized time</b><br>You have a total of {{ friendlyduration(uncategorizedDuration[0] ) }} uncategorized time,
       that's {{ Math.round(100 * uncategorizedDuration[0] / uncategorizedDuration[1]) }}% of all time {{ periodText }}.
       You can address this by using the 
-      <router-link :to="{ path: '/settings/category-builder' }">Category Builder</router-link>.
+      <ui-link class="aw-link" :to="{ path: '/settings/category-builder' }">Category Builder</ui-link>.
     </p>
   </aw-alert>
 </div>

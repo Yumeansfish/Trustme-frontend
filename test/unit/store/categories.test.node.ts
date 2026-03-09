@@ -23,16 +23,18 @@ describe('categories store', () => {
     expect(categoryStore.classes_unsaved_changes).toBeFalsy();
     expect(categoryStore.classes).not.toHaveLength(0);
 
-    // Retrieve class
-    let workCat = categoryStore.get_category(['Work']);
-    expect(workCat).not.toBeUndefined();
-    workCat = JSON.parse(JSON.stringify(workCat)); // copy
+    const editableCategoryName = categoryStore.all_categories.find(category => category[0] !== 'Uncategorized');
+    expect(editableCategoryName).toBeDefined();
+
+    let editableCategory = categoryStore.get_category(editableCategoryName);
+    expect(editableCategory).not.toBeUndefined();
+    editableCategory = JSON.parse(JSON.stringify(editableCategory)); // copy
 
     // Modify class
     const newRegex = 'Just testing';
-    workCat.rule.regex = newRegex;
-    categoryStore.updateClass(workCat);
-    expect(categoryStore.get_category(['Work']).rule.regex).toEqual(newRegex);
+    editableCategory.rule.regex = newRegex;
+    categoryStore.updateClass(editableCategory);
+    expect(categoryStore.get_category(editableCategoryName).rule.regex).toEqual(newRegex);
 
     // Check that getters behave somewhat
     expect(categoryStore.all_categories).not.toHaveLength(0);
@@ -47,14 +49,14 @@ describe('categories store', () => {
 
   test('exposes query rules separately from stored classes', () => {
     categoryStore.load([
-      { name: ['Work'], rule: { type: 'none' } },
-      { name: ['Work', 'Docs'], rule: { type: 'regex', regex: 'docs' } },
+      { name: ['Planning'], rule: { type: 'none' } },
+      { name: ['Planning', 'Docs'], rule: { type: 'regex', regex: 'docs' } },
       { name: ['Uncategorized'], rule: { type: null } },
     ]);
 
     expect(categoryStore.queryRules).toEqual([
-      [['Work'], { type: 'none' }],
-      [['Work', 'Docs'], { type: 'regex', regex: 'docs' }],
+      [['Planning'], { type: 'none' }],
+      [['Planning', 'Docs'], { type: 'regex', regex: 'docs' }],
     ]);
   });
 
@@ -71,30 +73,25 @@ describe('categories store', () => {
     expect(cats).toHaveLength(2);
   });
 
-  test('update implicit parent category', () => {
-    // The default categories have implicit Media and Comms categories (with 'No Rule')
-    // Tests against https://github.com/ActivityWatch/activitywatch/issues/580
-    categoryStore.restoreDefaultClasses();
+  test('update parent category renames children', () => {
+    categoryStore.load([
+      { name: ['Planning'], rule: { type: 'none' } },
+      { name: ['Planning', 'Calendar'], rule: { type: 'regex', regex: 'calendar' } },
+      { name: ['Uncategorized'], rule: { type: null } },
+    ]);
 
-    // Check that the label is available
-    expect(categoryStore.all_categories).toContainEqual(['Media']);
+    const planningCat: Category = categoryStore.get_category(['Planning']);
+    expect(planningCat.id).not.toBeUndefined();
 
-    // Get category and modify it
-    const media_cat: Category = categoryStore.get_category(['Media']);
-    expect(media_cat.id).not.toBeUndefined();
-    const new_media_cat = { ...media_cat, name: ['Media2'], data: { test: true } };
-    categoryStore.updateClass(new_media_cat);
+    categoryStore.updateClass({ ...planningCat, name: ['Coordination'], data: { test: true } });
 
-    // Check that category was modified correctly
-    const media2_cat: Category = categoryStore.get_category(['Media2']);
-    expect(media2_cat.data.test).toBe(true);
+    const renamedParent: Category = categoryStore.get_category(['Coordination']);
+    expect(renamedParent.data.test).toBe(true);
 
-    // Check that child was modified correctly when parent name changed
-    const music_cat = categoryStore.get_category(['Media2', 'Music']);
-    expect(music_cat.id).not.toBeUndefined();
+    const renamedChild = categoryStore.get_category(['Coordination', 'Calendar']);
+    expect(renamedChild.id).not.toBeUndefined();
 
-    // Check that defaultCategories haven't mutated
-    expect(defaultCategories.map(c => c.name)).toContainEqual(['Media', 'Music']);
+    expect(defaultCategories.map(c => c.name)).not.toContainEqual(['Coordination']);
   });
 
   test('modify a category after deleting another', () => {
@@ -102,40 +99,34 @@ describe('categories store', () => {
     // cause the changes to be applied to unintended classes.
     // Test against:
     // https://github.com/ActivityWatch/activitywatch/issues/361#issuecomment-970707045
-    categoryStore.restoreDefaultClasses();
+    categoryStore.load([
+      { name: ['Code'], rule: { type: 'regex', regex: 'code' } },
+      { name: ['Video'], rule: { type: 'regex', regex: 'video' } },
+      { name: ['Music'], rule: { type: 'regex', regex: 'music' } },
+    ]);
 
-    // Check that Image category is available
-    expect(categoryStore.all_categories).toContainEqual(['Work', 'Image']);
+    const codeCat = categoryStore.get_category(['Code']);
+    const codeCatId = codeCat.id;
+    expect(codeCatId).not.toBeUndefined();
+    categoryStore.removeClass(codeCatId);
 
-    // Delete Image category
-    const image_cat = categoryStore.get_category(['Work', 'Image']);
-    const image_cat_id = image_cat.id;
-    expect(image_cat_id).not.toBeUndefined();
-    categoryStore.removeClass(image_cat_id);
+    expect(categoryStore.all_categories).not.toContainEqual(['Code']);
 
-    // Check that Image category no longer exists
-    expect(categoryStore.all_categories).not.toContainEqual(['Work', 'Image']);
+    const videoCat: Category = categoryStore.get_category(['Video']);
+    const videoCatId = videoCat.id;
+    expect(videoCatId).not.toBeUndefined();
+    expect(videoCatId).toBeGreaterThan(codeCatId);
 
-    // Get Video category (whose ID succeeds to that of Image) and modify it
-    const video_cat: Category = categoryStore.get_category(['Work', 'Video']);
-    const video_cat_id = video_cat.id;
-    expect(video_cat_id).not.toBeUndefined();
-    expect(video_cat_id).toBeGreaterThan(image_cat_id);
-    const new_video_cat: Category = {
-      ...video_cat,
-      name: ['Work', 'Video2'],
+    categoryStore.updateClass({
+      ...videoCat,
+      name: ['Video2'],
       data: { test: true },
-    };
-    categoryStore.updateClass(new_video_cat);
+    });
 
-    // Check that modification on Video was applied
-    const video_2_cat = categoryStore.get_category_by_id(video_cat_id);
-    expect(video_2_cat.data.test).toBe(true);
+    const updatedVideoCat = categoryStore.get_category_by_id(videoCatId);
+    expect(updatedVideoCat.data.test).toBe(true);
 
-    // Check that the category named "Video" no longer exists, and the category named "Video2" exists
-    expect(categoryStore.all_categories.filter(c => isEqual(c, ['Work', 'Video']))).toHaveLength(0);
-    expect(categoryStore.all_categories.filter(c => isEqual(c, ['Work', 'Video2']))).toHaveLength(
-      1
-    );
+    expect(categoryStore.all_categories.filter(c => isEqual(c, ['Video']))).toHaveLength(0);
+    expect(categoryStore.all_categories.filter(c => isEqual(c, ['Video2']))).toHaveLength(1);
   });
 });

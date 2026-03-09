@@ -2,18 +2,18 @@
 <div class="space-y-2">
   <div class="aw-tree-row">
     <div class="min-w-0 flex-1">
-      <button class="text-foreground flex items-start gap-2 text-left" type="button" :class="indentClass(depth)" @click="toggleExpanded"><span class="text-foreground-muted pt-0.5">
+      <ui-button class="text-foreground flex items-start gap-2 text-left" type="button" :class="indentClass(depth)" @click="toggleExpanded"><span class="text-foreground-muted pt-0.5">
           <icon v-if="_class.children.length > 0" :name="expanded ? 'regular/minus-square' : 'regular/plus-square'" scale="0.8"></icon>
           <icon v-else name="circle" scale="0.4"></icon></span><span class="min-w-0"><span class="aw-tree-name">{{ _class.name.slice(depth).join(" ➤ ")}}</span>
-          <input class="ml-1 h-4 w-4 pointer-events-none cursor-default rounded-full border-0 bg-transparent p-0" v-if="_class.data && _class.data.color" type="color" :value="_class.data.color" tabindex="-1" aria-label="Category color"><span class="aw-tree-meta ml-1" v-if="_class.children.length > 0">({{totalChildren}})</span><span class="hidden text-xs md:inline" v-if="_class.data && _class.data.score !== undefined" :class="_class.data.score > 0 ? 'text-success' : 'text-danger'">&nbsp; {{ _class.data.score >= 0 ? '+' : '' }}{{ _class.data.score }}</span><span class="aw-tree-rule hidden md:block"><span v-if="_class.rule.type === 'regex'">Rule ({{_class.rule.type}}): <code class="aw-code-inline">{{_class.rule.regex}}</code></span><span v-else>No rule</span></span></span></button>
+          <ui-input class="ml-1 h-4 w-4 pointer-events-none cursor-default rounded-full border-0 bg-transparent p-0" v-if="_class.data && _class.data.color" type="color" :value="_class.data.color" tabindex="-1" aria-label="Category color" /><span class="aw-tree-meta ml-1" v-if="_class.children.length > 0">({{totalChildren}})</span><span class="hidden text-xs md:inline" v-if="_class.data && _class.data.score !== undefined" :class="_class.data.score > 0 ? 'text-success' : 'text-danger'">&nbsp; {{ _class.data.score >= 0 ? '+' : '' }}{{ _class.data.score }}</span><span class="aw-tree-rule hidden md:block"><span v-if="_class.rule.type === 'regex'">Rule ({{_class.rule.type}}): <code class="aw-code-inline">{{_class.rule.regex}}</code></span><span v-else>No rule</span></span></span></ui-button>
     </div>
     <div class="flex items-center gap-2">
-      <button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="showEditModal(_class.id)">
+      <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="showEditModal(_class.id)">
         <icon name="edit"></icon>
-      </button>
-      <button class="aw-btn aw-btn-sm aw-btn-success" type="button" @click="addSubclass(_class); expanded = true">
+      </ui-button>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-success" type="button" @click="addSubclass(_class); expanded = true">
         <icon name="plus"></icon>
-      </button>
+      </ui-button>
     </div>
   </div>
   <div class="space-y-2" v-if="expanded">

@@ -1,14 +1,14 @@
 <template>
 <div class="space-y-3">
   <label class="flex flex-col gap-1"><span class="aw-label">Filter mode</span>
-    <select class="aw-select" v-model="mode">
+    <ui-select class="aw-select" v-model="mode">
       <option value="custom">Custom regex</option>
       <option value="categories">Use existing categories</option>
-    </select>
+    </ui-select>
   </label>
   <aw-select-categories v-if="mode == 'categories'" v-model="filterCategoriesData"></aw-select-categories>
   <div class="flex items-center gap-3" v-else>
-    <input class="aw-input flex-1" v-model="pattern" v-on:keyup.enter="generate()" placeholder="Regex pattern to search for">
+    <ui-input class="aw-input flex-1" v-model="pattern" v-on:keyup.enter="generate()" placeholder="Regex pattern to search for" />
     <slot name="input-group-append"></slot>
   </div>
 </div>

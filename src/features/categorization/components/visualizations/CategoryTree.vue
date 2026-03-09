@@ -8,7 +8,7 @@
   </div>
   <div class="aw-divider"></div>
   <label class="text-foreground inline-flex items-center gap-2 text-sm">
-    <input class="aw-checkbox" v-model="show_perc" type="checkbox"><span>Show percent</span>
+    <ui-checkbox class="aw-checkbox" v-model="show_perc"  /><span>Show percent</span>
   </label>
 </div>
 </template>

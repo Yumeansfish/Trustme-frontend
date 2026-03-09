@@ -9,26 +9,26 @@ import {
 describe('category rules', () => {
   test('serializes query rules without null-only placeholders', () => {
     const categories: Category[] = [
-      { name: ['Work'], rule: { type: 'none' } },
-      { name: ['Work', 'Docs'], rule: { type: 'regex', regex: 'docs' } },
+      { name: ['Planning'], rule: { type: 'none' } },
+      { name: ['Planning', 'Docs'], rule: { type: 'regex', regex: 'docs' } },
       { name: ['Uncategorized'], rule: { type: null } },
     ];
 
     const queryRules = toQueryCategoryRules(categories);
 
     expect(queryRules).toEqual([
-      [['Work'], { type: 'none' }],
-      [['Work', 'Docs'], { type: 'regex', regex: 'docs' }],
+      [['Planning'], { type: 'none' }],
+      [['Planning', 'Docs'], { type: 'regex', regex: 'docs' }],
     ]);
 
     queryRules[0][0][0] = 'Changed';
-    expect(categories[0].name).toEqual(['Work']);
+    expect(categories[0].name).toEqual(['Planning']);
   });
 
   test('matches deepest category across multiple texts', () => {
     const categories: Category[] = [
-      { name: ['Work'], rule: { type: 'regex', regex: 'github' } },
-      { name: ['Work', 'Programming'], rule: { type: 'regex', regex: 'ActivityWatch' } },
+      { name: ['Research'], rule: { type: 'regex', regex: 'github' } },
+      { name: ['Research', 'Docs'], rule: { type: 'regex', regex: 'ActivityWatch' } },
     ];
 
     const match = matchCategoryAgainstTexts(['GitHub', 'ActivityWatch webui'], categories);
@@ -38,7 +38,7 @@ describe('category rules', () => {
 
   test('classifies events and falls back to uncategorized', () => {
     const categories: Category[] = [
-      { name: ['Comms', 'Email'], rule: { type: 'regex', regex: 'Gmail' } },
+      { name: ['Email'], rule: { type: 'regex', regex: 'Gmail' } },
     ];
 
     const events = classifyEvents(
@@ -49,7 +49,7 @@ describe('category rules', () => {
       categories
     );
 
-    expect(events[0].data.$category).toEqual(['Comms', 'Email']);
+    expect(events[0].data.$category).toEqual(['Email']);
     expect(events[1].data.$category).toEqual([...UNCATEGORIZED_CATEGORY_NAME]);
   });
 });

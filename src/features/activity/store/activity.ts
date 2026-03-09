@@ -759,38 +759,38 @@ export const useActivityStore = defineStore('activity', {
 
           // Create a nice distribution of activities for a vivid chart
           if (i >= 9 && i <= 17) {
-            // Work hours
+            // Code-heavy hours
             cat_events.push({
               duration: Math.random() * 2000 + 1000,
-              data: { $category: ['Work', 'Programming', 'ActivityWatch'] },
+              data: { $category: ['Code'] },
             });
             if (Math.random() > 0.4)
               cat_events.push({
                 duration: Math.random() * 800,
-                data: { $category: ['Comms', 'Video Conferencing'] },
+                data: { $category: ['Meetings'] },
               });
           } else if (i >= 18 && i <= 22) {
             // Evening
             if (Math.random() > 0.2)
               cat_events.push({
                 duration: Math.random() * 1500 + 1000,
-                data: { $category: ['Media', 'Games'] },
+                data: { $category: ['Gaming'] },
               });
             cat_events.push({
               duration: Math.random() * 1000 + 200,
-              data: { $category: ['Media', 'Social Media'] },
+              data: { $category: ['Browsing'] },
             });
           } else if (i >= 8 && i <= 9) {
             // Morning
             cat_events.push({
               duration: Math.random() * 800 + 400,
-              data: { $category: ['Comms', 'Email'] },
+              data: { $category: ['Email'] },
             });
           } else if (i < 2 || i >= 23) {
             // Late night
             cat_events.push({
               duration: Math.random() * 600,
-              data: { $category: ['Media', 'Social Media'] },
+              data: { $category: ['Browsing'] },
             });
           }
 

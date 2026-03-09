@@ -5,27 +5,34 @@
       <h5 class="text-foreground-strong text-lg font-semibold">Categorization</h5>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="restoreDefaultClasses">
+      <ui-link class="aw-btn aw-btn-sm aw-btn-primary" :to="{ path: '/settings/category-builder' }">
+        <icon name="tag"></icon>Open AI Category Builder
+      </ui-link>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="restoreDefaultClasses">
         <icon name="undo"></icon>Restore defaults
-      </button>
+      </ui-button>
       <label class="aw-btn aw-btn-sm aw-btn-secondary cursor-pointer">Import
-        <input class="hidden" type="file" @change="importCategories">
+        <ui-input class="hidden" type="file" @change="importCategories" />
       </label>
-      <button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="exportClasses">Export</button>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="exportClasses">Export</ui-button>
     </div>
   </div>
+  <aw-alert show variant="info">
+    AI suggestions for uncategorized activity live in
+    <ui-link class="aw-link" :to="{ path: '/settings/category-builder' }">Category Builder</ui-link>.
+  </aw-alert>
   <p class="aw-caption">Rules for categorizing events. An event can only have one category. If several categories match, the deepest one will be chosen.</p>
   <p class="aw-caption">You can use the 
-    <router-link :to="{ path: '/settings/category-builder' }">Category Builder</router-link> to quickly create categories from uncategorized activity.
-    You can also find and share categorization rule presets on <a href="https://forum.activitywatch.net/c/projects/category-rules">the forum</a>.
-    For help on how to write categorization rules, see <a href="https://docs.activitywatch.net/en/latest/features/categorization.html">the documentation</a>.
+    <ui-link class="aw-link" :to="{ path: '/settings/category-builder' }">Category Builder</ui-link> to quickly create categories from uncategorized activity.
+    You can also find and share categorization rule presets on <ui-link href="https://forum.activitywatch.net/c/projects/category-rules">the forum</ui-link>.
+    For help on how to write categorization rules, see <ui-link href="https://docs.activitywatch.net/en/latest/features/categorization.html">the documentation</ui-link>.
   </p>
   <div class="space-y-3">
     <aw-alert variant="warning" :show="classes_unsaved_changes">
       <div class="flex items-start justify-between gap-3"><span>You have unsaved changes!</span>
         <div class="flex items-center gap-2">
-          <button class="aw-btn aw-btn-sm aw-btn-success" type="button" @click="saveClasses"></button>Save
-          <button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="resetClasses"></button>Discard
+          <ui-button class="aw-btn aw-btn-sm aw-btn-success" type="button" @click="saveClasses">Save</ui-button>
+          <ui-button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="resetClasses">Discard</ui-button>
         </div>
       </div>
     </aw-alert>
@@ -37,10 +44,10 @@
     </div>
   </div>
   <div class="flex items-center justify-between">
-    <button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="addClass">
+    <ui-button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="addClass">
       <icon class="mr-2" name="plus"></icon>Add category
-    </button>
-    <button class="aw-btn aw-btn-md aw-btn-success" type="button" @click="saveClasses" :disabled="!classes_unsaved_changes">Save</button>
+    </ui-button>
+    <ui-button class="aw-btn aw-btn-md aw-btn-success" type="button" @click="saveClasses" :disabled="!classes_unsaved_changes">Save</ui-button>
   </div>
 </div>
 </template>

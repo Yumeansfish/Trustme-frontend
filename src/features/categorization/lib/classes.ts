@@ -1,13 +1,6 @@
 import _ from 'lodash';
-import {
-  CATEGORY_DEFAULT_COMMS,
-  CATEGORY_DEFAULT_GAMES,
-  CATEGORY_DEFAULT_MEDIA,
-  CATEGORY_DEFAULT_MUSIC,
-  CATEGORY_DEFAULT_SOCIAL,
-  CATEGORY_DEFAULT_WORK,
-  CATEGORY_UNCATEGORIZED,
-} from '~/features/categorization/lib/visualizationTokens';
+import seedKnowledgebase from '~/features/categorization/knowledgebase/generated/seed-knowledgebase.v1.json';
+import { compileKnowledgebase } from '~/features/categorization/knowledgebase/compile';
 
 const level_sep = '>';
 
@@ -29,80 +22,9 @@ export interface Category {
   children?: Category[];
 }
 
-const COLOR_UNCAT = CATEGORY_UNCATEGORIZED;
-
 // The default categories
 // Should be run through createMissingParents before being used in most cases.
-export const defaultCategories: Category[] = [
-  {
-    name: ['Work'],
-    rule: { type: 'regex', regex: 'Google Docs|libreoffice|ReText' },
-    data: { color: CATEGORY_DEFAULT_WORK, score: 10 },
-  },
-  {
-    name: ['Work', 'Programming'],
-    rule: {
-      type: 'regex',
-      regex: 'GitHub|Stack Overflow|BitBucket|Gitlab|vim|Spyder|kate|Ghidra|Scite',
-    },
-  },
-  {
-    name: ['Work', 'Programming', 'ActivityWatch'],
-    rule: { type: 'regex', regex: 'ActivityWatch|aw-', ignore_case: true },
-  },
-  { name: ['Work', 'Image'], rule: { type: 'regex', regex: 'GIMP|Inkscape' } },
-  { name: ['Work', 'Video'], rule: { type: 'regex', regex: 'Kdenlive' } },
-  { name: ['Work', 'Audio'], rule: { type: 'regex', regex: 'Audacity' } },
-  { name: ['Work', '3D'], rule: { type: 'regex', regex: 'Blender' } },
-  {
-    name: ['Media'],
-    rule: { type: 'none' },
-    data: { color: CATEGORY_DEFAULT_MEDIA },
-  },
-  {
-    name: ['Media', 'Games'],
-    rule: { type: 'regex', regex: 'Minecraft|RimWorld' },
-    data: { color: CATEGORY_DEFAULT_GAMES },
-  },
-  {
-    name: ['Media', 'Video'],
-    rule: { type: 'regex', regex: 'YouTube|Plex|VLC' },
-    data: { color: CATEGORY_DEFAULT_MEDIA },
-  },
-  {
-    name: ['Media', 'Social Media'],
-    rule: {
-      type: 'regex',
-      regex: 'reddit|Facebook|Twitter|Instagram|devRant',
-      ignore_case: true,
-    },
-    data: { color: CATEGORY_DEFAULT_SOCIAL },
-  },
-  {
-    name: ['Media', 'Music'],
-    rule: {
-      type: 'regex',
-      regex: 'Spotify|Deezer',
-      ignore_case: true,
-    },
-    data: { color: CATEGORY_DEFAULT_MUSIC },
-  },
-  {
-    name: ['Comms'],
-    rule: { type: 'none' },
-    data: { color: CATEGORY_DEFAULT_COMMS },
-  },
-  {
-    name: ['Comms', 'IM'],
-    rule: {
-      type: 'regex',
-      regex:
-        'Messenger|Telegram|Signal|WhatsApp|Rambox|Slack|Riot|Element|Discord|Nheko|NeoChat|Mattermost',
-    },
-  },
-  { name: ['Comms', 'Email'], rule: { type: 'regex', regex: 'Gmail|Thunderbird|mutt|alpine' } },
-  { name: ['Uncategorized'], rule: { type: null }, data: { color: COLOR_UNCAT } },
-];
+export const defaultCategories: Category[] = compileKnowledgebase(seedKnowledgebase);
 
 export function annotate(c: Category) {
   const ch = c.name;

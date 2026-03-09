@@ -25,16 +25,18 @@ describe('activity store', () => {
     expect(categoryStore.classes_unsaved_changes).toBeFalsy();
     expect(categoryStore.classes).not.toHaveLength(0);
 
-    // Retrieve class
-    let workCat = categoryStore.get_category(['Work']);
-    expect(workCat).not.toBeUndefined();
-    workCat = JSON.parse(JSON.stringify(workCat)); // copy
+    const editableCategoryName = categoryStore.all_categories.find(category => category[0] !== 'Uncategorized');
+    expect(editableCategoryName).toBeDefined();
+
+    let editableCategory = categoryStore.get_category(editableCategoryName);
+    expect(editableCategory).not.toBeUndefined();
+    editableCategory = JSON.parse(JSON.stringify(editableCategory)); // copy
 
     // Modify class
     const newRegex = 'Just testing';
-    workCat.rule.regex = newRegex;
-    categoryStore.updateClass(workCat);
-    expect(categoryStore.get_category(['Work']).rule.regex).toEqual(newRegex);
+    editableCategory.rule.regex = newRegex;
+    categoryStore.updateClass(editableCategory);
+    expect(categoryStore.get_category(editableCategoryName).rule.regex).toEqual(newRegex);
 
     // Check that getters behave somewhat
     expect(categoryStore.all_categories).not.toHaveLength(0);

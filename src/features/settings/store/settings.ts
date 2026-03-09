@@ -2,6 +2,10 @@ import { defineStore } from 'pinia';
 import moment, { Moment } from 'moment';
 import { getClient } from '~/app/lib/awclient';
 import { Category, defaultCategories, cleanCategory } from '~/features/categorization/lib/classes';
+import {
+  CURRENT_CATEGORIZATION_KNOWLEDGEBASE_VERSION,
+  migrateCategorySettings,
+} from '~/features/categorization/knowledgebase/migrate';
 import { View, defaultViews } from '~/features/activity/store/views';
 import { isEqual } from 'lodash';
 
@@ -37,6 +41,7 @@ interface State {
   };
   always_active_pattern: string;
   classes: Category[];
+  categorizationKnowledgebaseVersion: number;
   views: View[];
 
   // Whether to show certain WIP features
@@ -77,6 +82,7 @@ export const useSettingsStore = defineStore('settings', {
 
     always_active_pattern: '',
     classes: defaultCategories,
+    categorizationKnowledgebaseVersion: 0,
     views: defaultViews,
 
     // Developer settings
@@ -153,11 +159,26 @@ export const useSettingsStore = defineStore('settings', {
         state._loaded = true;
       });
 
+      const categorizationMigration = migrateCategorySettings({
+        classes: this.classes,
+        version: this.categorizationKnowledgebaseVersion,
+      });
+
+      if (
+        categorizationMigration.didReplaceClasses ||
+        categorizationMigration.version !== this.categorizationKnowledgebaseVersion
+      ) {
+        this.$patch({
+          classes: categorizationMigration.classes,
+          categorizationKnowledgebaseVersion: categorizationMigration.version,
+        });
+      }
+
       // Since `requestTimeout` is used to initialize the client, we need to set it again
       // https://github.com/ActivityWatch/activitywatch/issues/979
       client.req.defaults.timeout = this.requestTimeout * 1000;
 
-      if (save) {
+      if (save || categorizationMigration.shouldPersist) {
         await this.save();
       }
     },

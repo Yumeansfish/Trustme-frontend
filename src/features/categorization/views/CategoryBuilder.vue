@@ -11,7 +11,7 @@
       Words with less than 60s of time will not be shown.
     </p>
     <p class="aw-caption">When you're done, you can inspect the categories in the 
-      <router-link class="aw-link" :to="{ path: '/settings' }">Settings</router-link> page.
+      <ui-link class="aw-link" :to="{ path: '/settings' }">Settings</ui-link> page.
     </p>
   </div>
   <div class="aw-card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -20,11 +20,57 @@
       <div class="text-sm text-foreground-muted">Hostname: {{ queryOptions.hostname }}</div>
       <div class="text-sm text-foreground-muted">Range: {{ queryOptions.start }} - {{ queryOptions.stop }}</div>
     </div>
-    <button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="show_options = !show_options"><span v-if="!show_options">Show options</span><span v-else>Hide options</span></button>
+    <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="show_options = !show_options"><span v-if="!show_options">Show options</span><span v-else>Hide options</span></ui-button>
   </div>
   <div class="aw-card-muted" v-show="show_options">
     <h4 class="aw-subtitle">Options</h4>
     <aw-query-options v-model="queryOptions"></aw-query-options>
+  </div>
+  <div class="aw-divider"></div>
+  <div class="space-y-3">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-1">
+        <h5 class="aw-subtitle">AI suggestions for uncategorized events</h5>
+        <p class="aw-caption">Runs <code class="aw-code-inline">{{ aiModelName }}</code> in the browser and suggests a category for repeated uncategorized app/title pairs. First run downloads the model.</p>
+      </div>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-primary disabled:cursor-not-allowed disabled:opacity-50" type="button" :disabled="loading || aiLoading || uncategorizedEvents.length === 0" @click="generateAiSuggestions">
+        <span v-if="aiLoading">Generating…</span>
+        <span v-else>Generate suggestions</span>
+      </ui-button>
+    </div>
+    <aw-alert v-if="aiError" show variant="danger">{{ aiError }}</aw-alert>
+    <div class="aw-card-muted space-y-2" v-if="aiLoading">
+      <div class="text-sm font-medium text-foreground-strong">AI is working…</div>
+      <div class="text-sm text-foreground-muted">{{ aiStatus }}</div>
+    </div>
+    <div class="aw-empty" v-else-if="uncategorizedEvents.length === 0">No uncategorized events available for AI suggestions on {{ queryOptions.hostname || 'this host' }} between {{ queryOptions.start }} and {{ queryOptions.stop }}. Use “Show options” to widen the range or switch host.</div>
+    <div class="aw-empty" v-else-if="aiSuggestionsVisible.length === 0">No AI suggestions yet. Fetch uncategorized events above, then click Generate suggestions.</div>
+    <div class="space-y-3" v-else>
+      <div class="aw-card" v-for="suggestion in aiSuggestionsVisible" :key="suggestionKey(suggestion)">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div class="min-w-0 space-y-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="aw-chip">{{ Math.round(suggestion.group.duration) }}s</span>
+              <span class="aw-chip">{{ suggestion.group.count }} events</span>
+              <span class="aw-chip">AI {{ formatSuggestionScore(suggestion.candidates[0].score) }}</span>
+            </div>
+            <div class="space-y-1">
+              <div class="text-sm font-semibold text-foreground-strong">{{ suggestion.group.app || 'Unknown application' }}</div>
+              <div class="text-sm text-foreground-muted break-words">{{ suggestion.group.title || 'No window title' }}</div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs text-foreground-subtle">
+              <span>Suggested:</span>
+              <span class="aw-chip" v-for="candidate in suggestion.candidates" :key="candidate.label">{{ candidate.label }} · {{ formatSuggestionScore(candidate.score) }}</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 xl:justify-end">
+            <ui-button class="aw-btn aw-btn-sm aw-btn-success disabled:cursor-not-allowed disabled:opacity-50" type="button" :disabled="!suggestion.group.app" @click="applySuggestion(suggestion, 'app')">Append app rule</ui-button>
+            <ui-button class="aw-btn aw-btn-sm aw-btn-warning disabled:cursor-not-allowed disabled:opacity-50" type="button" :disabled="!suggestion.group.title" @click="applySuggestion(suggestion, 'title')">Append title rule</ui-button>
+            <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="ignoreSuggestion(suggestion)">Ignore</ui-button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="aw-divider"></div>
   <h5 class="aw-subtitle">Common words in "{{category.join(" > ")}}" events</h5>
@@ -36,14 +82,14 @@
         <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div class="text-sm font-medium text-foreground-strong">{{ word.word }} ({{ Math.round(word.duration) }}s)</div>
           <div class="flex flex-wrap items-center gap-2">
-            <button class="aw-btn aw-btn-sm aw-btn-success" type="button" @click="createRule(word.word)">New rule</button>
-            <button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="appendRule(word.word)">Append rule</button>
-            <button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="ignoreWord(word.word)">Ignore</button>
-            <button class="aw-btn aw-btn-sm aw-btn-outline" type="button" @click="showEvents(word)"><span v-if="showing_events[0] != word">Show events</span><span v-else>Hide events</span></button>
+            <ui-button class="aw-btn aw-btn-sm aw-btn-success" type="button" @click="createRule(word.word)">New rule</ui-button>
+            <ui-button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="appendRule(word.word)">Append rule</ui-button>
+            <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="ignoreWord(word.word)">Ignore</ui-button>
+            <ui-button class="aw-btn aw-btn-sm aw-btn-outline" type="button" @click="showEvents(word)"><span v-if="showing_events[0] != word">Show events</span><span v-else>Hide events</span></ui-button>
           </div>
         </div>
         <div class="mt-4 overflow-x-auto" v-if="showing_events && showing_events[0] == word">
-          <table class="aw-table">
+          <ui-table class="aw-table">
             <thead>
               <tr>
                 <th>Title</th>
@@ -56,7 +102,7 @@
                 <td class="text-right">{{ Math.round(event.duration) }}s</td>
               </tr>
             </tbody>
-          </table>
+          </ui-table>
         </div>
       </div>
     </div>
@@ -67,12 +113,12 @@
   <app-modal :open="isAppendRuleOpen" title="Append rule" panel-class="max-w-lg" @update:open="onAppendRuleOpenChange">
     <div class="space-y-4">
       <label class="flex flex-col gap-1"><span class="aw-label">Category</span>
-        <select class="aw-select" id="append-category" v-model="append.category">
+        <ui-select class="aw-select" id="append-category" v-model="append.category">
           <option v-for="cat in allCategoriesSelect" :value="cat.value" :key="cat.text">{{ cat.text }}</option>
-        </select>
+        </ui-select>
       </label>
       <label class="flex flex-col gap-1"><span class="aw-label">Word</span>
-        <input class="aw-input" v-model="append.word" type="text" @keydown.enter.prevent="handleSubmit">
+        <ui-input class="aw-input" v-model="append.word" type="text" @keydown.enter.prevent="handleSubmit" />
       </label>
       <div class="text-sm">
         <div class="text-success" v-if="validPattern && !broad_pattern">Pattern looks good</div>
@@ -81,8 +127,8 @@
       </div>
     </div>
     <template #footer>
-      <button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="closeAppendRule">Cancel</button>
-      <button class="aw-btn aw-btn-md aw-btn-primary disabled:cursor-not-allowed disabled:opacity-50" type="button" :disabled="!valid" @click="handleSubmit">Append rule</button>
+      <ui-button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="closeAppendRule">Cancel</ui-button>
+      <ui-button class="aw-btn aw-btn-md aw-btn-primary disabled:cursor-not-allowed disabled:opacity-50" type="button" :disabled="!valid" @click="handleSubmit">Append rule</ui-button>
     </template>
   </app-modal>
 </div>
@@ -101,6 +147,14 @@ import { getClient } from '~/app/lib/awclient';
 import CategoryEditModal from '~/features/categorization/components/CategoryEditModal.vue';
 import AppModal from '~/shared/ui/AppModal.vue';
 import { isRegexBroad, validateRegex } from '~/shared/lib/validate';
+import {
+  CATEGORY_EMBEDDING_MODEL_ID,
+  formatEmbeddingProgress,
+} from '~/features/categorization/lib/embedding/model';
+import {
+  groupUncategorizedEvents,
+  suggestCategoriesForGroups,
+} from '~/features/categorization/lib/embedding/suggestions';
 
 export default {
   name: 'aw-category-builder',
@@ -115,18 +169,25 @@ export default {
       // Options
       show_options: false,
       queryOptions: {
-        start: moment().subtract(1, 'day'),
-        stop: moment().add(1, 'day'),
+        start: moment().subtract(30, 'days').format('YYYY-MM-DD'),
+        stop: moment().add(1, 'day').format('YYYY-MM-DD'),
       },
 
       // TODO: Support inspecting a different category than Uncategorized (e.g. to make some category more precise)
       category: ['Uncategorized'],
 
       words: {},
+      uncategorizedEvents: [],
       showing_events: [],
 
       // TODO: load from settings
       ignored_words: [],
+      ignored_suggestion_keys: [],
+      aiSuggestions: [],
+      aiLoading: false,
+      aiError: '',
+      aiStatus: '',
+      aiModelName: CATEGORY_EMBEDDING_MODEL_ID,
 
       append: {
         word: '',
@@ -160,6 +221,11 @@ export default {
     broad_pattern: function () {
       return isRegexBroad(this.append.word);
     },
+    aiSuggestionsVisible() {
+      return this.aiSuggestions.filter(
+        suggestion => !this.ignored_suggestion_keys.includes(this.suggestionKey(suggestion))
+      );
+    },
   },
   watch: {
     queryOptions: {
@@ -177,16 +243,36 @@ export default {
     //await this.fetchWords();
   },
   methods: {
+    preferredHostname() {
+      const bucketsStore = useBucketsStore();
+      const nonUnknownHosts = bucketsStore.hosts.filter(host => host && host !== 'unknown');
+      const hostWithCategoryData = nonUnknownHosts.find(
+        host => bucketsStore.available(host).category
+      );
+      return hostWithCategoryData || nonUnknownHosts[0] || bucketsStore.hosts[0] || '';
+    },
     async fetchWords() {
       this.loading = true;
+      const preferredHostname = this.preferredHostname();
+      const bucketsStore = useBucketsStore();
+      const selectedHostname = this.queryOptions.hostname;
+      const selectedHostHasCategoryData =
+        selectedHostname && bucketsStore.available(selectedHostname).category;
+
+      if (
+        !selectedHostname ||
+        selectedHostname === 'unknown' ||
+        !selectedHostHasCategoryData
+      ) {
+        this.queryOptions.hostname = preferredHostname;
+      }
+
       if (!this.queryOptions.hostname) {
-        // FIXME: This is a hack to ensure that the hostname is set (otherwise isn't due to some race condition)
-        // Don't ever return the "unknown" hostname
-        // TODO: ideally, only choose a hostname that has the right buckets
-        this.queryOptions.hostname = _.filter(
-          useBucketsStore().hosts,
-          host => host !== 'unknown'
-        )[0];
+        this.uncategorizedEvents = [];
+        this.aiSuggestions = [];
+        this.aiStatus = 'No compatible host with category data was found';
+        this.loading = false;
+        return;
       }
       await this.categoryStore.load();
       const awclient = getClient();
@@ -208,10 +294,16 @@ export default {
         query.split('\n')
       );
 
-      const events = data[0];
+      const events = data[0] || [];
+      this.uncategorizedEvents = events;
+      this.aiSuggestions = [];
+      this.aiError = '';
+      this.aiStatus = '';
+      this.ignored_suggestion_keys = [];
       const words = new Map<string, { word: string; duration: number; events: any[] }>();
       for (const event of events) {
-        const words_in_event = event.data.title.split(/[\s\-,:()[\]/]/);
+        const title = event.data.title || '';
+        const words_in_event = title.split(/[\s\-,:()[\]/]/);
         for (const word of words_in_event) {
           if (word.length <= 2 || this.ignored_words.includes(word)) {
             continue;
@@ -230,6 +322,75 @@ export default {
       }
       this.words = words;
       this.loading = false;
+
+      if (events.length > 0) {
+        await this.generateAiSuggestions();
+      } else {
+        this.aiStatus = 'No uncategorized events found in the current query window';
+      }
+    },
+    async generateAiSuggestions() {
+      if (this.uncategorizedEvents.length === 0) {
+        this.aiSuggestions = [];
+        this.aiStatus = 'No uncategorized events found in the current query window';
+        return;
+      }
+
+      this.aiLoading = true;
+      this.aiError = '';
+      this.aiStatus = 'Preparing uncategorized event groups…';
+
+      try {
+        await this.categoryStore.load();
+        const eventGroups = groupUncategorizedEvents(this.uncategorizedEvents);
+        this.aiStatus = 'Loading embedding model…';
+        this.aiSuggestions = await suggestCategoriesForGroups(eventGroups, this.categoryStore.classes, {
+          limit: 15,
+          minScore: 0.32,
+          onModelProgress: progress => {
+            this.aiStatus = formatEmbeddingProgress(progress);
+          },
+        });
+        this.aiStatus =
+          this.aiSuggestions.length > 0
+            ? `Generated ${this.aiSuggestions.length} suggestions`
+            : 'No strong suggestions found';
+      } catch (error) {
+        console.error('Failed to generate AI suggestions', error);
+        this.aiError =
+          error instanceof Error
+            ? error.message
+            : 'Failed to generate AI suggestions';
+      } finally {
+        this.aiLoading = false;
+      }
+    },
+    suggestionKey(suggestion) {
+      return suggestion.group.key;
+    },
+    ignoreSuggestion(suggestion) {
+      this.ignored_suggestion_keys.push(this.suggestionKey(suggestion));
+    },
+    formatSuggestionScore(score: number) {
+      return `${Math.round(score * 100)}%`;
+    },
+    async applySuggestion(suggestion, source: 'app' | 'title') {
+      const rawValue = source === 'app' ? suggestion.group.app : suggestion.group.title;
+      if (!rawValue) {
+        return;
+      }
+
+      const suggestedCategory = this.categoryStore.get_category(
+        suggestion.candidates[0].categoryName
+      );
+      if (!suggestedCategory?.id) {
+        return;
+      }
+
+      this.categoryStore.appendClassRule(suggestedCategory.id, _.escapeRegExp(rawValue));
+      await this.categoryStore.save();
+      await this.fetchWords();
+      await this.generateAiSuggestions();
     },
     showEvents(word) {
       // If already showing events, hide them and return

@@ -1,8 +1,8 @@
 <template>
 <div class="space-y-3">
-  <select class="aw-select" v-model="selectedCategoryKeys" :disabled="options.length === 0" multiple size="6">
+  <ui-select class="aw-select" v-model="selectedCategoryKeys" :disabled="options.length === 0" multiple size="6">
     <option v-for="option in options" :key="option.value" :value="option.value">{{ option.text }}</option>
-  </select>
+  </ui-select>
   <div class="flex flex-wrap gap-2" v-if="selectedCategoryKeys.length > 0"><span class="aw-chip" v-for="tag in selectedCategoryKeys" :key="tag"><span>{{ tag }}</span></span></div>
 </div>
 </template>

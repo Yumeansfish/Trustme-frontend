@@ -3,29 +3,29 @@
   <div class="space-y-6">
     <div class="grid gap-4 md:grid-cols-2">
       <label class="flex flex-col gap-1"><span class="aw-label">Name</span>
-        <input class="aw-input" v-model="editing.name" type="text">
+        <ui-input class="aw-input" v-model="editing.name" type="text" />
       </label>
       <label class="flex flex-col gap-1"><span class="aw-label">Parent</span>
-        <select class="aw-select" v-model="editing.parent">
+        <ui-select class="aw-select" v-model="editing.parent">
           <option v-for="category in allCategories" :key="category.text" :value="category.value">{{ category.text }}</option>
-        </select>
+        </ui-select>
       </label>
     </div>
     <div class="aw-card-muted space-y-4">
       <div class="space-y-3">
         <h4 class="aw-eyebrow">Rule</h4>
         <label class="flex flex-col gap-1"><span class="aw-label">Type</span>
-          <select class="aw-select" v-model="editing.rule.type">
+          <ui-select class="aw-select" v-model="editing.rule.type">
             <option v-for="ruleType in allRuleTypes" :key="ruleType.value" :value="ruleType.value">{{ ruleType.text }}</option>
-          </select>
+          </ui-select>
         </label>
         <div class="space-y-3" v-if="editing.rule.type === 'regex'">
           <label class="flex flex-col gap-1"><span class="aw-label">Pattern</span>
-            <input class="aw-input" v-model="editing.rule.regex" type="text">
+            <ui-input class="aw-input" v-model="editing.rule.regex" type="text" />
           </label>
           <div class="flex flex-wrap items-center justify-between gap-3">
             <label class="flex items-center gap-2 text-sm text-foreground">
-              <input class="aw-checkbox" v-model="editing.rule.ignore_case" type="checkbox"><span>Case insensitive</span>
+              <ui-checkbox class="aw-checkbox" v-model="editing.rule.ignore_case"  /><span>Case insensitive</span>
             </label>
             <div class="text-sm">
               <div class="text-danger" v-if="!validPattern">Invalid pattern</div>
@@ -40,7 +40,7 @@
       <div class="space-y-3">
         <h4 class="aw-eyebrow">Color</h4>
         <label class="flex items-center gap-2 text-sm text-foreground">
-          <input class="aw-checkbox" v-model="editing.inherit_color" type="checkbox"><span>Inherit parent color</span>
+          <ui-checkbox class="aw-checkbox" v-model="editing.inherit_color"  /><span>Inherit parent color</span>
         </label>
         <div class="aw-card p-3" v-show="!editing.inherit_color">
           <color-picker v-model="editing.color"></color-picker>
@@ -49,20 +49,20 @@
       <div class="space-y-3">
         <h4 class="aw-eyebrow">Productivity score</h4>
         <label class="flex items-center gap-2 text-sm text-foreground">
-          <input class="aw-checkbox" v-model="editing.inherit_score" type="checkbox"><span>Inherit parent score</span>
+          <ui-checkbox class="aw-checkbox" v-model="editing.inherit_score"  /><span>Inherit parent score</span>
         </label>
         <label class="flex flex-col gap-1" v-if="!editing.inherit_score"><span class="aw-label">Score</span>
-          <input class="aw-input" v-model="editing.score" type="number">
+          <ui-input class="aw-input" v-model="editing.score" type="number" />
         </label>
       </div>
     </div>
   </div>
   <template #footer>
-    <button class="aw-btn aw-btn-md aw-btn-danger mr-auto" type="button" @click="removeClass">
+    <ui-button class="aw-btn aw-btn-md aw-btn-danger mr-auto" type="button" @click="removeClass">
       <icon name="trash"></icon><span>Remove category</span>
-    </button>
-    <button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="closeModal">Cancel</button>
-    <button class="aw-btn aw-btn-md aw-btn-primary" type="button" @click="handleSubmit">Save category</button>
+    </ui-button>
+    <ui-button class="aw-btn aw-btn-md aw-btn-secondary" type="button" @click="closeModal">Cancel</ui-button>
+    <ui-button class="aw-btn aw-btn-md aw-btn-primary" type="button" @click="handleSubmit">Save category</ui-button>
   </template>
 </app-modal>
 </template>

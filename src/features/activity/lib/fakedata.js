@@ -5,7 +5,7 @@ export const window_events = [
       app: 'Firefox',
       title: 'ActivityWatch/activitywatch: Track how you spend your time - Mozilla Firefox',
       url: 'https://github.com/ActivityWatch/activitywatch',
-      $category: ['Work', 'Programming', 'ActivityWatch'],
+      $category: ['Code'],
     },
   },
   {
@@ -14,7 +14,7 @@ export const window_events = [
       app: 'Firefox',
       title: 'Inbox - Gmail - Mozilla Firefox',
       url: 'https://mail.google.com',
-      $category: ['Comms', 'Email'],
+      $category: ['Email'],
     },
   },
   {
@@ -23,7 +23,7 @@ export const window_events = [
       app: 'Firefox',
       title: 'reddit: the front page of the internet - Mozilla Firefox',
       url: 'https://reddit.com',
-      $category: ['Media', 'Social Media'],
+      $category: ['Browsing'],
     },
   },
   {
@@ -32,7 +32,7 @@ export const window_events = [
       app: 'Firefox',
       title: 'YouTube - Mozilla Firefox',
       url: 'https://youtube.com',
-      $category: ['Media', 'Video'],
+      $category: ['Video'],
     },
   },
   {
@@ -41,7 +41,7 @@ export const window_events = [
       app: 'Firefox',
       title: 'Home / Twitter - Mozilla Firefox',
       url: 'https://twitter.com',
-      $category: ['Media', 'Social Media'],
+      $category: ['Browsing'],
     },
   },
   {
@@ -50,7 +50,7 @@ export const window_events = [
       app: 'Firefox',
       title: 'Stack Overflow',
       url: 'https://stackoverflow.com',
-      $category: ['Work', 'Programming'],
+      $category: ['Code'],
     },
   },
   {
@@ -58,7 +58,7 @@ export const window_events = [
     data: {
       app: 'Terminal',
       title: 'vim ~/code/activitywatch/aw-server/aw-webui/src',
-      $category: ['Work', 'Programming', 'ActivityWatch'],
+      $category: ['Code'],
     },
   },
   {
@@ -66,7 +66,7 @@ export const window_events = [
     data: {
       app: 'Terminal',
       title: 'bash ~/code/activitywatch',
-      $category: ['Work', 'Programming', 'ActivityWatch'],
+      $category: ['Code'],
     },
   },
   {
@@ -74,15 +74,15 @@ export const window_events = [
     data: {
       app: 'zoom',
       title: 'Zoom Meeting',
-      $category: ['Comms', 'Video Conferencing'],
+      $category: ['Meetings'],
     },
   },
   {
     duration: 0.4 * 60 * 60,
-    data: { app: 'Minecraft', title: 'Minecraft', $category: ['Media', 'Games'] },
+    data: { app: 'Minecraft', title: 'Minecraft', $category: ['Gaming'] },
   },
   {
     duration: 3.15 * 60,
-    data: { app: 'Spotify', title: 'Spotify', $category: ['Media', 'Music'] },
+    data: { app: 'Spotify', title: 'Spotify', $category: ['Music'] },
   },
 ];

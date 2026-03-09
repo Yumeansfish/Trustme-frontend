@@ -1,23 +1,23 @@
 <template>
 <div class="space-y-5">
   <h3 class="aw-section-title">Query Explorer</h3>
-  <p class="aw-caption">See <a class="aw-link" href="https://docs.activitywatch.net/en/latest/examples/querying-data.html">the documentation</a> for help on how to write queries.</p>
+  <p class="aw-caption">See <ui-link class="aw-link" href="https://docs.activitywatch.net/en/latest/examples/querying-data.html">the documentation</ui-link> for help on how to write queries.</p>
   <div class="aw-divider"></div>
   <aw-alert v-if="error" variant="danger" show>{{error}}</aw-alert>
   <form class="aw-card space-y-4">
     <div class="grid gap-4 sm:grid-cols-2">
       <label class="flex flex-col gap-1"><span class="aw-label">Start</span>
-        <input class="aw-input" type="date" :max="today" v-model="startdate">
+        <ui-input class="aw-input" type="date" :max="today" v-model="startdate" />
       </label>
       <label class="flex flex-col gap-1"><span class="aw-label">End</span>
-        <input class="aw-input" type="date" :max="tomorrow" v-model="enddate">
+        <ui-input class="aw-input" type="date" :max="tomorrow" v-model="enddate" />
       </label>
     </div>
     <label class="flex flex-col gap-1"><span class="aw-label">Query</span>
-      <textarea class="aw-textarea font-mono" v-model="query_code" @keypress.ctrl.enter="query()" rows="10"></textarea>
+      <ui-textarea class="aw-textarea font-mono" v-model="query_code" @keypress.ctrl.enter="query()" rows="10"></ui-textarea>
     </label>
     <div class="flex items-center gap-3">
-      <button class="aw-btn aw-btn-md aw-btn-success" type="button" @click="query()">Query</button><span class="text-foreground-muted text-sm">{{eventcount_str}}</span>
+      <ui-button class="aw-btn aw-btn-md aw-btn-success" type="button" @click="query()">Query</ui-button><span class="text-foreground-muted text-sm">{{eventcount_str}}</span>
     </div>
   </form>
   <div class="aw-divider"></div>
