@@ -2,7 +2,7 @@
 <div class="aw-card-muted space-y-3" v-if="show">
   <aw-alert v-if="note" variant="warning" show>
     <div class="flex items-start justify-between gap-3"><span>This will not appear in the production build <span v-if="reason">({{ reason }})</span>.</span>
-      <button class="aw-btn aw-btn-sm aw-btn-secondary shrink-0" type="button" @click="hide = true">Hide</button>
+      <ui-button class="aw-btn aw-btn-sm aw-btn-secondary shrink-0" type="button" @click="hide = true">Hide</ui-button>
     </div>
   </aw-alert>
   <slot></slot>

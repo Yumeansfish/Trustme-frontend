@@ -9,18 +9,20 @@
       <div class="space-y-2">
         <div class="aw-label">Show last</div>
         <div class="flex flex-wrap gap-2">
-          <button class="aw-btn aw-btn-sm" v-for="(dur, idx) in durations" :key="idx" type="button" @click="duration = dur.seconds; applyLastDuration()" :class="duration === dur.seconds && mode === 'last_duration' ? 'aw-btn-primary' : 'aw-btn-secondary'" v-html="dur.label"></button>
+          <ui-button class="aw-btn aw-btn-sm" v-for="(dur, idx) in durations" :key="idx" type="button" @click="duration = dur.seconds; applyLastDuration()" :class="duration === dur.seconds && mode === 'last_duration' ? 'aw-btn-primary' : 'aw-btn-secondary'">
+            <span v-html="dur.label"></span>
+          </ui-button>
         </div>
       </div>
       <div class="grid gap-4 sm:grid-cols-2">
         <label class="flex flex-col gap-1"><span class="aw-label">Mode</span>
-          <select class="aw-select-sm" id="mode" v-model="mode" @change="valueChanged">
+          <ui-select class="aw-select-sm" id="mode" v-model="mode" @change="valueChanged">
             <option value="last_duration">Last duration</option>
             <option value="range">Date range</option>
-          </select>
+          </ui-select>
         </label>
         <label class="flex flex-col gap-1" v-if="mode == 'last_duration'"><span class="aw-label">Duration</span>
-          <select class="aw-select-sm" id="duration" v-model="duration" @change="valueChanged">
+          <ui-select class="aw-select-sm" id="duration" v-model="duration" @change="valueChanged">
             <option :value="15*60">15min</option>
             <option :value="30*60">30min</option>
             <option :value="60*60">1h</option>
@@ -29,25 +31,25 @@
             <option :value="6*60*60">6h</option>
             <option :value="12*60*60">12h</option>
             <option :value="24*60*60">24h</option>
-          </select>
+          </ui-select>
         </label>
       </div>
       <div class="aw-time-range-grid" v-if="mode == 'range'">
         <label class="flex flex-col gap-1"><span class="aw-label">Start</span>
-          <input class="aw-input-sm" type="date" v-model="start">
+          <ui-input class="aw-input-sm" type="date" v-model="start" />
         </label>
         <label class="flex flex-col gap-1"><span class="aw-label">End</span>
-          <input class="aw-input-sm" type="date" v-model="end">
+          <ui-input class="aw-input-sm" type="date" v-model="end" />
         </label>
         <div class="flex items-end">
-          <button class="aw-btn aw-btn-sm aw-btn-secondary w-full" type="button" :disabled="invalidDaterange || emptyDaterange || daterangeTooLong" @click="applyRange">Apply</button>
+          <ui-button class="aw-btn aw-btn-sm aw-btn-secondary w-full" type="button" :disabled="invalidDaterange || emptyDaterange || daterangeTooLong" @click="applyRange">Apply</ui-button>
         </div>
       </div>
     </div>
     <div class="space-y-2 text-sm text-foreground-muted" v-if="showUpdate">
-      <button class="aw-btn aw-btn-sm aw-btn-secondary w-full" type="button" @click="refresh()">
+      <ui-button class="aw-btn aw-btn-sm aw-btn-secondary w-full" type="button" @click="refresh()">
         <icon name="sync"></icon><span>Refresh</span>
-      </button>
+      </ui-button>
       <div v-if="lastUpdate">Last update: {{ lastUpdate ? lastUpdate.fromNow() : '' }}</div>
     </div>
   </div>

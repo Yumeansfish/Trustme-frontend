@@ -26,14 +26,14 @@
                 {{ description }}
               </p>
             </div>
-            <button
+            <ui-button
               type="button"
               class="aw-icon-button h-8 w-8 shrink-0"
               aria-label="Close modal"
               @click="close"
             >
               ×
-            </button>
+            </ui-button>
           </div>
 
           <div class="aw-modal-body">

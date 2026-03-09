@@ -22,14 +22,14 @@
             <p class="text-sm font-semibold">{{ toast.title }}</p>
             <p v-if="toast.description" class="mt-1 text-sm opacity-90">{{ toast.description }}</p>
           </div>
-          <button
+          <ui-button
             type="button"
             class="aw-icon-button h-7 w-7 shrink-0 border border-transparent text-base leading-none opacity-70 hover:opacity-100"
             aria-label="Dismiss notification"
             @click="uiStore.dismissToast(toast.id)"
           >
             ×
-          </button>
+          </ui-button>
         </div>
       </transition-group>
     </div>

@@ -1,22 +1,22 @@
 <template>
   <div class="flex items-center gap-2">
-    <input
+    <ui-input
       type="text"
       v-model="colorValue"
       @input="updateFromInput"
       placeholder="#FF00FF"
       class="aw-input flex-1"
     />
-    <input
+    <ui-input
       type="color"
       :value="colorValue"
       @input="updateFromNativePicker"
       class="h-10 w-10 cursor-pointer rounded-md border border-base bg-surface p-1 shadow-sm"
       aria-label="Pick color"
     />
-    <button type="button" class="aw-btn aw-btn-md aw-btn-secondary" @click="randomColor()" title="Randomize">
+    <ui-button type="button" class="aw-btn aw-btn-md aw-btn-secondary" @click="randomColor()" title="Randomize">
       🎲
-    </button>
+    </ui-button>
   </div>
 </template>
 

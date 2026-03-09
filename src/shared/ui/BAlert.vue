@@ -1,13 +1,13 @@
 <template>
   <div v-if="isVisible" :class="alertClasses" role="alert">
-    <button
+    <ui-button
       v-if="dismissible"
       type="button"
       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md text-lg leading-none opacity-60 transition hover:opacity-100"
       @click="dismiss"
     >
       ×
-    </button>
+    </ui-button>
     <slot></slot>
   </div>
 </template>

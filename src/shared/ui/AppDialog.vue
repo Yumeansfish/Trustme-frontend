@@ -20,7 +20,7 @@
               {{ uiStore.dialog.description }}
             </p>
 
-            <input
+            <ui-input
               v-if="uiStore.dialog.mode === 'prompt'"
               ref="promptInput"
               v-model="uiStore.dialog.value"
@@ -29,23 +29,23 @@
               class="aw-input"
               @keydown.enter.prevent="uiStore.submitDialog()"
             />
-          </div>
+          </div />
 
           <div class="flex justify-end gap-2 border-t border-muted px-6 py-4">
-            <button
+            <ui-button
               type="button"
               class="aw-btn aw-btn-md aw-btn-secondary"
               @click="uiStore.cancelDialog()"
             >
               {{ uiStore.dialog.cancelText }}
-            </button>
-            <button
+            </ui-button>
+            <ui-button
               type="button"
               class="aw-btn aw-btn-md aw-btn-primary"
               @click="uiStore.submitDialog()"
             >
               {{ uiStore.dialog.confirmText }}
-            </button>
+            </ui-button>
           </div>
         </div>
       </div>

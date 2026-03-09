@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 // We will disable the no-shadow eslint rule for the entire file:
 /* eslint-disable no-shadow */
 
