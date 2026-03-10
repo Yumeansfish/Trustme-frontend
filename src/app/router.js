@@ -44,6 +44,7 @@ const router = createRouter({
     {
       path: '/activity/:host([^/]+)',
       component: Activity,
+      meta: { viewportPage: true },
       props: true,
       children: [
         {
@@ -64,10 +65,15 @@ const router = createRouter({
     { path: '/buckets', component: Buckets },
     { path: '/buckets/:id', component: Bucket, props: true },
     { path: '/timeline', component: Timeline, meta: { fullContainer: true } },
-    { path: '/streamdeck/:date?', component: Streamdeck, props: true, meta: { fullContainer: true } },
+    {
+      path: '/streamdeck/:date?',
+      component: Streamdeck,
+      props: true,
+      meta: { fullContainer: true },
+    },
     { path: '/settings', component: Settings },
     { path: '/settings/category-builder', component: CategoryBuilder },
-    { path: '/stopwatch', component: Stopwatch },
+    { path: '/away', alias: '/stopwatch', component: Stopwatch },
     { path: '/search', component: Search },
     { path: '/query', component: QueryExplorer },
     { path: '/dev', component: Dev },

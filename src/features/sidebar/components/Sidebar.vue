@@ -1,7 +1,5 @@
 <template>
-  <aside
-    class="group aw-sidebar"
-  >
+  <aside class="group aw-sidebar">
     <nav class="flex h-full flex-col py-2">
       <div class="flex h-11 items-center px-4 select-none">
         <img class="h-6 w-6 shrink-0 object-contain" src="/logo.png" />
@@ -27,7 +25,10 @@
             <span class="aw-sidebar-section-title">Activity</span>
           </div>
           <div class="aw-sidebar-section-panel">
-            <div v-if="activityViews === null" class="flex h-9 items-center px-5 text-foreground-subtle">
+            <div
+              v-if="activityViews === null"
+              class="flex h-9 items-center px-5 text-foreground-subtle"
+            >
               <icon class="h-3.5 w-3.5 shrink-0" name="ellipsis-h"></icon>
               <span class="aw-sidebar-copy">Loading...</span>
             </div>
@@ -68,13 +69,9 @@
           <span class="aw-sidebar-copy">Timeline</span>
         </ui-link>
 
-        <ui-link
-          to="/stopwatch"
-          active-class="aw-sidebar-link-active"
-          class="aw-sidebar-link h-11 px-4"
-        >
-          <icon class="h-4 w-4 shrink-0" name="stopwatch"></icon>
-          <span class="aw-sidebar-copy">Stopwatch</span>
+        <ui-link to="/away" active-class="aw-sidebar-link-active" class="aw-sidebar-link h-11 px-4">
+          <icon class="h-4 w-4 shrink-0" name="pause"></icon>
+          <span class="aw-sidebar-copy">Away Session</span>
         </ui-link>
       </div>
 
@@ -106,6 +103,7 @@
       </div>
 
       <div class="mt-auto border-t border-base pt-2">
+        <theme-toggle-button></theme-toggle-button>
         <ui-link
           to="/buckets"
           active-class="aw-sidebar-link-active"
@@ -131,12 +129,16 @@
 import _ from 'lodash';
 
 import { useBucketsStore } from '~/features/buckets/store/buckets';
+import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 import { useSettingsStore } from '~/features/settings/store/settings';
 
 import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'Sidebar',
+  components: {
+    ThemeToggleButton,
+  },
   computed: {
     buckets() {
       return useBucketsStore().buckets;
@@ -157,7 +159,8 @@ export default defineComponent({
           types_by_host[v.hostname] = types_by_host[v.hostname] || {};
           types_by_host[v.hostname].afk ||= v.type == 'afkstatus';
           types_by_host[v.hostname].window ||= v.type == 'currentwindow';
-          types_by_host[v.hostname].android ||= v.type == 'currentwindow' && v.id.includes('android');
+          types_by_host[v.hostname].android ||=
+            v.type == 'currentwindow' && v.id.includes('android');
         });
 
         const processedHosts = new Set<string>();
