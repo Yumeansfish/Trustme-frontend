@@ -1,35 +1,72 @@
 <template>
-<div class="space-y-3">
-  <div class="grid gap-4 md:grid-cols-2">
-    <label class="flex flex-col gap-1">
-      <span class="aw-label">Bucket</span>
-      <ui-select class="aw-select" v-model="selectedBucketId" :disabled="bucketOptions.length === 0 || loading">
-        <option v-for="option in bucketOptions" :key="option.value" :value="option.value">{{ option.text }}</option>
-      </ui-select>
-    </label>
-    <label class="flex flex-col gap-1">
-      <span class="aw-label">
-        Field in event data
-        <span class="aw-help-badge ml-1" title="Field names come from event data. Dot notation is supported (e.g., data.title).">i</span>
-      </span>
-      <ui-select class="aw-select" v-model="selectedField" :disabled="!selectedBucketId || loading">
-        <option v-for="option in fieldSelectOptions" :key="option.value" :value="option.value">{{ option.text }}</option>
-      </ui-select>
-      <ui-input class="aw-input mt-2" v-if="selectedField === '__custom' || fieldOptions.length === 0" v-model="customField" placeholder="e.g. data.title" :disabled="loading" />
-    </label>
-  </div>
-  <aw-alert v-if="error" show variant="danger">{{ error }}</aw-alert>
-  <aw-alert v-else-if="!selectedBucketId" show variant="info">Select a watcher to load events for this period.</aw-alert>
-  <aw-alert v-else-if="!loading && aggregated.length === 0" show variant="warning">No events found for this watcher and time range.</aw-alert>
-  <div>
-    <div class="text-foreground-muted flex items-center justify-center gap-2 py-4 text-sm" v-if="loading">
-      <icon name="spinner" pulse></icon>
-      <span>Loading events...</span>
+  <div class="flex h-full min-h-0 flex-col gap-3">
+    <div class="grid gap-4 md:grid-cols-2">
+      <label class="flex flex-col gap-1">
+        <span class="aw-label">Bucket</span>
+        <ui-select
+          class="aw-select"
+          v-model="selectedBucketId"
+          :disabled="bucketOptions.length === 0 || loading"
+        >
+          <option v-for="option in bucketOptions" :key="option.value" :value="option.value">
+            {{ option.text }}
+          </option>
+        </ui-select>
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="aw-label">
+          Field in event data
+          <span
+            class="aw-help-badge ml-1"
+            title="Field names come from event data. Dot notation is supported (e.g., data.title)."
+            >i</span
+          >
+        </span>
+        <ui-select
+          class="aw-select"
+          v-model="selectedField"
+          :disabled="!selectedBucketId || loading"
+        >
+          <option v-for="option in fieldSelectOptions" :key="option.value" :value="option.value">
+            {{ option.text }}
+          </option>
+        </ui-select>
+        <ui-input
+          class="aw-input mt-2"
+          v-if="selectedField === '__custom' || fieldOptions.length === 0"
+          v-model="customField"
+          placeholder="e.g. data.title"
+          :disabled="loading"
+        />
+      </label>
     </div>
-    <aw-summary v-else-if="aggregated.length" :fields="aggregated" :namefunc="namefunc" :hoverfunc="hoverfunc" :colorfunc="colorfunc" with_limit></aw-summary>
-    <div class="aw-empty" v-else>Pick a field to see results.</div>
+    <aw-alert v-if="error" show variant="danger">{{ error }}</aw-alert>
+    <aw-alert v-else-if="!selectedBucketId" show variant="info"
+      >Select a watcher to load events for this period.</aw-alert
+    >
+    <aw-alert v-else-if="!loading && aggregated.length === 0" show variant="warning"
+      >No events found for this watcher and time range.</aw-alert
+    >
+    <div class="min-h-0 flex-1 overflow-hidden">
+      <div
+        class="text-foreground-muted flex items-center justify-center gap-2 py-4 text-sm"
+        v-if="loading"
+      >
+        <icon name="spinner" pulse></icon>
+        <span>Loading events...</span>
+      </div>
+      <aw-summary
+        class="h-full"
+        v-else-if="aggregated.length"
+        :fields="aggregated"
+        :namefunc="namefunc"
+        :hoverfunc="hoverfunc"
+        :colorfunc="colorfunc"
+        with_limit
+      ></aw-summary>
+      <div class="aw-empty" v-else>Pick a field to see results.</div>
+    </div>
   </div>
-</div>
 </template>
 
 <script lang="ts">

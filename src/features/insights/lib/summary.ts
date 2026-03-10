@@ -5,7 +5,12 @@ import _ from 'lodash';
 import { useCategoryStore } from '~/features/categorization/store/categories';
 import { getCategoryColorFromString } from '~/features/categorization/lib/color';
 import { IEvent } from '~/shared/lib/interfaces';
-import { SUMMARY_BAR_BG_COLOR, SUMMARY_BAR_COLOR } from '~/features/insights/lib/visualizationTokens';
+import {
+  SUMMARY_BAR_BG_COLOR,
+  SUMMARY_BAR_BG_SELECTED,
+  SUMMARY_BAR_COLOR,
+  SUMMARY_BAR_SELECTED,
+} from '~/features/insights/lib/visualizationTokens';
 
 function create(container: HTMLElement) {
   container.innerHTML = '';
@@ -36,7 +41,7 @@ function formatMinutes(seconds: number): string {
   return `${mins} min`;
 }
 
-function update(container: HTMLElement, apps: Entry[]) {
+function update(container: HTMLElement, apps: Entry[], selectedName: string | null = null) {
   const list = container.querySelector('.aw-summary-list') as HTMLElement;
   if (!list) return container;
 
@@ -60,17 +65,17 @@ function update(container: HTMLElement, apps: Entry[]) {
   _.each(apps, app => {
     const pct = total_duration > 0 ? Math.round((app.duration / total_duration) * 100) : 0;
     const barWidth = longest_duration > 0 ? (app.duration / longest_duration) * 100 : 0;
+    const isSelected = selectedName === app.name;
 
-    // Rize indigo color
-    const barColor = SUMMARY_BAR_COLOR;
-    const barBgColor = SUMMARY_BAR_BG_COLOR;
+    const barColor = isSelected ? SUMMARY_BAR_SELECTED : SUMMARY_BAR_COLOR;
+    const barBgColor = isSelected ? SUMMARY_BAR_BG_SELECTED : SUMMARY_BAR_BG_COLOR;
 
     // Row wrapper
     const row = app.link ? document.createElement('a') : document.createElement('div');
     if (app.link && row instanceof HTMLAnchorElement) {
       row.href = app.link;
     }
-    row.className = 'aw-row';
+    row.className = `aw-row${isSelected ? ' aw-row-active' : ''}`;
     row.title = app.hovertext;
 
     // 1. Percentage
@@ -123,7 +128,8 @@ function updateSummedEvents(
   titleKeyFunc: (event: IEvent) => string,
   hoverKeyFunc: (event: IEvent) => string,
   colorKeyFunc: (event: IEvent) => string,
-  linkKeyFunc: (event: IEvent) => string = () => null
+  linkKeyFunc: (event: IEvent) => string = () => null,
+  selectedName: string | null = null
 ) {
   if (hoverKeyFunc == null) {
     hoverKeyFunc = titleKeyFunc;
@@ -139,7 +145,7 @@ function updateSummedEvents(
       category: e.data['$category'],
     } as Entry;
   });
-  update(container, apps);
+  update(container, apps, selectedName);
 }
 
 export default {

@@ -1,31 +1,45 @@
 <template>
-<div class="space-y-6">
-  <div class="text-center">
-    <div class="text-foreground-muted text-sm">Your total score today is:</div>
-    <div class="aw-display-sm font-semibold" :class="score >= 0 ? 'text-success' : 'text-danger'">{{ score >= 0 ? '+' : '' }}{{ (Math.round(score * 10) / 10).toFixed(1) }}</div>
-    <div class="text-foreground-subtle text-sm">({{ score_productive_percent.toFixed(1) }}% productive)</div>
-  </div>
-  <div class="aw-divider"></div>
-  <div class="space-y-2"><b class="text-foreground-strong text-sm font-semibold">Top productive:</b>
-    <div class="mt-2 flex items-start justify-between gap-4" v-for="cat in top_productive">
-      <div class="min-w-0">
-        <div class="text-foreground-strong font-medium">{{ cat.data.$category.slice(-1)[0] }}</div>
-        <div class="aw-score-meta">{{ cat.data.$category.slice(0, -1).join(" > ") }}</div>
+  <div class="h-full overflow-y-auto pr-1 space-y-6">
+    <div class="text-center">
+      <div class="text-foreground-muted text-sm">Your total score today is:</div>
+      <div class="aw-display-sm font-semibold" :class="score >= 0 ? 'text-success' : 'text-danger'">
+        {{ score >= 0 ? '+' : '' }}{{ (Math.round(score * 10) / 10).toFixed(1) }}
       </div>
-      <div class="aw-score-value text-success ml-auto font-semibold">+{{ (Math.round(cat.data.$total_score * 10) / 10).toFixed(1) }}</div>
+      <div class="text-foreground-subtle text-sm">
+        ({{ score_productive_percent.toFixed(1) }}% productive)
+      </div>
+    </div>
+    <div class="aw-divider"></div>
+    <div class="space-y-2">
+      <b class="text-foreground-strong text-sm font-semibold">Top productive:</b>
+      <div class="mt-2 flex items-start justify-between gap-4" v-for="cat in top_productive">
+        <div class="min-w-0">
+          <div class="text-foreground-strong font-medium">
+            {{ cat.data.$category.slice(-1)[0] }}
+          </div>
+          <div class="aw-score-meta">{{ cat.data.$category.slice(0, -1).join(' > ') }}</div>
+        </div>
+        <div class="aw-score-value text-success ml-auto font-semibold">
+          +{{ (Math.round(cat.data.$total_score * 10) / 10).toFixed(1) }}
+        </div>
+      </div>
+    </div>
+    <div class="aw-divider"></div>
+    <div class="space-y-2">
+      <b class="text-foreground-strong text-sm font-semibold">Top distracting:</b>
+      <div class="mt-2 flex items-start justify-between gap-4" v-for="cat in top_distracting">
+        <div class="min-w-0">
+          <div class="text-foreground-strong font-medium">
+            {{ cat.data.$category.slice(-1)[0] }}
+          </div>
+          <div class="aw-score-meta">{{ cat.data.$category.slice(0, -1).join(' > ') }}</div>
+        </div>
+        <div class="aw-score-value text-danger ml-auto font-semibold">
+          {{ (Math.round(cat.data.$total_score * 10) / 10).toFixed(1) }}
+        </div>
+      </div>
     </div>
   </div>
-  <div class="aw-divider"></div>
-  <div class="space-y-2"><b class="text-foreground-strong text-sm font-semibold">Top distracting:</b>
-    <div class="mt-2 flex items-start justify-between gap-4" v-for="cat in top_distracting">
-      <div class="min-w-0">
-        <div class="text-foreground-strong font-medium">{{ cat.data.$category.slice(-1)[0] }}</div>
-        <div class="aw-score-meta">{{ cat.data.$category.slice(0, -1).join(" > ") }}</div>
-      </div>
-      <div class="aw-score-value text-danger ml-auto font-semibold">{{ (Math.round(cat.data.$total_score * 10) / 10).toFixed(1) }}</div>
-    </div>
-  </div>
-</div>
 </template>
 
 <script lang="ts">

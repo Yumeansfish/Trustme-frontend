@@ -107,9 +107,7 @@ function ensureDuration(duration: unknown): number {
   return typeof duration === 'number' && Number.isFinite(duration) ? duration : 0;
 }
 
-function ensureActiveHistory(
-  active_history: unknown
-): Record<string, IEvent[]> {
+function ensureActiveHistory(active_history: unknown): Record<string, IEvent[]> {
   if (!active_history || typeof active_history !== 'object' || Array.isArray(active_history)) {
     return {};
   }
@@ -141,6 +139,8 @@ function ensureByPeriod(by_period: unknown): CategoryPeriodData {
 
 interface State {
   loaded: boolean;
+  request_nonce: number;
+  active_request_nonce: number;
 
   window: {
     available: boolean;
@@ -207,6 +207,8 @@ export const useActivityStore = defineStore('activity', {
   state: (): State => ({
     // set to true once loading has started
     loaded: false,
+    request_nonce: 0,
+    active_request_nonce: 0,
 
     window: {
       available: false,
@@ -299,6 +301,25 @@ export const useActivityStore = defineStore('activity', {
   },
 
   actions: {
+    isAbortError(error: unknown) {
+      if (!error || typeof error !== 'object') {
+        return false;
+      }
+
+      const maybeError = error as { code?: string; name?: string; message?: string };
+      const message = (maybeError.message || '').toLowerCase();
+      return (
+        maybeError.code === 'ERR_CANCELED' ||
+        maybeError.name === 'CanceledError' ||
+        message.includes('canceled') ||
+        message.includes('aborted')
+      );
+    },
+
+    isCurrentRequest(this: State, request_nonce: number) {
+      return request_nonce === this.active_request_nonce;
+    },
+
     async ensure_loaded(query_options: QueryOptions) {
       console.log('--- ACTIVITY STORE: ensure_loaded called with options ---', query_options);
       const settingsStore = useSettingsStore();
@@ -308,74 +329,95 @@ export const useActivityStore = defineStore('activity', {
 
       console.info('Query options: ', query_options);
       if (this.loaded) {
-        getClient().abort();
+        await getClient().abort();
       }
       if (!this.loaded || this.query_options !== query_options || query_options.force) {
         console.log('ACTIVITY STORE: Actually loading data now...');
-        this.start_loading(query_options);
-        if (!query_options.timeperiod) {
-          query_options.timeperiod = dateToTimeperiod(query_options.date, settingsStore.startOfDay);
-        }
+        const request_nonce = this.start_loading(query_options);
 
-        await bucketsStore.ensureLoaded();
-        await this.get_buckets(query_options);
-
-        // TODO: These queries can actually run in parallel, but since server won't process them in parallel anyway we won't.
-        this.set_available();
-
-        const hostsList = query_options.host.split(',').map(h => h.trim());
-
-        if (this.window.available) {
-          console.info(
-            settingsStore.useMultidevice || hostsList.length > 1
-              ? 'Querying multiple devices'
-              : 'Querying a single device'
-          );
-          if (settingsStore.useMultidevice || hostsList.length > 1) {
-            const hostnames = bucketsStore.hosts.filter(
-              // require that the host has window buckets,
-              // and that the host is not a fakedata host,
-              // unless we're explicitly querying fakedata
-              host =>
-                host &&
-                bucketsStore.bucketsWindow(host).length > 0 &&
-                hostsList.includes(host) &&
-                (!host.startsWith('fakedata') || query_options.host.startsWith('fakedata'))
+        try {
+          if (!query_options.timeperiod) {
+            query_options.timeperiod = dateToTimeperiod(
+              query_options.date,
+              settingsStore.startOfDay
             );
-            console.info('Including hosts in multiquery: ', hostnames);
-            await this.query_multidevice_full(query_options, hostnames);
-          } else {
-            await this.query_desktop_full(query_options);
           }
-        } else if (this.android.available) {
-          await this.query_android(query_options);
-        } else {
-          console.log(
-            'Cannot query windows as we are missing either an afk/window bucket pair or an android bucket'
-          );
-          this.query_window_completed();
-          this.query_category_time_by_period_completed();
-        }
 
-        if (this.active.available) {
-          await this.query_active_history(query_options);
-        } else if (this.android.available) {
-          await this.query_active_history_android(query_options);
-        } else {
-          console.log('Cannot call query_active_history as we do not have an afk bucket');
-          await this.query_active_history_completed();
-        }
+          await bucketsStore.ensureLoaded();
+          if (!this.isCurrentRequest(request_nonce)) return;
 
-        if (this.editor.available) {
-          await this.query_editor(query_options);
-        } else {
-          console.log('Cannot call query_editor as we do not have any editor buckets');
-          await this.query_editor_completed();
-        }
+          await this.get_buckets(query_options);
+          if (!this.isCurrentRequest(request_nonce)) return;
 
-        // Perform this last, as it takes the longest
-        if (this.window.available || this.android.available) {
-          await this.query_category_time_by_period(query_options);
+          // TODO: These queries can actually run in parallel, but since server won't process them in parallel anyway we won't.
+          this.set_available();
+
+          const hostsList = query_options.host.split(',').map(h => h.trim());
+
+          if (this.window.available) {
+            console.info(
+              settingsStore.useMultidevice || hostsList.length > 1
+                ? 'Querying multiple devices'
+                : 'Querying a single device'
+            );
+            if (settingsStore.useMultidevice || hostsList.length > 1) {
+              const hostnames = bucketsStore.hosts.filter(
+                // require that the host has window buckets,
+                // and that the host is not a fakedata host,
+                // unless we're explicitly querying fakedata
+                host =>
+                  host &&
+                  bucketsStore.bucketsWindow(host).length > 0 &&
+                  hostsList.includes(host) &&
+                  (!host.startsWith('fakedata') || query_options.host.startsWith('fakedata'))
+              );
+              console.info('Including hosts in multiquery: ', hostnames);
+              await this.query_multidevice_full(query_options, hostnames, request_nonce);
+            } else {
+              await this.query_desktop_full(query_options, request_nonce);
+            }
+          } else if (this.android.available) {
+            await this.query_android(query_options, request_nonce);
+          } else {
+            console.log(
+              'Cannot query windows as we are missing either an afk/window bucket pair or an android bucket'
+            );
+            this.query_window_completed(undefined, request_nonce);
+            this.query_category_time_by_period_completed(undefined, request_nonce);
+          }
+
+          if (!this.isCurrentRequest(request_nonce)) return;
+
+          if (this.active.available) {
+            await this.query_active_history(query_options, request_nonce);
+          } else if (this.android.available) {
+            await this.query_active_history_android(query_options, request_nonce);
+          } else {
+            console.log('Cannot call query_active_history as we do not have an afk bucket');
+            this.query_active_history_completed(undefined, request_nonce);
+          }
+
+          if (!this.isCurrentRequest(request_nonce)) return;
+
+          if (this.editor.available) {
+            await this.query_editor(query_options, request_nonce);
+          } else {
+            console.log('Cannot call query_editor as we do not have any editor buckets');
+            this.query_editor_completed(undefined, request_nonce);
+          }
+
+          if (!this.isCurrentRequest(request_nonce)) return;
+
+          // Perform this last, as it takes the longest
+          if (this.window.available || this.android.available) {
+            await this.query_category_time_by_period(query_options, request_nonce);
+          }
+        } catch (error) {
+          if (this.isAbortError(error) || !this.isCurrentRequest(request_nonce)) {
+            console.debug('Skipping aborted or stale activity request');
+            return;
+          }
+          throw error;
         }
       } else {
         console.warn(
@@ -384,7 +426,7 @@ export const useActivityStore = defineStore('activity', {
       }
     },
 
-    async query_android({ timeperiod, filter_categories }: QueryOptions) {
+    async query_android({ timeperiod, filter_categories }: QueryOptions, request_nonce: number) {
       const periods = [timeperiodToStr(timeperiod)];
       const categoryStore = useCategoryStore();
       const q = queries.appQuery(
@@ -392,21 +434,30 @@ export const useActivityStore = defineStore('activity', {
         categoryStore.queryRules,
         filter_categories
       );
-      const data = await getClient().query(periods, q).catch(this.errorHandler);
-      this.query_window_completed(data?.[0]);
+      const data = await getClient().query(periods, q);
+      if (!this.isCurrentRequest(request_nonce)) return;
+      this.query_window_completed(data?.[0], request_nonce);
     },
 
     async reset() {
-      getClient().abort();
+      await getClient().abort();
+      this.request_nonce += 1;
+      this.active_request_nonce = this.request_nonce;
+      this.loaded = false;
+      this.query_options = null;
+      this.active.history = {};
       this.query_window_completed({});
       this.query_browser_completed({});
+      this.query_stopwatch_completed({});
+      this.editor.available = false;
       this.query_editor_completed({});
       this.query_category_time_by_period_completed({});
     },
 
     async query_multidevice_full(
       { timeperiod, filter_categories, filter_afk, always_active_pattern }: QueryOptions,
-      hosts: string[]
+      hosts: string[],
+      request_nonce: number
     ) {
       const periods = [timeperiodToStr(timeperiod)];
       const categories = useCategoryStore().queryRules;
@@ -420,17 +471,21 @@ export const useActivityStore = defineStore('activity', {
         always_active_pattern,
       });
       const data = await getClient().query(periods, q, { name: 'multidevice', verbose: true });
-      this.query_window_completed(data?.[0]?.window);
+      if (!this.isCurrentRequest(request_nonce)) return;
+      this.query_window_completed(data?.[0]?.window, request_nonce);
     },
 
-    async query_desktop_full({
-      timeperiod,
-      filter_categories,
-      filter_afk,
-      include_audible,
-      include_stopwatch,
-      always_active_pattern,
-    }: QueryOptions) {
+    async query_desktop_full(
+      {
+        timeperiod,
+        filter_categories,
+        filter_afk,
+        include_audible,
+        include_stopwatch,
+        always_active_pattern,
+      }: QueryOptions,
+      request_nonce: number
+    ) {
       const periods = [timeperiodToStr(timeperiod)];
       const categories = useCategoryStore().queryRules;
 
@@ -452,24 +507,29 @@ export const useActivityStore = defineStore('activity', {
         name: 'fullDesktopQuery',
         verbose: true,
       });
-      this.query_window_completed(data?.[0]?.window);
-      this.query_browser_completed(data?.[0]?.browser);
+      if (!this.isCurrentRequest(request_nonce)) return;
+      this.query_window_completed(data?.[0]?.window, request_nonce);
+      this.query_browser_completed(data?.[0]?.browser, request_nonce);
       if (include_stopwatch) {
-        this.query_stopwatch_completed(data?.[0]?.stopwatch);
+        this.query_stopwatch_completed(data?.[0]?.stopwatch, request_nonce);
       }
     },
 
-    async query_editor({ timeperiod }) {
+    async query_editor({ timeperiod }: QueryOptions, request_nonce: number) {
       const periods = [timeperiodToStr(timeperiod)];
       const q = queries.editorActivityQuery(this.buckets.editor);
       const data = await getClient().query(periods, q, {
         name: 'editorActivityQuery',
         verbose: true,
       });
-      this.query_editor_completed(data?.[0]);
+      if (!this.isCurrentRequest(request_nonce)) return;
+      this.query_editor_completed(data?.[0], request_nonce);
     },
 
-    async query_active_history({ timeperiod, ...query_options }: QueryOptions) {
+    async query_active_history(
+      { timeperiod, ...query_options }: QueryOptions,
+      request_nonce: number
+    ) {
       const settingsStore = useSettingsStore();
       const bucketsStore = useBucketsStore();
       // Filter out periods that are already in the history, and that are in the future
@@ -503,22 +563,29 @@ export const useActivityStore = defineStore('activity', {
         name: 'activityQuery',
         verbose: true,
       });
+      if (!this.isCurrentRequest(request_nonce)) return;
       const active_history = _.zipObject(
         periods,
         _.map(data, pair => _.filter(pair, e => e.data.status == 'not-afk'))
       );
-      this.query_active_history_completed({ active_history });
+      this.query_active_history_completed({ active_history }, request_nonce);
     },
 
-    async query_category_time_by_period({
-      timeperiod,
-      filter_categories,
-      filter_afk,
-      include_stopwatch,
-      dontQueryInactive,
-      always_active_pattern,
-    }: QueryOptions & { dontQueryInactive: boolean }) {
-      console.log('ACTIVITY STORE: query_category_time_by_period STARTED.', { dontQueryInactive, filters: filter_categories });
+    async query_category_time_by_period(
+      {
+        timeperiod,
+        filter_categories,
+        filter_afk,
+        include_stopwatch,
+        dontQueryInactive,
+        always_active_pattern,
+      }: QueryOptions & { dontQueryInactive: boolean },
+      request_nonce: number
+    ) {
+      console.log('ACTIVITY STORE: query_category_time_by_period STARTED.', {
+        dontQueryInactive,
+        filters: filter_categories,
+      });
       // TODO: Needs to be adapted for Android
       let periods: string[];
       const count = timeperiod.length[0];
@@ -542,23 +609,15 @@ export const useActivityStore = defineStore('activity', {
 
       // Filter out periods that start in the future
       periods = periods.filter(period => new Date(period.split('/')[0]) < new Date());
-      console.log('ACTIVITY STORE: query_category_time_by_period - Calculated periods:', periods.length);
-
-      const signal = getClient().controller.signal;
-      let cancelled = false;
-      signal.onabort = () => {
-        cancelled = true;
-        console.debug('Request aborted');
-      };
+      console.log(
+        'ACTIVITY STORE: query_category_time_by_period - Calculated periods:',
+        periods.length
+      );
 
       // Query one period at a time, to avoid timeout on slow queries
       let data = [];
       for (const period of periods) {
-        // Not stable
-        //signal.throwIfAborted();
-        if (cancelled) {
-          throw signal['reason'] || 'unknown reason';
-        }
+        if (!this.isCurrentRequest(request_nonce)) return;
 
         // Only query periods with known data from AFK bucket
         if (dontQueryInactive && this.active.events.length > 0) {
@@ -593,17 +652,18 @@ export const useActivityStore = defineStore('activity', {
           always_active_pattern,
           ...(isAndroid
             ? {
-              bid_android: this.buckets.android[0],
-            }
+                bid_android: this.buckets.android[0],
+              }
             : {
-              bid_afk: this.buckets.afk[0],
-              bid_window: this.buckets.window[0],
-            }),
+                bid_afk: this.buckets.afk[0],
+                bid_window: this.buckets.window[0],
+              }),
         });
         const result = await getClient().query([period], query, {
           verbose: true,
           name: 'categoryQuery',
         });
+        if (!this.isCurrentRequest(request_nonce)) return;
         data = data.concat(result);
       }
 
@@ -612,11 +672,13 @@ export const useActivityStore = defineStore('activity', {
       // Filter out values that are undefined (no longer needed, only used when visualization was progressive (looks buggy))
       by_period = _.fromPairs(_.toPairs(by_period).filter(o => o[1]));
 
-      console.log('ACTIVITY STORE: query_category_time_by_period - Data ready to commit.', { periods: Object.keys(by_period).length });
-      this.query_category_time_by_period_completed({ by_period });
+      console.log('ACTIVITY STORE: query_category_time_by_period - Data ready to commit.', {
+        periods: Object.keys(by_period).length,
+      });
+      this.query_category_time_by_period_completed({ by_period }, request_nonce);
     },
 
-    async query_active_history_android({ timeperiod }: QueryOptions) {
+    async query_active_history_android({ timeperiod }: QueryOptions, request_nonce: number) {
       const periods = timeperiodStrsAroundTimeperiod(timeperiod).filter(tp_str => {
         return !_.includes(this.active.history, tp_str);
       });
@@ -624,6 +686,7 @@ export const useActivityStore = defineStore('activity', {
         periods,
         queries.activityQueryAndroid(this.buckets.android[0])
       );
+      if (!this.isCurrentRequest(request_nonce)) return;
       const active_history = _.zipObject(periods, data);
       const active_history_events = _.mapValues(
         active_history,
@@ -631,7 +694,7 @@ export const useActivityStore = defineStore('activity', {
           return [{ timestamp: key.split('/')[0], duration, data: { status: 'not-afk' } }];
         }
       );
-      this.query_active_history_completed({ active_history: active_history_events });
+      this.query_active_history_completed({ active_history: active_history_events }, request_nonce);
     },
 
     set_available(this: State) {
@@ -804,27 +867,33 @@ export const useActivityStore = defineStore('activity', {
 
     // mutations
     start_loading(this: State, query_options: QueryOptions) {
+      const shouldResetVisuals = this.query_options == null;
       this.loaded = true;
       this.query_options = query_options;
+      this.request_nonce += 1;
+      this.active_request_nonce = this.request_nonce;
 
-      // Resets the store state while waiting for new query to finish
-      this.window.top_apps = null;
-      this.window.top_titles = null;
+      if (shouldResetVisuals) {
+        // Resets the store state while waiting for the first query to finish.
+        // Later refreshes keep rendering the previous snapshot until new data arrives.
+        this.window.top_apps = null;
+        this.window.top_titles = null;
 
-      this.browser.duration = 0;
-      this.browser.top_domains = null;
-      this.browser.top_urls = null;
-      this.browser.top_titles = null;
+        this.browser.duration = 0;
+        this.browser.top_domains = null;
+        this.browser.top_urls = null;
+        this.browser.top_titles = null;
 
-      this.editor.duration = 0;
-      this.editor.top_files = null;
-      this.editor.top_languages = null;
-      this.editor.top_projects = null;
+        this.editor.duration = 0;
+        this.editor.top_files = null;
+        this.editor.top_languages = null;
+        this.editor.top_projects = null;
 
-      this.category.top = null;
-      this.category.by_period = null;
+        this.category.top = null;
+        this.category.by_period = null;
 
-      this.active.duration = null;
+        this.active.duration = null;
+      }
 
       // Ensures that active history isn't being fully reloaded on every date change
       // (see caching done in query_active_history and query_active_history_android)
@@ -832,9 +901,15 @@ export const useActivityStore = defineStore('activity', {
       if (Object.keys(this.active.history).length === 0) {
         this.active.history = {};
       }
+      return this.request_nonce;
     },
 
-    query_window_completed(this: State, data: WindowQueryResult | null = null) {
+    query_window_completed(
+      this: State,
+      data: WindowQueryResult | null = null,
+      request_nonce?: number
+    ) {
+      if (typeof request_nonce === 'number' && request_nonce !== this.active_request_nonce) return;
       const cat_events = scoreCategories(colorCategories(ensureEventList(data?.cat_events)));
 
       // Set $color and $score for categories
@@ -847,32 +922,57 @@ export const useActivityStore = defineStore('activity', {
       console.log('ACTIVITY STORE: query_window_completed committed data');
     },
 
-    query_browser_completed(this: State, data: BrowserQueryResult | null = null) {
+    query_browser_completed(
+      this: State,
+      data: BrowserQueryResult | null = null,
+      request_nonce?: number
+    ) {
+      if (typeof request_nonce === 'number' && request_nonce !== this.active_request_nonce) return;
       this.browser.top_domains = ensureEventList(data?.domains);
       this.browser.top_urls = ensureEventList(data?.urls);
       this.browser.top_titles = ensureEventList(data?.titles);
       this.browser.duration = ensureDuration(data?.duration);
     },
 
-    query_stopwatch_completed(this: State, data: StopwatchQueryResult | null = null) {
+    query_stopwatch_completed(
+      this: State,
+      data: StopwatchQueryResult | null = null,
+      request_nonce?: number
+    ) {
+      if (typeof request_nonce === 'number' && request_nonce !== this.active_request_nonce) return;
       this.stopwatch.top_stopwatches = ensureEventList(data?.stopwatch_events);
     },
 
-    query_editor_completed(this: State, data: EditorQueryResult | null = null) {
+    query_editor_completed(
+      this: State,
+      data: EditorQueryResult | null = null,
+      request_nonce?: number
+    ) {
+      if (typeof request_nonce === 'number' && request_nonce !== this.active_request_nonce) return;
       this.editor.duration = ensureDuration(data?.duration);
       this.editor.top_files = ensureEventList(data?.files);
       this.editor.top_languages = ensureEventList(data?.languages);
       this.editor.top_projects = ensureEventList(data?.projects);
     },
 
-    query_active_history_completed(this: State, { active_history } = { active_history: {} }) {
+    query_active_history_completed(
+      this: State,
+      { active_history } = { active_history: {} },
+      request_nonce?: number
+    ) {
+      if (typeof request_nonce === 'number' && request_nonce !== this.active_request_nonce) return;
       this.active.history = {
         ...this.active.history,
         ...ensureActiveHistory(active_history),
       };
     },
 
-    query_category_time_by_period_completed(this: State, { by_period } = { by_period: {} }) {
+    query_category_time_by_period_completed(
+      this: State,
+      { by_period } = { by_period: {} },
+      request_nonce?: number
+    ) {
+      if (typeof request_nonce === 'number' && request_nonce !== this.active_request_nonce) return;
       this.category.by_period = ensureByPeriod(by_period);
       console.log('ACTIVITY STORE: query_category_time_by_period_completed committed by_period');
     },

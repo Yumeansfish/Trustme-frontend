@@ -1,7 +1,7 @@
 <template>
-<div>
-  <iframe :src="src" frameborder="0"></iframe>
-</div>
+  <div class="h-full min-h-0">
+    <iframe class="h-full w-full" :src="src" frameborder="0"></iframe>
+  </div>
 </template>
 
 <script lang="js">
@@ -17,6 +17,7 @@ export default {
   computed: {
     src: function () {
       const options = useActivityStore().query_options;
+      if (!options || !options.timeperiod) return '';
       const start = options.timeperiod.start;
       const end = moment(start).add(...options.timeperiod.length).toISOString();
       const urlParams = new URLSearchParams({

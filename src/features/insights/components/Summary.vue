@@ -1,7 +1,7 @@
 <template>
-<div>
-  <div class="aw-summary-container"></div>
-</div>
+  <div class="flex h-full min-h-0 flex-col">
+    <div class="aw-summary-container min-h-0 flex-1"></div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -28,6 +28,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    selectedName: {
+      type: String,
+      default: null,
+    },
   },
   data: function () {
     return {};
@@ -35,6 +39,9 @@ export default {
   computed: {},
   watch: {
     fields: function () {
+      this.update();
+    },
+    selectedName: function () {
       this.update();
     },
   },
@@ -53,7 +60,8 @@ export default {
           this.namefunc,
           this.hoverfunc,
           this.colorfunc,
-          this.linkfunc
+          this.linkfunc,
+          this.selectedName
         );
       } else {
         summary.set_status(el, 'Loading...');

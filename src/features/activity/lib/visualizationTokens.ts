@@ -1,4 +1,6 @@
 export const ACTIVITY_PRIMARY_BAR = '#6699ff';
+export const ACTIVITY_HIGHLIGHT = '#0f8f9c';
+export const ACTIVITY_HIGHLIGHT_BORDER = '#0a6c76';
 export const ACTIVITY_AXIS_COLOR = '#a0aab2';
 export const ACTIVITY_GRID_COLOR = '#f0f0f0';
 export const ACTIVITY_QUERY_INTERVAL = '#aaaaaa';
