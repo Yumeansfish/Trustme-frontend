@@ -21,6 +21,11 @@
     --primary-foreground: 255 255 255;
     --primary-ring: 221 214 254;
 
+    --highlight: 15 143 156;
+    --highlight-hover: 13 118 128;
+    --highlight-soft: 224 247 250;
+    --highlight-ring: 153 230 237;
+
     --success: 5 150 105;
     --success-hover: 4 120 87;
     --success-soft: 236 253 245;
@@ -51,9 +56,7 @@
     --radius-pill: 9999px;
 
     --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.06);
-    --shadow-lg:
-      0 10px 15px -3px rgb(15 23 42 / 0.12),
-      0 4px 6px -4px rgb(15 23 42 / 0.08);
+    --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.08);
     --shadow-xl: 0 25px 50px -12px rgb(15 23 42 / 0.22);
 
     --duration-fast: 150ms;
@@ -75,11 +78,11 @@
 
     --size-summary-pct: 42px;
     --size-summary-duration: 55px;
-    --size-summary-max-height: 25rem;
+    --size-summary-max-height: 18rem;
     --size-activity-redirect-min-height: 15rem;
-    --size-event-list-max-height: 25rem;
-    --size-donut-chart: 13.75rem;
-    --size-timeline-barchart-height: 20.625rem;
+    --size-event-list-max-height: 18rem;
+    --size-donut-chart: 11.75rem;
+    --size-timeline-barchart-height: 14.5rem;
     --size-sunburst-clock-height: 38.75rem;
     --size-sunburst-clock-legend-width: 6.25rem;
     --size-sunburst-clock-max-width: 46.875rem;
@@ -87,7 +90,10 @@
     --size-sunburst-clock-center-width: 8.75rem;
     --size-sunburst-overlay-width: 18.75rem;
     --size-sunburst-overlay-offset-y: 4.375rem;
-    --size-visualization-min-height: 28.125rem;
+    --size-visualization-min-height: 20rem;
+    --size-vis-card-standard-height: 18.5rem;
+    --size-vis-card-timeline-height: 19rem;
+    --size-vis-card-tall-height: 41rem;
     --size-help-badge: 1rem;
     --size-modal-content-max-height: 75vh;
 
