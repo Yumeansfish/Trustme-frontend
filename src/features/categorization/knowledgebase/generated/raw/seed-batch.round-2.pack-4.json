@@ -1,0 +1,45 @@
+{
+  "id": "gen-1773089152-Mf9Y4Hd61XPeA07HtEUU",
+  "object": "chat.completion",
+  "created": 1773089152,
+  "model": "openai/gpt-4o-mini",
+  "provider": "OpenAI",
+  "system_fingerprint": "fp_a1ddba3226",
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "{\"categories\":[{\"name\":\"Shopping\",\"exact_apps\":[\"Amazon\",\"eBay\",\"Etsy\",\"Walmart\",\"Target\",\"Best Buy\",\"Shopify\",\"Zalando\",\"Alibaba\",\"Rakuten\",\"Wish\",\"Wayfair\"],\"aliases\":[\"E-commerce\",\"Online Store\",\"Shopping Site\",\"Product Purchase\",\"Market Browser\",\"Retail App\",\"Buy Stuff\",\"Deal Finder\"],\"domains\":[\"amazon.com\",\"ebay.com\",\"etsy.com\",\"walmart.com\",\"target.com\",\"bestbuy.com\",\"shopify.com\",\"alibaba.com\"],\"title_keywords\":[\"Buy Online\",\"Shopping Cart\",\"Checkout\",\"Order Tracking\",\"Product Search\",\"Deals and Discounts\",\"Marketplace\",\"Wishlist\"],\"negative_indicators\":[\"Invoice\",\"Billing Statement\",\"Return Policy\",\"Credit Card Statement\",\"Tax Return\",\"Financial Report\"]},{\"name\":\"Finance\",\"exact_apps\":[\"QuickBooks\",\"Mint\",\"YNAB\",\"TurboTax\",\"PayPal\",\"Venmo\",\"Square\",\"Xero\",\"Robinhood\",\"Fidelity\",\"Bank of America\",\"Chase\"],\"aliases\":[\"Money Management\",\"Budgeting App\",\"Expense Tracker\",\"Financial Software\",\"Investment Platform\",\"Banking App\",\"Savings Tool\",\"Accounting Software\"],\"domains\":[\"quickbooks.com\",\"mint.com\",\"ynab.com\",\"turbotax.com\",\"paypal.com\",\"venmo.com\",\"square.com\",\"robinhood.com\"],\"title_keywords\":[\"Budget Overview\",\"Account Summary\",\"Transaction History\",\"Investment Portfolio\",\"Expense Report\",\"Bank Statement\",\"Tax Filing\",\"Credit Score\"],\"negative_indicators\":[\"Shopping List\",\"Invoice Confirmation\",\"Retail Transaction\",\"Payment Confirmation\",\"Return Request\",\"Customer Service\"]},{\"name\":\"System\",\"exact_apps\":[\"File Explorer\",\"Terminal\",\"Task Manager\",\"Control Panel\",\"System Preferences\",\"Disk Utility\",\"Windows Settings\",\"Activity Monitor\",\"Registry Editor\",\"Command Prompt\",\"Device Manager\",\"Disk Cleanup\"],\"aliases\":[\"System Tools\",\"Administration App\",\"Settings Hub\",\"Device Settings\",\"File Manager\",\"OS Utilities\",\"Config Panel\",\"User Management\"],\"domains\":[\"microsoft.com\",\"apple.com\",\"linux.org\",\"support.microsoft.com\",\"support.apple.com\",\"linuxmint.com\",\"ukubuntu.com\",\"ubuntu.com\"],\"title_keywords\":[\"Settings\",\"File Management\",\"System Configuration\",\"User Permissions\",\"Installation\",\"Device Setup\",\"Performance Monitor\",\"Software Update\"],\"negative_indicators\":[\"Retail App\",\"Financial Dashboard\",\"Online Shopping\",\"Invoice Processing\",\"Email Client\",\"Gaming Application\"]}]}",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 424,
+    "completion_tokens": 463,
+    "total_tokens": 887,
+    "cost": 0.0003414,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0003414,
+      "upstream_inference_prompt_cost": 0.0000636,
+      "upstream_inference_completions_cost": 0.0002778
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

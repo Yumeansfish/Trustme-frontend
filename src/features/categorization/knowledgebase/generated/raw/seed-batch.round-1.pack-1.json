@@ -1,0 +1,45 @@
+{
+  "id": "gen-1773089068-rMcWrFHSzc1EIfYRJWU4",
+  "object": "chat.completion",
+  "created": 1773089068,
+  "model": "openai/gpt-4o-mini",
+  "provider": "OpenAI",
+  "system_fingerprint": "fp_a1ddba3226",
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "{\"categories\":[{\"name\":\"Code\",\"exact_apps\":[\"Visual Studio Code\",\"Sublime Text\",\"Atom\",\"PyCharm\",\"Eclipse\",\"NetBeans\",\"Git Bash\",\"Terminal\",\"Postman\",\"Docker\",\"GitKraken\",\"Xcode\"],\"aliases\":[\"Development\",\"Coding\",\"Programming\",\"Debugging\",\"Scripting\",\"Version Control\",\"CLI\",\"IDEs\"],\"domains\":[\"github.com\",\"gitlab.com\",\"stackoverflow.com\",\"npmjs.com\",\"pypi.org\",\"devdocs.io\",\"codepen.io\",\"jsfiddle.net\"],\"title_keywords\":[\"Coding\",\"Debugging\",\"Programming\",\"API Testing\",\"Version Control\",\"Terminal\",\"Build Tools\",\"Code Editor\"],\"negative_indicators\":[\"Design\",\"Visual\",\"Writing\",\"Research\",\"Graphics\",\"Documentation\"]},{\"name\":\"Design\",\"exact_apps\":[\"Adobe Photoshop\",\"Figma\",\"Sketch\",\"Adobe Illustrator\",\"InVision\",\"Canva\",\"Adobe XD\",\"CorelDRAW\",\"Procreate\",\"Adobe After Effects\",\"Affinity Designer\",\"GIMP\"],\"aliases\":[\"Graphic Design\",\"UI/UX\",\"Visual Design\",\"Mockup Tools\",\"Illustration Tools\",\"Photo Editing\",\"Motion Graphics\",\"Digital Design\"],\"domains\":[\"behance.net\",\"dribbble.com\",\"adobe.com\",\"figma.com\",\"sketch.com\",\"canva.com\",\"invisionapp.com\",\"coreldraw.com\"],\"title_keywords\":[\"UI Design\",\"Graphics\",\"Mockups\",\"Illustration\",\"Photo Editing\",\"Motion Design\",\"Design Systems\",\"Wireframes\"],\"negative_indicators\":[\"Code\",\"Programming\",\"Writing\",\"Research\",\"Documentation\",\"Technical\"]},{\"name\":\"Writing\",\"exact_apps\":[\"Microsoft Word\",\"Google Docs\",\"Notion\",\"Evernote\",\"Scrivener\",\"Bear\",\"MarkdownPad\",\"Ulysses\",\"Typora\",\"Quip\",\"Zoho Writer\",\"WritersDuet\"],\"aliases\":[\"Text Editing\",\"Document Creation\",\"Drafting\",\"Notes\",\"Content Writing\",\"Article Writing\",\"Blogging\",\"Editing\"],\"domains\":[\"medium.com\",\"wikipedia.org\",\"notion.so\",\"evernote.com\",\"scribophile.com\",\"grammarly.com\",\"wordtune.com\",\"citedby.net\"],\"title_keywords\":[\"Documents\",\"Essays\",\"Specs\",\"Notes\",\"Drafts\",\"Content\",\"Markdown\",\"Wikis\"],\"negative_indicators\":[\"Code\",\"Programming\",\"Design\",\"Research\",\"Technical Writing\",\"Documentation\"]},{\"name\":\"Research\",\"exact_apps\":[\"Zotero\",\"Mendeley\",\"EndNote\",\"Evernote\",\"Google Scholar\",\"Scrivener\",\"Microsoft OneNote\",\"NVivo\",\"Statista\",\"RefWorks\",\"JSTOR\",\"ResearchGate\"],\"aliases\":[\"Information Gathering\",\"Literature Review\",\"Data Collection\",\"Research Tools\",\"Academic Research\",\"Reference Management\",\"Citation Tools\",\"Research Analysis\"],\"domains\":[\"scholar.google.com\",\"jstor.org\",\"researchgate.net\",\"sciencedirect.com\",\"arxiv.org\",\"nature.com\",\"doi.org\",\"pubmed.ncbi.nlm.nih.gov\"],\"title_keywords\":[\"Research\",\"Documentation\",\"Papers\",\"Tutorials\",\"Comparison\",\"Investigation\",\"Literature\",\"Data\"],\"negative_indicators\":[\"Code\",\"Programming\",\"Design\",\"Writing\",\"Technical\",\"Development\"]}]}",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 472,
+    "completion_tokens": 616,
+    "total_tokens": 1088,
+    "cost": 0.0004404,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0004404,
+      "upstream_inference_prompt_cost": 0.0000708,
+      "upstream_inference_completions_cost": 0.0003696
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

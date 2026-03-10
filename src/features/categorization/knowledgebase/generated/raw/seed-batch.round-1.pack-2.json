@@ -1,0 +1,45 @@
+{
+  "id": "gen-1773089082-6OXET9LfMjfSTJBnQKG7",
+  "object": "chat.completion",
+  "created": 1773089082,
+  "model": "openai/gpt-4o-mini",
+  "provider": "OpenAI",
+  "system_fingerprint": "fp_373a14eb6f",
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "{\"categories\":[{\"name\":\"Browsing\",\"exact_apps\":[\"Google Chrome\",\"Mozilla Firefox\",\"Safari\",\"Microsoft Edge\",\"Opera\",\"Brave\",\"Vivaldi\",\"Internet Explorer\",\"Tor Browser\",\"DuckDuckGo\",\"Chromium\",\"Opera GX\"],\"aliases\":[\"Web Surfing\",\"Internet Browsing\",\"Page Hopping\",\"Web Navigation\",\"Online Browsing\",\"Web Exploration\",\"Surfing\",\"Link Clicking\"],\"domains\":[\"google.com\",\"reddit.com\",\"youtube.com\",\"wikipedia.org\",\"twitter.com\",\"quora.com\",\"linkedin.com\",\"facebook.com\"],\"title_keywords\":[\"Browsing\",\"Shopping\",\"Video Streaming\",\"News Feed\",\"Social Media\",\"Search Results\",\"Forums\",\"Image Gallery\"],\"negative_indicators\":[\"Email Notifications\",\"Meeting Reminders\",\"Chat Alerts\",\"Task Management\",\"Document Editing\",\"File Transfer\"]},{\"name\":\"Messaging\",\"exact_apps\":[\"Slack\",\"Microsoft Teams\",\"WhatsApp\",\"Discord\",\"Telegram\",\"Signal\",\"Skype\",\"Google Chat\",\"Facebook Messenger\",\"WeChat\",\"Viber\",\"iMessage\"],\"aliases\":[\"Chatting\",\"Instant Messaging\",\"Direct Messaging\",\"IM\",\"Team Chat\",\"Social Messaging\",\"Text Messaging\",\"Group Chat\"],\"domains\":[\"slack.com\",\"teams.microsoft.com\",\"whatsapp.com\",\"discord.com\",\"telegram.org\",\"messenger.com\",\"signal.org\",\"weixin.qq.com\"],\"title_keywords\":[\"Chat\",\"Conversation\",\"Message\",\"Direct Message\",\"Group Chat\",\"Team Communication\",\"Thread\",\"Notification\"],\"negative_indicators\":[\"Video Call\",\"Screen Sharing\",\"Email\",\"File Transfer\",\"Document Collaboration\",\"Meeting Invite\"]},{\"name\":\"Meetings\",\"exact_apps\":[\"Zoom\",\"Microsoft Teams\",\"Google Meet\",\"Skype\",\"Webex\",\"GoToMeeting\",\"BlueJeans\",\"Jitsi Meet\",\"RingCentral\",\"Cisco Webex Teams\",\"Slack Calls\",\"Whereby\"],\"aliases\":[\"Video Conference\",\"Live Call\",\"Webinar\",\"Virtual Meeting\",\"Online Meeting\",\"Audio Call\",\"Screen Share\",\"Meeting Room\"],\"domains\":[\"zoom.us\",\"teams.microsoft.com\",\"meet.google.com\",\"webex.com\",\"gotomeeting.com\",\"bluejeans.com\",\"jitsi.org\",\"ringcentral.com\"],\"title_keywords\":[\"Meeting\",\"Conference\",\"Call\",\"Webinar\",\"Presentation\",\"Screen Share\",\"Video Conference\",\"Team Meeting\"],\"negative_indicators\":[\"Document Editing\",\"Email\",\"Chat\",\"Task List\",\"File Sharing\",\"Online Research\"]},{\"name\":\"Email\",\"exact_apps\":[\"Microsoft Outlook\",\"Gmail\",\"Apple Mail\",\"Thunderbird\",\"Yahoo Mail\",\"Zoho Mail\",\"ProtonMail\",\"Outlook.com\",\"AOL Mail\",\"Mailbird\",\"eM Client\",\"Roundcube\"],\"aliases\":[\"Email Client\",\"Mail App\",\"Inbox Management\",\"Mailing\",\"Message Handling\",\"Email Service\",\"Mailing System\",\"Email Correspondence\"],\"domains\":[\"gmail.com\",\"outlook.com\",\"yahoo.com\",\"zoho.com\",\"protonmail.com\",\"aol.com\",\"mail.com\",\"roundcube.net\"],\"title_keywords\":[\"Inbox\",\"Sent Items\",\"Drafts\",\"New Email\",\"Message\",\"Attachment\",\"Mail\",\"Email Thread\"],\"negative_indicators\":[\"Chat\",\"Video Call\",\"Task Manager\",\"Document Sharing\",\"Online Course\",\"Meeting\"]}]}",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 459,
+    "completion_tokens": 614,
+    "total_tokens": 1073,
+    "cost": 0.00043725,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.00043725,
+      "upstream_inference_prompt_cost": 0.00006885,
+      "upstream_inference_completions_cost": 0.0003684
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "id": "gen-1773089094-7tg5p1LaBYhSRfGCwAzf",
+  "object": "chat.completion",
+  "created": 1773089094,
+  "model": "openai/gpt-4o-mini",
+  "provider": "OpenAI",
+  "system_fingerprint": "fp_a1ddba3226",
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "{\n  \"categories\": [\n    {\n      \"name\": \"Planning\",\n      \"exact_apps\": [\n        \"Trello\",\n        \"Asana\",\n        \"Notion\",\n        \"Todoist\",\n        \"Microsoft Planner\",\n        \"Google Calendar\",\n        \"Evernote\",\n        \"Microsoft Project\",\n        \"Jira\",\n        \"ClickUp\",\n        \"Microsoft To Do\",\n        \"Basecamp\"\n      ],\n      \"aliases\": [\n        \"Task Manager\",\n        \"Scheduler\",\n        \"To-Do List\",\n        \"Project Management Tool\",\n        \"Calendar App\",\n        \"Planning Tool\",\n        \"Roadmap Software\",\n        \"Collaboration Platform\"\n      ],\n      \"domains\": [\n        \"trello.com\",\n        \"asana.com\",\n        \"notion.so\",\n        \"todoist.com\",\n        \"google.com/calendar\",\n        \"evernote.com\",\n        \"microsoft.com/planner\",\n        \"jira.com\"\n      ],\n      \"title_keywords\": [\n        \"task\",\n        \"project\",\n        \"schedule\",\n        \"calendar\",\n        \"planning\",\n        \"reminder\",\n        \"coordinator\",\n        \"to-do\"\n      ],\n      \"negative_indicators\": [\n        \"game\",\n        \"video\",\n        \"music\",\n        \"streaming\",\n        \"social\",\n        \"chat\"\n      ]\n    },\n    {\n      \"name\": \"Gaming\",\n      \"exact_apps\": [\n        \"Steam\",\n        \"Epic Games Launcher\",\n        \"Origin\",\n        \"Battle.net\",\n        \"Discord\",\n        \"GOG Galaxy\",\n        \"Xbox App\",\n        \"PlayStation App\",\n        \"Uplay\",\n        \"Riot Client\",\n        \"Game Pass\",\n        \"NVIDIA GeForce NOW\"\n      ],\n      \"aliases\": [\n        \"Game Launcher\",\n        \"Gaming Platform\",\n        \"Gaming Client\",\n        \"Game Service\",\n        \"Video Game App\",\n        \"Game Hub\",\n        \"Gaming Catalog\",\n        \"Esports Client\"\n      ],\n      \"domains\": [\n        \"steampowered.com\",\n        \"epicgames.com\",\n        \"origin.com\",\n        \"blizzard.com\",\n        \"discord.com\",\n        \"gog.com\",\n        \"xbox.com\",\n        \"playstation.com\"\n      ],\n      \"title_keywords\": [\n        \"game\",\n        \"launcher\",\n        \"play\",\n        \"multiplayer\",\n        \"download\",\n        \"battle\",\n        \"esports\",\n        \"console\"\n      ],\n      \"negative_indicators\": [\n        \"music\",\n        \"video\",\n        \"streaming\",\n        \"planner\",\n        \"document\",\n        \"chat\"\n      ]\n    },\n    {\n      \"name\": \"Video\",\n      \"exact_apps\": [\n        \"VLC Media Player\",\n        \"YouTube\",\n        \"Netflix\",\n        \"Hulu\",\n        \"Adobe Premiere Pro\",\n        \"Windows Media Player\",\n        \"Zoom\",\n        \"Twitch\",\n        \"Plex\",\n        \"Kdenlive\",\n        \"iMovie\",\n        \"QuickTime Player\"\n      ],\n      \"aliases\": [\n        \"Video Player\",\n        \"Media Player\",\n        \"Streaming Service\",\n        \"Video Hub\",\n        \"Film App\",\n        \"Clip Player\",\n        \"Video Software\",\n        \"Video Repository\"\n      ],\n      \"domains\": [\n        \"youtube.com\",\n        \"netflix.com\",\n        \"hulu.com\",\n        \"vimeo.com\",\n        \"twitch.tv\",\n        \"plex.tv\",\n        \"adobe.com/premiere\",\n        \"kdenlive.org\"\n      ],\n      \"title_keywords\": [\n        \"video\",\n        \"streaming\",\n        \"watch\",\n        \"media\",\n        \"film\",\n        \"clip\",\n        \"lecture\",\n        \"record\"\n      ],\n      \"negative_indicators\": [\n        \"game\",\n        \"music\",\n        \"task\",\n        \"calendar\",\n        \"chat\",\n        \"social\"\n      ]\n    },\n    {\n      \"name\": \"Music\",\n      \"exact_apps\": [\n        \"Spotify\",\n        \"Apple Music\",\n        \"YouTube Music\",\n        \"Pandora\",\n        \"SoundCloud\",\n        \"Tidal\",\n        \"Audacity\",\n        \"Winamp\",\n        \"iTunes\",\n        \"Amazon Music\",\n        \"Deezer\",\n        \"Google Play Music\"\n      ],\n      \"aliases\": [\n        \"Music Player\",\n        \"Streaming Music\",\n        \"Audio App\",\n        \"Music Hub\",\n        \"Radio Streaming\",\n        \"Audio Service\",\n        \"Song Player\",\n        \"Music Service\"\n      ],\n      \"domains\": [\n        \"spotify.com\",\n        \"apple.com/music\",\n        \"music.youtube.com\",\n        \"pandora.com\",\n        \"soundcloud.com\",\n        \"tidal.com\",\n        \"amazon.com/music\",\n        \"deezer.com\"\n      ],\n      \"title_keywords\": [\n        \"music\",\n        \"audio\",\n        \"stream\",\n        \"playlist\",\n        \"radio\",\n        \"song\",\n        \"listen\",\n        \"track\"\n      ],\n      \"negative_indicators\": [\n        \"video\",\n        \"game\",\n        \"task\",\n        \"planner\",\n        \"document\",\n        \"chat\"\n      ]\n    }\n  ]\n}",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 445,
+    "completion_tokens": 1051,
+    "total_tokens": 1496,
+    "cost": 0.00069735,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.00069735,
+      "upstream_inference_prompt_cost": 0.00006675,
+      "upstream_inference_completions_cost": 0.0006306
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}
