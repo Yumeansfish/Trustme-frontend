@@ -3,10 +3,13 @@
     <div class="flex h-full overflow-hidden">
       <aw-header class="shrink-0"></aw-header>
       <main
-        class="min-h-0 min-w-0 flex-1 overflow-y-auto px-2 pt-2 md:px-3"
-        :class="fullContainer ? 'w-full' : 'max-w-none'"
+        class="min-h-0 min-w-0 flex-1 px-2 py-2 md:px-3 md:py-3"
+        :class="viewportPage ? 'overflow-hidden' : 'overflow-y-auto'"
       >
-        <div class="aw-panel my-2 p-3 md:my-3">
+        <div
+          class="aw-panel p-3"
+          :class="viewportPage ? 'flex h-full min-h-0 flex-col overflow-hidden' : ''"
+        >
           <error-boundary>
             <new-release-notification
               v-if="isNewReleaseCheckEnabled"
@@ -24,12 +27,9 @@
 <script lang="ts">
 import { useSettingsStore } from '~/features/settings/store/settings';
 import { useServerStore } from '~/shared/stores/server';
-import { detectPreferredTheme } from '~/shared/lib/theme';
+import { applyTheme } from '~/shared/lib/theme';
 import AppToaster from '~/shared/ui/AppToaster.vue';
 import AppDialog from '~/shared/ui/AppDialog.vue';
-// if vite is used, you can import css file as module
-//import darkCssUrl from '../static/dark.css?url';
-//import darkCssContent from '../static/dark.css?inline';
 
 import { defineComponent } from 'vue';
 
@@ -43,30 +43,30 @@ export default defineComponent({
       activityViews: [],
       isNewReleaseCheckEnabled: !process.env.VUE_APP_ON_ANDROID,
       loaded: false,
+      themeMediaQuery: null as MediaQueryList | null,
     };
   },
 
   computed: {
-    fullContainer() {
-      return this.$route.meta.fullContainer;
+    viewportPage() {
+      return Boolean(this.$route.meta.viewportPage);
+    },
+    settingsTheme() {
+      return useSettingsStore().theme;
+    },
+  },
+
+  watch: {
+    settingsTheme(theme) {
+      applyTheme(theme);
     },
   },
 
   async created() {
     try {
-      // Get Theme From LocalStorage
       const settingsStore = useSettingsStore();
       await settingsStore.ensureLoaded();
-      const theme = settingsStore.theme;
-      const detectedTheme = theme === 'auto' ? detectPreferredTheme() : theme;
-
-      // Apply the dark theme if detected
-      if (detectedTheme === 'dark') {
-        const themeLink = document.createElement('link');
-        themeLink.href = '/dark.css';
-        themeLink.rel = 'stylesheet';
-        document.querySelector('head')?.appendChild(themeLink);
-      }
+      applyTheme(settingsStore.theme);
     } catch (e) {
       console.error('Failed to load settings or theme:', e);
     } finally {
@@ -77,6 +77,24 @@ export default defineComponent({
   mounted: async function () {
     const serverStore = useServerStore();
     await serverStore.getInfo();
+
+    if (window.matchMedia) {
+      this.themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.themeMediaQuery.addEventListener('change', this.handleSystemThemeChange);
+    }
+  },
+
+  beforeUnmount() {
+    this.themeMediaQuery?.removeEventListener('change', this.handleSystemThemeChange);
+  },
+
+  methods: {
+    handleSystemThemeChange() {
+      const settingsStore = useSettingsStore();
+      if (settingsStore.theme === 'auto') {
+        applyTheme('auto');
+      }
+    },
   },
 });
 </script>

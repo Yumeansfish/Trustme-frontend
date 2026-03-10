@@ -1,5 +1,5 @@
 <template>
-<div>
+<div class="h-full min-h-0">
   <aw-alert variant="danger" v-for="error in errors" :key="error.time" :show="!error.dismissed" dismissible @dismissed="error.dismissed = false">{{ error.msg }}</aw-alert>
   <slot></slot>
 </div>
@@ -17,8 +17,7 @@ export default defineComponent({
     };
   },
   errorCaptured(err: any, _vm: any, _info: any) {
-    // console.error("Error captured!");
-    // console.error(err, vm, info);
+    console.error("Error captured!", err, _vm, _info);
 
     // Ignore request cancellation errors
     if (err.code === 'ERR_CANCELED') {

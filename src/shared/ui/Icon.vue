@@ -48,6 +48,9 @@ import {
   ArrowUp,
   ArrowDown,
   Tag,
+  Sun,
+  Moon,
+  GripVertical,
 } from 'lucide-vue-next';
 
 // Map FontAwesome icon names used across the codebase to Lucide equivalents
@@ -104,6 +107,9 @@ const iconMap = {
   'arrow-down': ArrowDown,
   'tag': Tag,
   'tags': Tag,
+  'sun': Sun,
+  'moon': Moon,
+  'bars': GripVertical,
 };
 
 export default defineComponent({
