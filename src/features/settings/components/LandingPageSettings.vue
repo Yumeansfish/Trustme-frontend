@@ -1,22 +1,32 @@
 <template>
-<div class="space-y-3">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h5 class="m-0 text-base font-semibold text-foreground-strong">Landing page</h5>
-    <ui-select class="aw-select-sm w-full sm:w-56" v-if="loaded" :value="landingpage" @change="landingpage = $event.target.value">
-      <option value="/activity">Activity</option>
-      <option v-for="hostname in hostnames" :key="hostname" :value="'/activity/' + encodeURIComponent(hostname)">Activity ({{hostname}})</option>
-      <option value="/timeline">Timeline</option>
-    </ui-select><span class="text-sm text-foreground-muted" v-else>Loading...</span>
-  </div><small class="text-sm text-foreground-muted">The page to open when opening ActivityWatch.</small>
-</div>
+  <settings-card
+    title="Landing Page"
+    description="Choose where ActivityWatch should open by default."
+    icon="desktop"
+  >
+    <template #control>
+      <settings-dropdown
+        v-if="loaded"
+        v-model="landingpage"
+        :options="landingPageOptions"
+      ></settings-dropdown>
+      <div v-else class="aw-settings-subpanel text-sm text-foreground-muted">Loading pages...</div>
+    </template>
+  </settings-card>
 </template>
 
 <script lang="ts">
 import { useSettingsStore } from '~/features/settings/store/settings';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
+import SettingsCard from '~/features/settings/components/SettingsCard.vue';
+import SettingsDropdown from '~/features/settings/components/SettingsDropdown.vue';
 
 export default {
   name: 'LandingPageSettings',
+  components: {
+    SettingsCard,
+    SettingsDropdown,
+  },
   data: () => {
     return {
       bucketsStore: useBucketsStore(),
@@ -37,6 +47,25 @@ export default {
     },
     hostnames() {
       return this.bucketsStore.hosts;
+    },
+    landingPageOptions() {
+      return [
+        {
+          label: 'Activity',
+          value: '/activity',
+          description: 'Open the main dashboard',
+        },
+        ...this.hostnames.map(hostname => ({
+          label: `Activity (${hostname})`,
+          value: `/activity/${encodeURIComponent(hostname)}`,
+          description: 'Jump straight into one device view',
+        })),
+        {
+          label: 'Timeline',
+          value: '/timeline',
+          description: 'Open the live timeline view',
+        },
+      ];
     },
   },
   async mounted() {

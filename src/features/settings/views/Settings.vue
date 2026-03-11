@@ -1,20 +1,23 @@
 <template>
-<div class="space-y-6">
-  <div class="flex flex-wrap items-start justify-between gap-3">
-    <h3 class="aw-section-title">Settings</h3>
-    <theme-toggle-button floating></theme-toggle-button>
+  <div class="space-y-8 pb-10">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="space-y-2">
+        <h3 class="aw-section-title">Settings</h3>
+        <p class="aw-caption max-w-2xl">
+          Tune how your dashboard starts the day, opens pages, groups devices, and counts active
+          time.
+        </p>
+      </div>
+      <theme-toggle-button floating></theme-toggle-button>
+    </div>
+    <div class="aw-settings-stack">
+      <DaystartSettings></DaystartSettings>
+      <TimelineDurationSettings></TimelineDurationSettings>
+      <LandingPageSettings></LandingPageSettings>
+      <DeviceGroupingSettings></DeviceGroupingSettings>
+      <ActivePatternSettings></ActivePatternSettings>
+    </div>
   </div>
-  <div class="aw-divider"></div>
-  <DaystartSettings></DaystartSettings>
-  <div class="aw-divider"></div>
-  <TimelineDurationSettings></TimelineDurationSettings>
-  <div class="aw-divider"></div>
-  <LandingPageSettings></LandingPageSettings>
-  <div class="aw-divider"></div>
-  <DeviceGroupingSettings></DeviceGroupingSettings>
-  <div class="aw-divider"></div>
-  <ActivePatternSettings></ActivePatternSettings>
-</div>
 </template>
 
 <script lang="ts">

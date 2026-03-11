@@ -1,29 +1,50 @@
 <template>
-<div class="space-y-3">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h5 class="m-0 text-base font-semibold text-foreground-strong">Start of day</h5>
-    <ui-input class="aw-input-sm w-full sm:w-40" :value="startOfDay" type="time" @change="startOfDay = $event.target.value" />
-  </div><small class="text-sm text-foreground-muted">
-    The time at which days "start", since humans don't always go to bed before midnight.
-    Set to 04:00 by default.</small>
-  <div class="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-    <h5 class="m-0 text-base font-semibold text-foreground-strong">Start of week</h5>
-    <ui-select class="aw-select-sm w-full sm:w-40" v-model="startOfWeek">
-      <option value="Saturday">Saturday</option>
-      <option value="Sunday">Sunday</option>
-      <option value="Monday">Monday</option>
-    </ui-select>
-  </div><small class="text-sm text-foreground-muted">The weekday which starts a new week.</small>
-</div>
+  <div class="aw-settings-stack">
+    <settings-card
+      title="Start Of Day"
+      description="Shift the day boundary for late nights, overnight work, and sessions that continue past midnight."
+      icon="clock"
+    >
+      <template #control>
+        <ui-input
+          class="aw-settings-field w-full"
+          :value="startOfDay"
+          type="time"
+          @change="startOfDay = $event.target.value"
+        />
+      </template>
+    </settings-card>
+
+    <settings-card
+      title="Start Of Week"
+      description="Choose which weekday anchors weekly summaries and trend views."
+      icon="calendar-week"
+    >
+      <template #control>
+        <settings-dropdown v-model="startOfWeek" :options="weekOptions"></settings-dropdown>
+      </template>
+    </settings-card>
+  </div>
 </template>
 <script lang="ts">
 import { useSettingsStore } from '~/features/settings/store/settings';
+import SettingsCard from '~/features/settings/components/SettingsCard.vue';
+import SettingsDropdown from '~/features/settings/components/SettingsDropdown.vue';
 
 export default {
   name: 'DaystartSettings',
+  components: {
+    SettingsCard,
+    SettingsDropdown,
+  },
   data() {
     return {
       settingsStore: useSettingsStore(),
+      weekOptions: [
+        { label: 'Saturday', value: 'Saturday' },
+        { label: 'Sunday', value: 'Sunday' },
+        { label: 'Monday', value: 'Monday' },
+      ],
     };
   },
   computed: {
@@ -32,7 +53,6 @@ export default {
         return this.settingsStore.startOfDay;
       },
       set: function (value) {
-        console.log('Set start of day to ' + value);
         this.settingsStore.update({ startOfDay: value });
       },
     },
@@ -41,7 +61,6 @@ export default {
         return this.settingsStore.startOfWeek;
       },
       set: function (value) {
-        console.log('Set start of week to ' + value);
         this.settingsStore.update({ startOfWeek: value });
       },
     },

@@ -1,29 +1,48 @@
 <template>
-<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-  <div class="space-y-2">
-    <h5 class="text-sm font-semibold text-foreground-strong">Always count as active pattern</h5><small class="aw-caption">
-      Apps or titles matching this regular expression will never be counted as AFK.
-      
-      Can be used to count time as active, despite no input (like meetings, or games with controllers). An empty string disables it.
-      
-      Example expression:&nbsp;<code class="aw-code-inline">Zoom Meeting|Google Meet|Microsoft Teams</code></small>
-  </div>
-  <div class="w-full space-y-2 sm:max-w-md">
-    <ui-input class="aw-input-sm" v-model="always_active_pattern_editing" type="text" placeholder="Zoom Meeting|Google Meet|Microsoft Teams" :class="enabled && !valid ? 'aw-input-invalid' : ''" /><small class="block text-right text-sm">
-      <div class="text-success" v-if="enabled && valid">Enabled</div>
-      <div class="text-danger" v-else-if="enabled">Invalid pattern</div>
-      <div class="text-foreground-muted" v-else>Disabled</div>
-      <div class="text-danger" v-if="enabled && valid && broad_pattern">Pattern too broad</div></small>
-  </div>
-</div>
+  <settings-card
+    title="Always Count As Active"
+    description="Keep matching apps or window titles active even without keyboard or mouse input."
+    icon="code"
+  >
+    <template #control>
+      <ui-input
+        v-model="always_active_pattern_editing"
+        class="aw-settings-field"
+        type="text"
+        placeholder="Zoom Meeting|Google Meet|Microsoft Teams"
+        :invalid="enabled && !valid"
+      />
+    </template>
+
+    <div class="aw-settings-subpanel flex flex-wrap items-start justify-between gap-3">
+      <div class="space-y-1">
+        <div class="text-sm font-semibold text-foreground-strong">Pattern Status</div>
+        <p class="aw-caption !leading-5">
+          Example:
+          <code class="aw-code-inline">Zoom Meeting|Google Meet|Microsoft Teams</code>
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <span v-if="enabled && valid" class="aw-chip text-success">Enabled</span>
+        <span v-else-if="enabled" class="aw-chip text-danger">Invalid Pattern</span>
+        <span v-else class="aw-chip text-foreground-muted">Disabled</span>
+        <span v-if="enabled && valid && broad_pattern" class="aw-chip text-warning">Too Broad</span>
+      </div>
+    </div>
+  </settings-card>
 </template>
 
 <script lang="ts">
 import { isRegexBroad, validateRegex } from '~/shared/lib/validate';
 import { useSettingsStore } from '~/features/settings/store/settings';
+import SettingsCard from '~/features/settings/components/SettingsCard.vue';
 
 export default {
   name: 'ActivePatternSettings',
+  components: {
+    SettingsCard,
+  },
   data() {
     return {
       settingsStore: useSettingsStore(),
@@ -51,7 +70,6 @@ export default {
         return this.settingsStore.always_active_pattern;
       },
       set(value) {
-        console.log('Setting always_active_pattern to ' + value);
         this.settingsStore.update({ always_active_pattern: value });
       },
     },

@@ -1,28 +1,42 @@
 <template>
-<div class="space-y-3">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h5 class="m-0 text-base font-semibold text-foreground-strong">Duration default value</h5>
-    <ui-select class="aw-select-sm w-full sm:w-36" :value="durationDefault" @change="durationDefault = Number($event.target.value)">
-      <option :value="15*60">15min</option>
-      <option :value="30*60">30min</option>
-      <option :value="60*60">1h</option>
-      <option :value="2*60*60">2h</option>
-      <option :value="4*60*60">4h</option>
-      <option :value="6*60*60">6h</option>
-      <option :value="12*60*60">12h</option>
-      <option :value="24*60*60">24h</option>
-    </ui-select>
-  </div><small class="text-sm text-foreground-muted">The default duration used for 'show last' in the timeline view.</small>
-</div>
+  <settings-card
+    title="Timeline Default Range"
+    description="Choose the default time window used when a timeline opens."
+    icon="stream"
+  >
+    <template #control>
+      <settings-dropdown
+        :model-value="durationDefault"
+        :options="durationOptions"
+        @update:model-value="durationDefault = Number($event)"
+      ></settings-dropdown>
+    </template>
+  </settings-card>
 </template>
 <script lang="ts">
 import { useSettingsStore } from '~/features/settings/store/settings';
+import SettingsCard from '~/features/settings/components/SettingsCard.vue';
+import SettingsDropdown from '~/features/settings/components/SettingsDropdown.vue';
 
 export default {
   name: 'TimelineDurationSettings',
+  components: {
+    SettingsCard,
+    SettingsDropdown,
+  },
   data() {
     return {
       settingsStore: useSettingsStore(),
+      durationOptions: [
+        { label: '15 Min', value: 15 * 60, description: 'Compact review window' },
+        { label: '30 Min', value: 30 * 60, description: 'Balanced live context' },
+        { label: '1 Hour', value: 60 * 60, description: 'Wider short-term context' },
+        { label: '2 Hours', value: 2 * 60 * 60, description: 'Half-session overview' },
+        { label: '4 Hours', value: 4 * 60 * 60, description: 'Default work block' },
+        { label: '6 Hours', value: 6 * 60 * 60, description: 'Longer workday slice' },
+        { label: '12 Hours', value: 12 * 60 * 60, description: 'Half-day coverage' },
+        { label: '24 Hours', value: 24 * 60 * 60, description: 'Full day window' },
+      ],
     };
   },
   computed: {
@@ -31,7 +45,6 @@ export default {
         return this.settingsStore.durationDefault;
       },
       set(value) {
-        console.log('Set default timeline duration to ' + value);
         this.settingsStore.update({ durationDefault: value });
       },
     },
