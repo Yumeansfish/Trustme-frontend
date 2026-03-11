@@ -83,7 +83,7 @@ export default {
       default: false,
     },
   },
-  emits: ['close', 'delete', 'save', 'update:open'],
+  emits: ['close', 'delete', 'save', 'saved', 'deleted', 'update:open'],
   data() {
     return {
       editedEvent: null,
@@ -144,12 +144,14 @@ export default {
       // FIXME: but what if the replace fails? Then UI will incorrectly think event was replaced?
       this.$emit('save', this.editedEvent);
       await this.$aw.replaceEvent(this.bucket_id, this.editedEvent);
+      this.$emit('saved', this.editedEvent);
     },
     async delete_() {
       // This emit needs to be called first, otherwise it won't occur for some reason
       // FIXME: but what if the replace fails? Then UI will incorrectly think event was deleted?
       this.$emit('delete', this.event);
       await this.$aw.deleteEvent(this.bucket_id, this.event.id);
+      this.$emit('deleted', this.event);
     },
     async getEvent() {
       if (this.bucket_id && this.event && this.event.id) {

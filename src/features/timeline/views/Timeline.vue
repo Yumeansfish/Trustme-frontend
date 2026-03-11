@@ -1,166 +1,193 @@
 <template>
-<div class="space-y-4">
-  <h2 class="aw-section-title">Timeline</h2>
-  <input-timeinterval class="mb-3" v-model="daterange" :defaultDuration="timeintervalDefaultDuration" :maxDuration="maxDuration"></input-timeinterval>
-  <div class="flex flex-wrap items-start gap-3">
-    <div class="aw-chip">Events shown: {{ num_events }}</div>
-    <label class="aw-card flex items-center gap-2 px-3 py-2 text-sm text-foreground"><span class="font-medium">Swimlanes</span>
-      <ui-select class="aw-select-sm" v-model="swimlane">
-        <option :value="null">None</option>
-        <option value="category">Categories</option>
-        <option value="bucketType">Bucket specific</option>
-      </ui-select>
-    </label>
-    <label class="aw-card flex items-center gap-2 px-3 py-2 text-sm text-foreground"><span class="font-medium">Duration</span>
-      <ui-select class="aw-select-sm" v-model="filter_duration">
-        <option :value="null">All</option>
-        <option :value="2">2+ secs</option>
-        <option :value="5">5+ secs</option>
-        <option :value="10">10+ secs</option>
-        <option :value="30">30+ sec</option>
-        <option :value="1 * 60">1+ mins</option>
-        <option :value="2 * 60">2+ mins</option>
-        <option :value="3 * 60">3+ mins</option>
-        <option :value="10 * 60">10+ mins</option>
-        <option :value="30 * 60">30+ mins</option>
-        <option :value="1 * 60 * 60">1+ hrs</option>
-        <option :value="2 * 60 * 60">2+ hrs</option>
-      </ui-select>
-    </label>
-    <ui-collapsible class="aw-card-muted max-w-xl" summary-class="cursor-pointer list-none text-sm font-medium text-foreground" content-class="mt-3 grid gap-3 sm:grid-cols-2">
-      <template #summary>
-        <span>Filters: {{ filter_summary }}</span>
-      </template>
-      <div class="contents">
-        <label class="flex flex-col gap-1"><span class="aw-label">Host</span>
-          <ui-select class="aw-select-sm" v-model="filter_hostname">
-            <option :value="null">All</option>
-            <option v-for="host in hosts" :key="host" :value="host">{{ host }}</option>
-          </ui-select>
-        </label>
-        <label class="flex flex-col gap-1"><span class="aw-label">Client</span>
-          <ui-select class="aw-select-sm" v-model="filter_client">
-            <option :value="null">All</option>
-            <option v-for="client in clients" :key="client" :value="client">{{ client }}</option>
-          </ui-select>
-        </label>
+<div class="space-y-8 pb-8 md:space-y-10 md:pb-10">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <h2 class="aw-section-title">Timeline</h2>
+    <theme-toggle-button floating></theme-toggle-button>
+  </div>
+
+  <aw-alert v-if="errorMessage" variant="warning" show>{{ errorMessage }}</aw-alert>
+
+  <div
+    v-if="loading"
+    class="aw-card-muted flex min-h-[20rem] items-center justify-center text-sm text-foreground-muted"
+  >
+    Loading Timeline...
+  </div>
+  <template v-else>
+    <aw-alert v-if="num_events === 0" class="mt-2" variant="warning" show>
+      No recent activity was found in the last 30 minutes.
+    </aw-alert>
+    <section class="aw-card p-6 md:p-7">
+      <div class="flex flex-col gap-4 md:gap-5">
+        <timeline-lane-card
+          laneType="status"
+          title="Status"
+          description=""
+          icon="clock"
+          :buckets="statusBuckets"
+          :daterange="daterange"
+          emptyMessage="No recent status changes."
+          @request-refresh="refreshTimeline"
+        ></timeline-lane-card>
+
+        <timeline-lane-card
+          laneType="app"
+          title="App Focus"
+          description=""
+          icon="desktop"
+          :buckets="appFocusBuckets"
+          :daterange="daterange"
+          emptyMessage="No recent app activity."
+          @request-refresh="refreshTimeline"
+        ></timeline-lane-card>
       </div>
-    </ui-collapsible>
-    <p class="ml-auto pt-2 text-sm text-foreground-subtle">Drag to pan and scroll to zoom</p>
-  </div>
-  <aw-alert class="mt-2" v-if="num_events === 0" variant="warning" show>No events match selected criteria. Timeline is not updated.</aw-alert>
-  <div v-if="buckets !== null">
-    <vis-timeline :buckets="buckets" :showRowLabels="true" :queriedInterval="daterange" :swimlane="swimlane" :updateTimelineWindow="updateTimelineWindow"></vis-timeline>
-    <aw-devonly reason="Not ready for production, still experimenting">
-      <aw-calendar :buckets="buckets"></aw-calendar>
-    </aw-devonly>
-  </div>
-  <div v-else>
-    <h1 class="aw-loading">Loading...</h1>
-  </div>
+    </section>
+  </template>
 </div>
 </template>
 
 <script lang="ts">
 import _ from 'lodash';
 import moment from 'moment';
-import { useSettingsStore } from '~/features/settings/store/settings';
-import { useBucketsStore } from '~/features/buckets/store/buckets';
-import { seconds_to_duration } from '~/app/lib/time';
-
 import { defineComponent } from 'vue';
+
+import { useBucketsStore } from '~/features/buckets/store/buckets';
+import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
+import TimelineLaneCard from '~/features/timeline/components/TimelineLaneCard.vue';
+import { useServerStore } from '~/shared/stores/server';
+
+const LOOKBACK_MINUTES = 30;
+const REFRESH_INTERVAL_MS = 30 * 1000;
+
+type TimelineBucket = {
+  id: string;
+  type: string;
+  hostname?: string;
+  client?: string;
+  events: any[];
+  groupId: string;
+  groupLabel: string;
+};
 
 export default defineComponent({
   name: 'Timeline',
+  components: {
+    ThemeToggleButton,
+    TimelineLaneCard,
+  },
   data() {
     return {
-      all_buckets: null as any,
-      hosts: null as string[] | null,
-      buckets: null as any[] | null,
-      clients: null as string[] | null,
+      bucketsStore: useBucketsStore(),
+      serverStore: useServerStore(),
+      buckets: [] as TimelineBucket[],
       daterange: null as [moment.Moment, moment.Moment] | null,
-      maxDuration: 31 * 24 * 60 * 60,
-      filter_hostname: null as string | null,
-      filter_client: null as string | null,
-      filter_duration: null as number | null,
-      swimlane: null as string | null,
-      updateTimelineWindow: true,
+      loading: true,
+      errorMessage: '',
+      refreshTimer: null as ReturnType<typeof setInterval> | null,
+      lastRefreshedAt: null as moment.Moment | null,
     };
   },
   computed: {
-    timeintervalDefaultDuration() {
-      const settingsStore = useSettingsStore();
-      return Number(settingsStore.durationDefault);
-    },
     num_events() {
       return _.sumBy(this.buckets || [], 'events.length');
     },
-    filter_summary() {
-      const desc: string[] = [];
-      if (this.filter_hostname) desc.push(this.filter_hostname);
-      if (this.filter_client) desc.push(this.filter_client);
-      if (this.filter_duration! > 0) desc.push(seconds_to_duration(this.filter_duration!));
-      return desc.length > 0 ? desc.join(', ') : 'none';
+    statusBuckets(): TimelineBucket[] {
+      return (this.buckets || []).filter(bucket => bucket.groupId === 'status');
+    },
+    appFocusBuckets(): TimelineBucket[] {
+      return (this.buckets || []).filter(bucket => bucket.groupId === 'app-focus');
     },
   },
-  watch: {
-    daterange() {
-      this.updateTimelineWindow = true;
-      this.getBuckets();
-    },
-    filter_hostname() {
-      this.updateTimelineWindow = false;
-      this.getBuckets();
-    },
-    filter_client() {
-      this.updateTimelineWindow = false;
-      this.getBuckets();
-    },
-    filter_duration() {
-      this.updateTimelineWindow = false;
-      this.getBuckets();
-    },
-    swimlane() {
-      this.updateTimelineWindow = false;
-      this.getBuckets();
-    },
+  async mounted() {
+    await this.refreshTimeline();
+    this.refreshTimer = setInterval(() => {
+      void this.refreshTimeline();
+    }, REFRESH_INTERVAL_MS);
   },
-  created() {
-    let query = window.location.search;
-    if (!query) {
-      const hash = window.location.hash;
-      const idx = hash.indexOf('?');
-      if (idx !== -1) {
-        query = hash.slice(idx);
-      }
-    }
-    const params = new URLSearchParams(query);
-    const start = params.get('start');
-    const end = params.get('end');
-    if (start && end) {
-      this.daterange = [moment(start), moment(end)];
+  beforeUnmount() {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
     }
   },
   methods: {
-    async getBuckets() {
-      if (!this.daterange) return;
-      this.all_buckets = Object.freeze(
-        await useBucketsStore().getBucketsWithEvents({
-          start: this.daterange[0].format(),
-          end: this.daterange[1].format(),
-        })
-      );
-      this.hosts = Array.from(new Set(this.all_buckets.map((b: any) => b.hostname)));
-      this.clients = Array.from(new Set(this.all_buckets.map((b: any) => b.client)));
-      let bs = this.all_buckets;
-      if (this.filter_hostname) bs = bs.filter((b: any) => b.hostname === this.filter_hostname);
-      if (this.filter_client) bs = bs.filter((b: any) => b.client === this.filter_client);
-      if (this.filter_duration! > 0) {
-        bs.forEach((b: any) => {
-          b.events = b.events.filter((e: any) => e.duration >= this.filter_duration!);
-        });
+    getCurrentHostname(): string | null {
+      return this.serverStore.info?.hostname || this.bucketsStore.hosts?.[0] || null;
+    },
+    buildRange(): [moment.Moment, moment.Moment] {
+      const end = moment();
+      const start = end.clone().subtract(LOOKBACK_MINUTES, 'minutes');
+      return [start, end];
+    },
+    getRelevantBucketIds(hostname: string): string[] {
+      return _.uniq([
+        ...this.bucketsStore.bucketsAFK(hostname),
+        ...this.bucketsStore.bucketsWindow(hostname),
+        ...this.bucketsStore.bucketsBrowser(hostname),
+        ...this.bucketsStore.bucketsEditor(hostname),
+        ...this.bucketsStore.bucketsStopwatch(hostname),
+        ...this.bucketsStore.bucketsAndroid(hostname),
+      ]);
+    },
+    getGroupMeta(bucket: { type?: string }) {
+      if (bucket.type === 'afkstatus') {
+        return {
+          groupId: 'status',
+          groupLabel: 'Status',
+        };
       }
-      this.buckets = bs;
+
+      return {
+        groupId: 'app-focus',
+        groupLabel: 'App Focus',
+      };
+    },
+    async refreshTimeline() {
+      this.loading = true;
+      this.errorMessage = '';
+
+      try {
+        if (!this.serverStore.info) {
+          await this.serverStore.getInfo();
+        }
+        await this.bucketsStore.ensureLoaded();
+
+        const hostname = this.getCurrentHostname();
+        if (!hostname) {
+          this.buckets = [];
+          this.daterange = this.buildRange();
+          this.errorMessage = 'Unable to resolve the current device.';
+          return;
+        }
+
+        const [start, end] = this.buildRange();
+        const bucketIds = this.getRelevantBucketIds(hostname);
+        const bucketResults = await Promise.all(
+          bucketIds.map(async id => {
+            const bucket = await this.bucketsStore.getBucketWithEvents({
+              id,
+              start: start.format(),
+              end: end.format(),
+            });
+
+            return {
+              ...bucket,
+              ...this.getGroupMeta(bucket),
+            };
+          })
+        );
+
+        this.daterange = [start, end];
+        this.buckets = bucketResults.filter(bucket => Array.isArray(bucket.events) && bucket.events.length);
+        this.lastRefreshedAt = moment();
+      } catch (error) {
+        console.error('Failed to refresh timeline:', error);
+        this.errorMessage = 'Failed to load the live timeline.';
+        this.buckets = [];
+        this.daterange = this.buildRange();
+      } finally {
+        this.loading = false;
+      }
     },
   },
 });

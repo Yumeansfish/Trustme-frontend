@@ -5,52 +5,85 @@ import _ from 'lodash';
 
 const sanitize = DOMPurify.sanitize;
 
+function createTooltipRow(label, value) {
+  return `
+    <div class="aw-vis-tooltip-field">
+      <div class="aw-vis-tooltip-field-label">${sanitize(label)}</div>
+      <div class="aw-vis-tooltip-field-value">${sanitize(value || '-')}</div>
+    </div>
+  `;
+}
+
+function createTooltipWideRow(label, value) {
+  return `
+    <div class="aw-vis-tooltip-field aw-vis-tooltip-field-wide">
+      <div class="aw-vis-tooltip-field-label">${sanitize(label)}</div>
+      <div class="aw-vis-tooltip-field-value">${sanitize(value || '-')}</div>
+    </div>
+  `;
+}
+
 export function buildTooltip(bucket, e) {
   // WARNING: XSS risk, make sure to sanitize properly
   // FIXME: Not actually tested against XSS attacks, implementation needs to be verified in tests.
-  let inner = 'Unknown bucket type';
+  let detailRows = '';
 
   // if same day, don't show date
-  let start = moment(e.timestamp);
-  let stop = moment(e.timestamp).add(e.duration, 'seconds');
-  if (start.isSame(stop, 'day')) {
-    start = start.format('HH:mm:ss');
-    stop = stop.format('HH:mm:ss');
+  const startMoment = moment(e.timestamp);
+  const stopMoment = moment(e.timestamp).add(e.duration, 'seconds');
+  let start = startMoment;
+  let stop = stopMoment;
+  if (startMoment.isSame(stopMoment, 'day')) {
+    start = startMoment.format('HH:mm:ss');
+    stop = stopMoment.format('HH:mm:ss');
   } else {
-    start = start.format('YYYY-MM-DD HH:mm:ss');
-    stop = stop.format('YYYY-MM-DD HH:mm:ss');
+    start = startMoment.format('YYYY-MM-DD HH:mm:ss');
+    stop = stopMoment.format('YYYY-MM-DD HH:mm:ss');
   }
 
+  const dateLabel = startMoment.format('ddd, MMM D');
+  const durationLabel = seconds_to_duration(e.duration);
+  const rangeLabel = `${start} - ${stop}`;
+  const metaRows = [
+    createTooltipRow('Start', start),
+    createTooltipRow('Stop', stop),
+  ].join('');
+
   if (bucket.type == 'currentwindow') {
-    inner = `
-      <tr><th>App</th><td>${sanitize(e.data.app)}</td></tr>
-      <tr><th>Title</th><td>${sanitize(e.data.title)}</td></tr>
-      `;
+    detailRows = [
+      createTooltipRow('App', e.data.app),
+      createTooltipWideRow('Title', e.data.title),
+    ].join('');
   } else if (bucket.type == 'web.tab.current') {
-    inner = `
-      <tr><th>Title</th><td>${sanitize(e.data.title)}</td></tr>
-      <tr><th>URL</th><td><a href=${sanitize(e.data.url)}>${sanitize(e.data.url)}</a></td></tr>
-      `;
+    detailRows = [
+      createTooltipWideRow('Title', e.data.title),
+      createTooltipWideRow('URL', e.data.url),
+    ].join('');
   } else if (bucket.type.startsWith('app.editor')) {
-    inner = `
-      <tr><th>Filename</th><td>${sanitize(_.last(e.data.file.split('/')))}</td></tr>
-      <tr><th>Path</th><td>${sanitize(e.data.file)}</td></tr>
-      <tr><th>Language</th><td>${sanitize(e.data.language)}</td></tr>
-      `;
+    detailRows = [
+      createTooltipRow('Filename', _.last(e.data.file.split('/'))),
+      createTooltipRow('Language', e.data.language),
+      createTooltipWideRow('Path', e.data.file),
+    ].join('');
   } else if (bucket.type.startsWith('general.stopwatch')) {
-    inner = `
-      <tr><th>Label</th><td>${sanitize(e.data.label)}</td></tr>
-      `;
+    detailRows = [createTooltipRow('Label', e.data.label)].join('');
   } else {
-    inner = `
-      <tr><th>Data</th><td>${sanitize(JSON.stringify(e.data))}</td></tr>
-      `;
+    detailRows = [createTooltipWideRow('Data', JSON.stringify(e.data))].join('');
   }
-  return `<table>
-    <tr></tr>
-    <tr><th>Start</th><td>${start}</td></tr>
-    <tr><th>Stop</th><td>${stop}</td></tr>
-    <tr><th>Duration&nbsp;</th><td>${seconds_to_duration(e.duration)}</td></tr>
-    ${inner}
-    </table>`;
+
+  return `
+    <div class="aw-vis-tooltip-card">
+      <div class="aw-vis-tooltip-top">
+        <div class="aw-vis-tooltip-date">${sanitize(dateLabel)}</div>
+        <div class="aw-vis-tooltip-pill">${sanitize(durationLabel)}</div>
+      </div>
+      <div class="aw-vis-tooltip-body">
+        <div class="aw-vis-tooltip-range">${sanitize(rangeLabel)}</div>
+        <div class="aw-vis-tooltip-grid">
+          ${metaRows}
+          ${detailRows}
+        </div>
+      </div>
+    </div>
+  `;
 }
