@@ -6,7 +6,7 @@
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <ui-link class="aw-btn aw-btn-sm aw-btn-primary" :to="{ path: '/settings/category-builder' }">
-        <icon name="tag"></icon>Open AI Category Builder
+        <icon name="tag"></icon>Open Category Builder
       </ui-link>
       <ui-button class="aw-btn aw-btn-sm aw-btn-warning" type="button" @click="restoreDefaultClasses">
         <icon name="undo"></icon>Restore defaults
@@ -17,10 +17,6 @@
       <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="exportClasses">Export</ui-button>
     </div>
   </div>
-  <aw-alert show variant="info">
-    AI suggestions for uncategorized activity live in
-    <ui-link class="aw-link" :to="{ path: '/settings/category-builder' }">Category Builder</ui-link>.
-  </aw-alert>
   <p class="aw-caption">Rules for categorizing events. An event can only have one category. If several categories match, the deepest one will be chosen.</p>
   <p class="aw-caption">You can use the 
     <ui-link class="aw-link" :to="{ path: '/settings/category-builder' }">Category Builder</ui-link> to quickly create categories from uncategorized activity.
@@ -36,7 +32,7 @@
         </div>
       </div>
     </aw-alert>
-    <div v-for="_class in classes_hierarchy">
+    <div v-for="_class in classes_hierarchy" :key="_class.id">
       <CategoryEditTree :_class="_class"></CategoryEditTree>
     </div>
     <div v-if="editingId !== null">
