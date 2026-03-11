@@ -42,9 +42,21 @@ const SUMMARY_BAR_ACTIVE_BG_CSS = 'rgb(var(--summary-vis-active) / 0.18)';
 const SUMMARY_BAR_HOVER_CSS = 'rgb(var(--summary-vis-hover))';
 const SUMMARY_BAR_HOVER_BG_CSS = 'rgb(var(--summary-vis-hover) / 0.18)';
 
-function formatMinutes(seconds: number): string {
+function formatDuration(seconds: number): string {
   const mins = Math.round(seconds / 60);
   if (mins < 1) return '< 1 min';
+
+  if (mins >= 60) {
+    const hours = Math.floor(mins / 60);
+    const remainingMinutes = mins % 60;
+
+    if (remainingMinutes === 0) {
+      return `${hours}h`;
+    }
+
+    return `${hours}h ${remainingMinutes}m`;
+  }
+
   return `${mins} min`;
 }
 
@@ -145,7 +157,7 @@ function update(
     // 4. Duration (min format)
     const durEl = document.createElement('span');
     durEl.className = 'aw-row-duration';
-    durEl.textContent = formatMinutes(app.duration);
+    durEl.textContent = formatDuration(app.duration);
 
     // 5. Edit icon (SVG pencil)
     const editEl = document.createElement('span');

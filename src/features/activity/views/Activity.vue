@@ -19,15 +19,15 @@
             v-for="(label, value) in periodLengths"
             :key="value"
             :class="periodLength === value ? 'aw-segmented-item-active' : ''"
-            @click="setDate(_date, value)"
+            @click="setCurrentPeriod(value)"
             type="button"
             >{{ label.charAt(0).toUpperCase() + label.slice(1) }}</ui-button
           >
         </div>
         <date-navigator
           :model-value="_date"
-          :max="today"
-          :disable-next="nextPeriod() > today"
+          :max="latestDate"
+          :disable-next="nextPeriod() > latestDate"
           @previous="$router.push(buildActivityRoute(previousPeriod()))"
           @next="$router.push(buildActivityRoute(nextPeriod()))"
           @select="setDate($event, periodLength)"
@@ -116,7 +116,6 @@ export default defineComponent({
       settingsStore: useSettingsStore(),
       highlightStore: useActivityHighlightStore(),
 
-      today: null,
       isBootstrapping: true,
 
       include_audible: true,
@@ -180,6 +179,9 @@ export default defineComponent({
       }
 
       return get_today_with_offset(offset);
+    },
+    latestDate: function () {
+      return get_today_with_offset(this.settingsStore.startOfDay);
     },
 
     periodLengths: function () {
@@ -375,6 +377,9 @@ export default defineComponent({
           this.timeperiod.length[1] as moment.unitOfTime.DurationConstructor
         )
         .format('YYYY-MM-DD');
+    },
+    setCurrentPeriod(periodLength: string) {
+      this.setDate(this.latestDate, periodLength);
     },
 
     setDate: function (date, periodLength) {

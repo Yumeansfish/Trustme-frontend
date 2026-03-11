@@ -32,10 +32,21 @@ import { resolveThemeColor, resolveThemeColorAlpha, THEME_CHANGE_EVENT } from '~
 Chart.defaults.maintainAspectRatio = false;
 
 function hourToTick(hours: number): string {
-  if (hours > 1) return `${hours}h`;
-  if (hours === 1) return '1h';
+  const totalMinutes = Math.round(hours * 60);
+
+  if (totalMinutes >= 60) {
+    const wholeHours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (minutes === 0) {
+      return `${wholeHours}h`;
+    }
+
+    return `${wholeHours}h ${minutes}m`;
+  }
+
   if (hours === 0) return '0';
-  return `${Math.round(hours * 60)}m`;
+  return `${totalMinutes}m`;
 }
 
 function hexToRgba(color: string, alpha: number): string {
@@ -161,11 +172,46 @@ export default defineComponent({
       console.error(`Invalid resolution: ${resolution}`);
       return [];
     },
+    visibleHourWindow() {
+      if (!this.isSingleDay || !this.datasets || this.labels.length === 0) {
+        return {
+          start: 0,
+          end: Math.max(this.labels.length - 1, 0),
+        };
+      }
+
+      const activeIndexes = this.labels
+        .map((_, index) => index)
+        .filter(index =>
+          (this.datasets || []).some(dataset => {
+            const value = dataset.data?.[index];
+            return typeof value === 'number' && value > 0;
+          })
+        );
+
+      if (activeIndexes.length === 0) {
+        return {
+          start: 0,
+          end: Math.max(this.labels.length - 1, 0),
+        };
+      }
+
+      return {
+        start: Math.max(0, activeIndexes[0] - 2),
+        end: Math.min(this.labels.length - 1, activeIndexes[activeIndexes.length - 1] + 2),
+      };
+    },
+    visibleLabels() {
+      const { start, end } = this.visibleHourWindow;
+      return this.labels.slice(start, end + 1);
+    },
     selectedCategoryLabel() {
       return this.highlightStore.categoryLabel;
     },
     visibleDatasets() {
       if (!this.datasets) return this.datasets;
+
+      const { start, end } = this.visibleHourWindow;
 
       return _.sortBy(this.datasets, dataset => dataset.label).map(dataset => {
         const isSelected = this.selectedCategoryLabel === dataset.label;
@@ -173,7 +219,7 @@ export default defineComponent({
 
         return {
           ...dataset,
-          data: dataset.data || [],
+          data: (dataset.data || []).slice(start, end + 1),
           backgroundColor: isSelected
             ? this.activeColor
             : isDimmed
@@ -198,7 +244,7 @@ export default defineComponent({
     },
     chartData(): any {
       return {
-        labels: this.labels,
+        labels: this.visibleLabels,
         datasets: this.visibleDatasets,
         title: {
           display: true,
@@ -254,7 +300,7 @@ export default defineComponent({
             displayColors: false,
             padding: 10,
             callbacks: {
-              title: context => context[0]?.label || '',
+              title: () => '',
               label: context => {
                 const value = context.parsed.y;
                 if (value === null) return '';
@@ -262,11 +308,7 @@ export default defineComponent({
                   this.totalVisibleHours > 0
                     ? Math.round((value / this.totalVisibleHours) * 100)
                     : 0;
-                return ` ${pct || '<1'}%: ${context.dataset.label}`;
-              },
-              afterLabel: context => {
-                const value = context.parsed.y;
-                return value === null ? '' : hourToTick(value);
+                return `${pct || '<1'}%: ${context.dataset.label}`;
               },
             },
           },
@@ -296,7 +338,7 @@ export default defineComponent({
               maxRotation: 0,
               minRotation: 0,
               padding: 8,
-              callback: (_value, index) => this.labels[index] ?? '',
+              callback: (_value, index) => this.visibleLabels[index] ?? '',
             },
           },
           y: {
