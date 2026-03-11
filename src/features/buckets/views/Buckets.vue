@@ -1,110 +1,91 @@
 <template>
 <div class="space-y-6">
-  <h2 class="aw-section-title">Buckets</h2>
-  <aw-alert show>Are you looking to collect more data? Check out <ui-link class="aw-link" href="https://activitywatch.readthedocs.io/en/latest/watchers.html">the docs</ui-link> for more watchers.</aw-alert>
-  <div class="aw-card space-y-4" v-for="device in bucketsStore.bucketsByDevice" :key="device.hostname || device.device_id">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div class="flex items-start gap-3">
-        <div class="bg-surface-subtle text-foreground flex h-10 w-10 items-center justify-center rounded-full">
-          <icon v-if="device.hostname === 'unknown'" name="question"></icon>
-          <icon v-else name="desktop"></icon>
-        </div>
-        <div class="space-y-1">
-          <div class="flex flex-wrap items-center gap-2">
-            <b class="text-foreground-strong text-base">{{ device.hostname }}</b>
-            <span class="aw-chip" v-if="serverStore.info.hostname == device.hostname">the current device</span>
-          </div>
-          <div class="text-foreground-muted text-sm">
-            <div v-if="device.hostname !== device.device_id">ID: {{ device.id }}</div>
-            <div>Last updated:&nbsp;
-              <time :class="isRecent(device.last_updated) ? 'text-success' : ''" :datetime="device.last_updated" :title="device.last_updated">{{ device.last_updated ? new Date(device.last_updated).toLocaleString() : "" }}</time>
-            </div>
-            <div>First seen:&nbsp;
-              <time :datetime="device.first_seen" :title="device.first_seen">{{ device.first_seen ? new Date(device.first_seen).toLocaleString() : "" }}</time>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="overflow-x-auto">
-      <ui-table class="aw-table">
-        <thead>
-          <tr>
-            <th>Bucket ID</th>
-            <th>Hostname</th>
-            <th>Updated</th>
-            <th class="text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="bucket in device.buckets" :key="bucket.id">
-            <td class="text-foreground-strong font-medium">{{ bucket.id }}</td>
-            <td>{{ bucket.hostname }}</td>
-            <td><span :class="isRecent(bucket.last_updated) ? 'text-success' : ''">{{ bucket.last_updated ? new Date(bucket.last_updated).toLocaleString() : "" }}</span></td>
-            <td>
-              <div class="flex flex-wrap justify-end gap-2">
-                <ui-link class="aw-btn aw-btn-sm aw-btn-primary" :to="'/buckets/' + bucket.id">
-                  <icon name="folder-open"></icon>
-                  Open
-                </ui-link>
-                <ui-link class="aw-btn aw-btn-sm aw-btn-secondary" :href="$aw.baseURL + '/api/0/buckets/' + bucket.id + '/export'" :download="'aw-bucket-export-' + bucket.id + '.json'" title="Export bucket to JSON">
-                  <icon name="download"></icon>
-                  JSON
-                </ui-link>
-                <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" @click="export_csv(bucket.id)">
-                  <icon name="download"></icon>
-                  CSV
-                </ui-button>
-                <ui-button class="aw-btn aw-btn-sm aw-btn-danger" type="button" @click="openDeleteBucketModal(bucket.id)">
-                  <icon name="trash"></icon>
-                  Delete
-                </ui-button>
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <h2 class="aw-section-title">Raw Data</h2>
+    <theme-toggle-button floating></theme-toggle-button>
+  </div>
+  <section class="aw-card space-y-5 p-5 md:p-6">
+    <div v-if="visibleBuckets.length" class="aw-bucket-grid">
+      <div
+        v-for="bucket in visibleBuckets"
+        :key="bucket.id"
+        class="aw-shortcut-card aw-bucket-card"
+        tabindex="0"
+        @click="openBucket(bucket.id)"
+        @keydown.enter.self.prevent="openBucket(bucket.id)"
+        @keydown.space.self.prevent="openBucket(bucket.id)"
+      >
+        <div class="flex items-start gap-4">
+          <span class="aw-shortcut-card-icon aw-bucket-card-icon">
+            <icon :name="bucketIcon(bucket)" class="h-5 w-5"></icon>
+          </span>
+          <div class="min-w-0 flex-1 space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <h4 class="aw-bucket-card-title">{{ bucketTitle(bucket) }}</h4>
+              <div class="aw-bucket-card-chevron">
+                <icon name="chevron-right" :size="20"></icon>
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </ui-table>
-    </div>
-    <div class="space-y-2" v-if="runChecks(device).length > 0">
-      <div class="text-foreground flex items-start gap-2 text-sm" v-for="msg in runChecks(device)">
-        <icon class="text-warning mt-0.5" name="exclamation-triangle"></icon>
-        <span>{{ msg }}</span>
-      </div>
-    </div>
-  </div>
-  <div class="space-y-3">
-    <h3 class="aw-subtitle">Import and export buckets</h3>
-    <div class="grid gap-4 lg:grid-cols-2">
-      <div class="aw-card space-y-3">
-        <h4 class="text-foreground-strong text-base font-semibold">Import buckets</h4>
-        <aw-alert v-if="import_error" show variant="danger" dismissible>{{ import_error }}</aw-alert>
-        <ui-input class="aw-input" type="file" accept="application/json" @change="import_file = $event.target.files?.[0] || null" />
-        <div class="text-foreground-muted flex items-center gap-2 text-sm" v-if="import_file">
-          <icon name="spinner" pulse></icon>
-          <span>Importing selected file…</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-sm text-foreground-muted">
+              <span class="aw-chip">{{ bucketHostname(bucket) }}</span>
+              <span class="aw-chip">{{ bucket.type || 'Unknown Type' }}</span>
+            </div>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-foreground-muted">
+              <span>
+                Updated:
+                <time
+                  :class="isRecent(bucket.last_updated) ? 'text-success' : ''"
+                  :datetime="bucket.last_updated"
+                  :title="bucket.last_updated"
+                >
+                  {{ formatDate(bucket.last_updated) }}
+                </time>
+              </span>
+              <span>
+                First Seen:
+                <time :datetime="bucket.first_seen" :title="bucket.first_seen">
+                  {{ formatDate(bucket.first_seen) }}
+                </time>
+              </span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 pt-1" @click.stop>
+              <ui-button class="aw-bucket-card-action" type="button" @click.stop="openBucket(bucket.id)">
+                <icon name="folder" :size="15"></icon>
+                <span>Open</span>
+              </ui-button>
+              <a
+                class="aw-bucket-card-action"
+                :href="bucketExportUrl(bucket.id)"
+                :download="'aw-bucket-export-' + bucket.id + '.json'"
+                title="Export bucket to JSON"
+                @click.stop
+              >
+                <icon name="download" :size="15"></icon>
+                <span>JSON</span>
+              </a>
+              <ui-button class="aw-bucket-card-action" type="button" @click.stop="export_csv(bucket.id)">
+                <icon name="download" :size="15"></icon>
+                <span>CSV</span>
+              </ui-button>
+              <ui-button
+                class="aw-bucket-card-action aw-bucket-card-action-danger"
+                type="button"
+                @click.stop="openDeleteBucketModal(bucket.id)"
+              >
+                <icon name="trash" :size="15"></icon>
+                <span>Delete</span>
+              </ui-button>
+            </div>
+          </div>
         </div>
-        <p class="aw-caption">
-          A valid file to import is a JSON file from either an export of a single bucket or an export from multiple buckets.
-          If there are buckets with the same name the import will fail.
-        </p>
-      </div>
-      <div class="aw-card space-y-3">
-        <h4 class="text-foreground-strong text-base font-semibold">Export buckets</h4>
-        <ui-link class="aw-btn aw-btn-md aw-btn-secondary" :href="$aw.baseURL + '/api/0/export'" :download="'aw-bucket-export.json'" title="Export bucket to JSON">
-          <icon name="download"></icon>
-          Export all buckets as JSON
-        </ui-link>
       </div>
     </div>
-  </div>
-  <div class="aw-divider"></div>
-  <aw-devonly reason="This section is still under development">
-    <h2 class="text-foreground-strong p-2 text-lg font-semibold">Tools</h2>
-    <div class="aw-divider"></div>
-    <aw-bucket-validate class="p-2"></aw-bucket-validate>
-    <div class="aw-divider"></div>
-    <aw-bucket-merge class="p-2"></aw-bucket-merge>
-  </aw-devonly>
+    <div v-else class="aw-empty py-10">No buckets found.</div>
+    <div v-if="visibleBuckets.some(bucket => bucketHostname(bucket) === 'Unknown')" class="aw-device-warning">
+      <icon class="mt-0.5 shrink-0 text-warning" name="exclamation-triangle"></icon>
+      <span>Some buckets are not attributed to a known hostname.</span>
+    </div>
+  </section>
 </div>
 </template>
 
@@ -115,49 +96,22 @@ import Papa from 'papaparse';
 import moment from 'moment';
 import { useDialog } from '~/shared/composables/useDialog';
 
-import { useServerStore } from '~/shared/stores/server';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
+import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 
 export default {
   name: 'Buckets',
   components: {
-    'aw-bucket-merge': () => import('~/features/buckets/components/BucketMerge.vue'),
-    'aw-bucket-validate': () => import('~/features/buckets/components/BucketValidate.vue'),
+    ThemeToggleButton,
   },
   data() {
     return {
-      moment,
       bucketsStore: useBucketsStore(),
-      serverStore: useServerStore(),
-
-      import_file: null,
-      import_error: null,
-      fields: [
-        { key: 'id', label: 'Bucket ID', sortable: true },
-        { key: 'hostname', sortable: true },
-        { key: 'last_updated', label: 'Updated', sortable: true },
-        { key: 'actions', label: '' },
-      ],
     };
   },
-  watch: {
-    import_file: async function (_new_value, _old_value) {
-      if (this.import_file != null) {
-        console.log('Importing file');
-        try {
-          await this.importBuckets(this.import_file);
-          console.log('Import successful');
-          this.import_error = null;
-        } catch (err) {
-          console.log('Import failed');
-          // TODO: Make aw-server report error message so it can be shown in the web-ui
-          this.import_error = 'Import failed, see aw-server logs for more info';
-        }
-        // We need to reload buckets even if we fail because imports can be partial
-        // (first bucket succeeds, second fails for example when importing multiple)
-        await this.bucketsStore.loadBuckets();
-        this.import_file = null;
-      }
+  computed: {
+    visibleBuckets() {
+      return this.sortedBuckets(this.bucketsStore.buckets).filter(bucket => !this.isEmptyBucket(bucket));
     },
   },
   mounted: async function () {
@@ -168,33 +122,45 @@ export default {
     isRecent: function (date) {
       return moment().diff(date) / 1000 < 120;
     },
-    runChecks: function (device) {
-      const checks = [
-        {
-          msg: () => {
-            return `Device known by several hostnames: ${device.hostnames}`;
-          },
-          failed: () => device.hostnames.length > 1,
-        },
-        {
-          msg: () => {
-            return `Device known by several IDs: ${device.device_ids}`;
-          },
-          failed: () => device.device_ids.length > 1,
-        },
-        {
-          msg: () => {
-            return `Device is a special device, unattributed to a hostname, or not assigned a device ID.`;
-          },
-          failed: () => _.isEqual(device.hostnames, ['unknown']),
-        },
-        //{
-        //  msg: () => 'just a test',
-        //  failed: () => true,
-        //},
-      ];
-      const failedChecks = _.filter(checks, c => c.failed());
-      return _.map(failedChecks, c => c.msg());
+    formatDate: function (date) {
+      return date ? new Date(date).toLocaleString() : '';
+    },
+    bucketHostname: function (bucket) {
+      return bucket.hostname || bucket.data?.hostname || bucket.device_id || 'Unknown';
+    },
+    bucketTitle: function (bucket) {
+      const hostname = this.bucketHostname(bucket);
+      const suffix = `_${hostname}`;
+      return bucket.id.endsWith(suffix) ? bucket.id.slice(0, -suffix.length) : bucket.id;
+    },
+    isEmptyBucket: function (bucket) {
+      if (!bucket.last_updated) {
+        return true;
+      }
+
+      const lastUpdated = moment(bucket.last_updated);
+      if (!lastUpdated.isValid()) {
+        return true;
+      }
+
+      return lastUpdated.isBefore(moment().subtract(1, 'month'));
+    },
+    sortedBuckets: function (buckets) {
+      return _.orderBy(buckets, [bucket => bucket.last_updated, bucket => bucket.id], ['desc', 'asc']);
+    },
+    bucketIcon: function (bucket) {
+      if (bucket.type === 'web.tab.current') return 'globe';
+      if (bucket.type === 'app.editor.activity') return 'terminal';
+      if (bucket.type === 'afkstatus') return 'clock';
+      if (bucket.type === 'currentwindow') return 'desktop';
+      if (bucket.type === 'general.stopwatch') return 'stopwatch';
+      return 'database';
+    },
+    bucketExportUrl: function (bucketId: string) {
+      return `${this.$aw.baseURL}/api/0/buckets/${bucketId}/export`;
+    },
+    openBucket: function (bucketId: string) {
+      this.$router.push('/buckets/' + bucketId);
     },
     openDeleteBucketModal: async function (bucketId: string) {
       const { confirm } = useDialog();
@@ -211,12 +177,6 @@ export default {
     },
     deleteBucket: async function (bucketId: string) {
       await this.bucketsStore.deleteBucket({ bucketId });
-    },
-    importBuckets: async function (importFile) {
-      const formData = new FormData();
-      formData.append('buckets.json', importFile);
-      const headers = { 'Content-Type': 'multipart/form-data' };
-      return this.$aw.req.post('/0/import', formData, { headers });
     },
 
     async export_csv(bucketId: string) {
