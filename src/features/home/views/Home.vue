@@ -1,7 +1,10 @@
 <template>
 <div class="space-y-6">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <h3 class="aw-section-title">Hello early user</h3>
+    <theme-toggle-button floating></theme-toggle-button>
+  </div>
   <aw-alert v-if="$isAndroid" show><b>Note:</b> ActivityWatch on Android is in a very early stage of development. There will be bugs, but we hope you bear with us as we refine things and get it on par with the desktop version of ActivityWatch (which you should try!).</aw-alert>
-  <h3 class="aw-section-title">Hello early user</h3>
   <p class="aw-caption">It's still early days for ActivityWatch<span v-if="$isAndroid">(especially on Android!)</span>. We've come a long way but we need users (like you!)
     to provide feedback and help us turn ActivityWatch into a successful project.
     Early users like you mean a lot to us, and we hope you'll reach out to us with any ideas you have for improvements!
@@ -67,10 +70,14 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { mapState } from 'pinia';
+import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 import { useServerStore } from '~/shared/stores/server';
 
 export default defineComponent({
   name: 'Home',
+  components: {
+    ThemeToggleButton,
+  },
   computed: {
     ...mapState(useServerStore, ['info']),
   },

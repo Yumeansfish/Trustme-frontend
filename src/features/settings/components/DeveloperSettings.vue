@@ -32,7 +32,6 @@
       <ui-input class="aw-input-sm w-full sm:w-32" v-model.number="requestTimeout" type="number" />
     </div>
   </div>
-  <div class="text-sm text-foreground-muted">Web UI commit hash: {{ COMMIT_HASH }}</div>
 </div>
 </template>
 

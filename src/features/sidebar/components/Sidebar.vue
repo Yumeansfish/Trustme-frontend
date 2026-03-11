@@ -6,12 +6,10 @@
         <span class="aw-sidebar-title">trust-me</span>
       </div>
 
-      <div class="flex-1 overflow-hidden">
+      <div class="aw-sidebar-scroll">
         <ui-link
-          v-if="activityViews && activityViews.length === 1"
-          v-for="view in activityViews"
-          :key="view.name"
-          :to="`/activity/${view.hostname}`"
+          v-if="singleActivityView"
+          :to="`/activity/${singleActivityView.hostname}`"
           active-class="aw-sidebar-link-active"
           class="aw-sidebar-link h-11 px-4"
         >
@@ -77,33 +75,7 @@
 
       <div class="mx-3 my-2 aw-sidebar-divider"></div>
 
-      <div class="flex flex-col">
-        <div class="flex h-11 items-center px-4 text-foreground-subtle">
-          <icon class="h-4 w-4 shrink-0" name="tools"></icon>
-          <span class="aw-sidebar-section-title">Tools</span>
-        </div>
-        <div class="aw-sidebar-section-panel aw-sidebar-tools-panel">
-          <ui-link
-            to="/search"
-            active-class="aw-sidebar-link-subactive"
-            class="aw-sidebar-link h-9 px-5"
-          >
-            <icon class="h-3.5 w-3.5 shrink-0" name="search"></icon>
-            <span class="aw-sidebar-copy">Search</span>
-          </ui-link>
-          <ui-link
-            to="/query"
-            active-class="aw-sidebar-link-subactive"
-            class="aw-sidebar-link h-9 px-5"
-          >
-            <icon class="h-3.5 w-3.5 shrink-0" name="code"></icon>
-            <span class="aw-sidebar-copy">Query</span>
-          </ui-link>
-        </div>
-      </div>
-
       <div class="mt-auto border-t border-base pt-2">
-        <theme-toggle-button></theme-toggle-button>
         <ui-link
           to="/buckets"
           active-class="aw-sidebar-link-active"
@@ -129,22 +101,21 @@
 import _ from 'lodash';
 
 import { useBucketsStore } from '~/features/buckets/store/buckets';
-import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 import { useSettingsStore } from '~/features/settings/store/settings';
 
 import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'Sidebar',
-  components: {
-    ThemeToggleButton,
-  },
   computed: {
     buckets() {
       return useBucketsStore().buckets;
     },
     deviceMappings() {
       return useSettingsStore().deviceMappings;
+    },
+    singleActivityView() {
+      return this.activityViews && this.activityViews.length === 1 ? this.activityViews[0] : null;
     },
     activityViews() {
       try {
