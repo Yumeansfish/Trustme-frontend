@@ -58,6 +58,7 @@ import { useServerStore } from '~/shared/stores/server';
 
 const LOOKBACK_MINUTES = 30;
 const REFRESH_INTERVAL_MS = 30 * 1000;
+const DEFAULT_FIXED_RANGE_SECONDS = 60;
 
 type TimelineBucket = {
   id: string;
@@ -99,10 +100,16 @@ export default defineComponent({
     },
   },
   async mounted() {
+    this.syncRefreshTimer();
     await this.refreshTimeline();
-    this.refreshTimer = setInterval(() => {
-      void this.refreshTimeline();
-    }, REFRESH_INTERVAL_MS);
+  },
+  watch: {
+    '$route.fullPath': {
+      async handler() {
+        this.syncRefreshTimer();
+        await this.refreshTimeline();
+      },
+    },
   },
   beforeUnmount() {
     if (this.refreshTimer) {
@@ -114,7 +121,62 @@ export default defineComponent({
     getCurrentHostname(): string | null {
       return this.serverStore.info?.hostname || this.bucketsStore.hosts?.[0] || null;
     },
+    parseFixedRange(): [moment.Moment, moment.Moment] | null {
+      const startQuery = typeof this.$route.query.start === 'string' ? this.$route.query.start : '';
+      const endQuery = typeof this.$route.query.end === 'string' ? this.$route.query.end : '';
+      const timestampQuery = typeof this.$route.query.ts === 'string' ? this.$route.query.ts : '';
+      const secondsQuery = Number(this.$route.query.seconds || this.$route.query.minutes || 0);
+
+      if (startQuery && endQuery) {
+        const start = moment(startQuery);
+        const end = moment(endQuery);
+
+        if (start.isValid() && end.isValid() && end.isAfter(start)) {
+          return [start, end];
+        }
+      }
+
+      if (timestampQuery) {
+        const center = moment(timestampQuery);
+        if (!center.isValid()) {
+          return null;
+        }
+
+        const spanSeconds = Math.max(
+          Number.isFinite(secondsQuery) && secondsQuery > 0
+            ? secondsQuery * (String(this.$route.query.minutes || '').length > 0 ? 60 : 1)
+            : DEFAULT_FIXED_RANGE_SECONDS,
+          1
+        );
+
+        return [
+          center.clone().subtract(spanSeconds / 2, 'seconds'),
+          center.clone().add(spanSeconds / 2, 'seconds'),
+        ];
+      }
+
+      return null;
+    },
+    syncRefreshTimer() {
+      if (this.refreshTimer) {
+        clearInterval(this.refreshTimer);
+        this.refreshTimer = null;
+      }
+
+      if (this.parseFixedRange()) {
+        return;
+      }
+
+      this.refreshTimer = setInterval(() => {
+        void this.refreshTimeline();
+      }, REFRESH_INTERVAL_MS);
+    },
     buildRange(): [moment.Moment, moment.Moment] {
+      const fixedRange = this.parseFixedRange();
+      if (fixedRange) {
+        return fixedRange;
+      }
+
       const end = moment();
       const start = end.clone().subtract(LOOKBACK_MINUTES, 'minutes');
       return [start, end];

@@ -6,14 +6,22 @@
           <icon :name="icon" class="h-5 w-5"></icon>
         </span>
         <div class="space-y-1">
-          <h3 class="text-foreground-strong text-lg font-semibold">{{ title }}</h3>
-          <p v-if="description" class="text-foreground-muted text-sm leading-6">{{ description }}</p>
+          <h3 class="text-foreground-strong text-xl font-semibold md:text-2xl">{{ title }}</h3>
+          <p
+            v-if="description"
+            class="text-foreground-muted text-base leading-7"
+          >
+            {{ description }}
+          </p>
         </div>
       </div>
       <div class="aw-chip">{{ eventCount }} events</div>
     </div>
 
-    <div v-if="segments.length === 0" class="aw-card-muted py-6 text-center text-sm text-foreground-muted">
+    <div
+      v-if="segments.length === 0"
+      class="aw-card-muted py-6 text-center text-base text-foreground-muted"
+    >
       {{ emptyMessage }}
     </div>
 

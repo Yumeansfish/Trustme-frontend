@@ -70,8 +70,7 @@
             :aria-disabled="Boolean(activeTimer)"
             :aria-pressed="selectedShortcutKey === shortcut.key"
             @click="selectShortcut(shortcut.key)"
-            @keydown.enter.prevent="selectShortcut(shortcut.key)"
-            @keydown.space.prevent="selectShortcut(shortcut.key)"
+            @keydown.enter.prevent.self="selectShortcut(shortcut.key)"
           >
             <div class="flex items-start justify-between gap-4">
               <div class="space-y-3">
