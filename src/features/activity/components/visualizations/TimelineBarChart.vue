@@ -1,12 +1,12 @@
 <template>
   <div
-    class="aw-chart-height relative flex min-h-0 flex-1 w-full overflow-hidden"
     v-if="visibleDatasets && visibleDatasets.length > 0"
+    class="aw-chart-height relative flex min-h-0 flex-1 w-full overflow-hidden"
   >
     <bar class="h-full w-full" :chart-data="chartData" :chart-options="chartOptions"></bar>
   </div>
-  <div class="aw-empty-state" v-else-if="datasets === null">No data</div>
-  <div class="aw-empty-state" v-else>
+  <div v-else-if="datasets === null" class="aw-empty-state">No data</div>
+  <div v-else class="aw-empty-state">
     <div class="aw-loading">Loading...</div>
   </div>
 </template>
@@ -24,9 +24,10 @@ import {
   ACTIVITY_AXIS_COLOR,
   ACTIVITY_GRID_COLOR,
   ACTIVITY_HIGHLIGHT,
-  ACTIVITY_HIGHLIGHT_BORDER,
+  ACTIVITY_HOVER,
   ACTIVITY_PRIMARY_BAR,
 } from '~/features/activity/lib/visualizationTokens';
+import { resolveThemeColor, resolveThemeColorAlpha, THEME_CHANGE_EVENT } from '~/shared/lib/theme';
 
 Chart.defaults.maintainAspectRatio = false;
 
@@ -80,56 +81,38 @@ export default defineComponent({
       default: () => [1, 'day'],
     },
   },
+  data() {
+    return {
+      themeVersion: 0,
+    };
+  },
   computed: {
     highlightStore() {
       return useActivityHighlightStore();
     },
+    normalColor() {
+      void this.themeVersion;
+      return resolveThemeColor('--summary-vis-normal', ACTIVITY_PRIMARY_BAR);
+    },
+    activeColor() {
+      void this.themeVersion;
+      return resolveThemeColor('--summary-vis-active', ACTIVITY_HIGHLIGHT);
+    },
+    hoverColor() {
+      void this.themeVersion;
+      return resolveThemeColor('--summary-vis-hover', ACTIVITY_HOVER);
+    },
+    axisColor() {
+      void this.themeVersion;
+      return resolveThemeColor('--summary-vis-normal', ACTIVITY_AXIS_COLOR);
+    },
+    gridColor() {
+      void this.themeVersion;
+      return resolveThemeColorAlpha('--summary-vis-normal', 0.18, ACTIVITY_GRID_COLOR);
+    },
     isSingleDay() {
       const [count, resolution] = this.timeperiod_length;
       return resolution.startsWith('day') && count === 1;
-    },
-    visibleDayWindow() {
-      if (!this.isSingleDay || !this.datasets || this.datasets.length === 0) {
-        return { start: 0, end: 23 };
-      }
-
-      const activeHours: number[] = [];
-      this.datasets.forEach(dataset => {
-        (dataset.data || []).forEach((value: number | null, index: number) => {
-          if (typeof value === 'number' && value > 0) {
-            activeHours.push(index);
-          }
-        });
-      });
-
-      if (activeHours.length === 0) {
-        return { start: 0, end: 23 };
-      }
-
-      const minActive = Math.min(...activeHours);
-      const maxActive = Math.max(...activeHours);
-      const paddedStart = Math.max(0, minActive - 2);
-      const paddedEnd = Math.min(23, maxActive + 2);
-
-      if (paddedEnd - paddedStart >= 20) {
-        return { start: 0, end: 23 };
-      }
-
-      return { start: paddedStart, end: paddedEnd };
-    },
-    visibleLabelStep() {
-      if (!this.isSingleDay) {
-        return 1;
-      }
-
-      const labelCount = this.labels.length;
-      if (labelCount <= 8) {
-        return 1;
-      }
-      if (labelCount <= 14) {
-        return 2;
-      }
-      return 3;
     },
     labels() {
       const start = this.timeperiod_start as string;
@@ -138,9 +121,7 @@ export default defineComponent({
 
       if (this.isSingleDay) {
         const hourOffset = get_hour_offset();
-        return _.range(this.visibleDayWindow.start, this.visibleDayWindow.end + 1).map(
-          hour => `${(hour + hourOffset) % 24}`
-        );
+        return _.range(24).map(hour => `${(hour + hourOffset) % 24}`);
       }
 
       if (resolution.startsWith('day')) {
@@ -187,22 +168,20 @@ export default defineComponent({
       if (!this.datasets) return this.datasets;
 
       return _.sortBy(this.datasets, dataset => dataset.label).map(dataset => {
-        const rawData = dataset.data || [];
-        const data = this.isSingleDay
-          ? rawData.slice(this.visibleDayWindow.start, this.visibleDayWindow.end + 1)
-          : rawData;
         const isSelected = this.selectedCategoryLabel === dataset.label;
         const isDimmed = this.selectedCategoryLabel && this.selectedCategoryLabel !== dataset.label;
 
         return {
           ...dataset,
-          data,
+          data: dataset.data || [],
           backgroundColor: isSelected
-            ? ACTIVITY_HIGHLIGHT
+            ? this.activeColor
             : isDimmed
-            ? hexToRgba(dataset.backgroundColor || ACTIVITY_PRIMARY_BAR, 0.2)
-            : dataset.backgroundColor,
-          borderColor: isSelected ? ACTIVITY_HIGHLIGHT_BORDER : 'transparent',
+            ? hexToRgba(this.normalColor, 0.2)
+            : this.normalColor,
+          hoverBackgroundColor: isSelected ? this.activeColor : this.hoverColor,
+          borderColor: isSelected ? this.activeColor : 'transparent',
+          hoverBorderColor: isSelected ? this.activeColor : 'transparent',
           borderWidth: isSelected ? 3 : 0,
         };
       });
@@ -310,32 +289,26 @@ export default defineComponent({
             ticks: {
               display: true,
               autoSkip: false,
-              color: ACTIVITY_AXIS_COLOR,
+              color: this.axisColor,
               font: {
-                size: 10,
+                size: this.isSingleDay ? 9 : 10,
               },
               maxRotation: 0,
               minRotation: 0,
               padding: 8,
-              callback: (_value, index) => {
-                const label = this.labels[index] ?? '';
-                if (!this.isSingleDay) {
-                  return label;
-                }
-                return index % this.visibleLabelStep === 0 ? label : '';
-              },
+              callback: (_value, index) => this.labels[index] ?? '',
             },
           },
           y: {
             stacked: true,
             min: 0,
-            suggestedMax: resolution.startsWith('day') ? 1 : undefined,
-            grace: resolution.startsWith('day') ? '6%' : '10%',
+            max: resolution.startsWith('day') ? 1 : undefined,
+            grace: resolution.startsWith('day') ? 0 : '10%',
             border: {
               display: false,
             },
             grid: {
-              color: ACTIVITY_GRID_COLOR,
+              color: this.gridColor,
               drawOnChartArea: true,
               drawTicks: false,
             },
@@ -343,7 +316,7 @@ export default defineComponent({
               autoSkip: false,
               callback: hourToTick,
               stepSize: resolution.startsWith('day') ? 0.25 : 1,
-              color: ACTIVITY_AXIS_COLOR,
+              color: this.axisColor,
               font: {
                 size: 10,
               },
@@ -353,6 +326,17 @@ export default defineComponent({
           },
         },
       } as any;
+    },
+  },
+  mounted() {
+    window.addEventListener(THEME_CHANGE_EVENT, this.handleThemeChange);
+  },
+  beforeUnmount() {
+    window.removeEventListener(THEME_CHANGE_EVENT, this.handleThemeChange);
+  },
+  methods: {
+    handleThemeChange() {
+      this.themeVersion += 1;
     },
   },
 });

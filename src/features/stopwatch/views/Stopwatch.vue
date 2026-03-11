@@ -1,18 +1,20 @@
 <template>
   <div class="flex h-full min-h-0 flex-col gap-5">
-    <div class="space-y-2">
-      <h1 class="aw-page-title">Away Session</h1>
-      <p class="aw-caption max-w-3xl">
-        Pause normal computer tracking when you step away from the keyboard. Add a label, press
-        Stop, and press Start when you are back to regular ActivityWatch monitoring.
-      </p>
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="space-y-2">
+        <h1 class="aw-page-title">Away Session</h1>
+        <p class="aw-caption max-w-3xl">
+          Track focused offline work and sync it back into Activity.
+        </p>
+      </div>
+      <theme-toggle-button floating></theme-toggle-button>
     </div>
 
     <div class="grid gap-4 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
       <section class="aw-card flex flex-col items-center justify-center gap-5 px-6 py-7">
         <div class="aw-focus-ring" :style="focusRingStyle">
           <div class="aw-focus-ring-inner">
-            <div class="text-foreground-strong text-6xl font-bold tracking-tight">
+            <div class="text-6xl font-bold tracking-tight" :style="timerDisplayStyle">
               {{ displayTimer }}
             </div>
             <div class="text-foreground-muted text-lg">
@@ -30,9 +32,7 @@
 
         <div class="flex flex-wrap items-center justify-center gap-2">
           <ui-button
-            :class="
-              activeTimer ? 'aw-btn aw-btn-lg aw-btn-success' : 'aw-btn aw-btn-lg aw-btn-danger'
-            "
+            class="aw-btn aw-btn-lg aw-btn-stopwatch"
             type="button"
             :disabled="!activeTimer && !canStopTracking"
             @click="handlePrimaryAction"
@@ -45,123 +45,77 @@
         <p class="aw-caption max-w-xs text-center">
           {{
             activeTimer
-              ? 'Press Start when you are back on the computer and want normal ActivityWatch tracking again.'
-              : 'Fill in What are you doing? first. Stop becomes available once the label is ready.'
+              ? 'Saved to Activity when you press Start.'
+              : 'Pick a card, then press Stop.'
           }}
         </p>
       </section>
 
-      <section class="aw-card flex min-h-0 flex-col gap-4">
+      <section class="aw-card flex min-h-0 flex-col gap-4 p-5">
         <div class="space-y-1">
-          <h2 class="aw-subtitle">Session details</h2>
-          <p class="aw-caption">
-            Describe the task you are about to do away from the keyboard. This label becomes the
-            saved manual session.
-          </p>
+          <h2 class="aw-subtitle">What you will do</h2>
         </div>
 
-        <label class="aw-label flex flex-col gap-2">
-          <span>What are you doing?</span>
-          <ui-input
-            class="aw-input h-11"
-            v-model="label"
-            type="text"
-            placeholder="Lunch, meeting, planning on paper…"
-            :disabled="Boolean(activeTimer)"
-            @keyup.enter="triggerStopTracking"
-          />
-        </label>
+        <div class="grid gap-3 md:grid-cols-3">
+          <div
+            v-for="shortcut in shortcuts"
+            :key="shortcut.key"
+            class="aw-shortcut-card"
+            :class="[
+              selectedShortcutKey === shortcut.key ? 'aw-shortcut-card-active' : '',
+              activeTimer ? 'cursor-not-allowed opacity-60' : '',
+            ]"
+            role="button"
+            :tabindex="activeTimer ? -1 : 0"
+            :aria-disabled="Boolean(activeTimer)"
+            :aria-pressed="selectedShortcutKey === shortcut.key"
+            @click="selectShortcut(shortcut.key)"
+            @keydown.enter.prevent="selectShortcut(shortcut.key)"
+            @keydown.space.prevent="selectShortcut(shortcut.key)"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <div class="space-y-3">
+                <span class="text-foreground-strong text-base font-semibold">{{ shortcut.title }}</span>
+                <p class="text-foreground-muted text-sm leading-6">
+                  {{ shortcut.description }}
+                </p>
+              </div>
+              <span class="aw-shortcut-card-icon">
+                <icon :name="shortcut.icon" class="h-5 w-5"></icon>
+              </span>
+            </div>
+            <div
+              v-if="shortcut.isOther && selectedShortcutKey === shortcut.key"
+              class="mt-4"
+              @click.stop
+            >
+              <ui-input
+                class="aw-input h-11"
+                v-model="customLabel"
+                type="text"
+                placeholder="Type a category"
+                :disabled="Boolean(activeTimer)"
+                @keydown.enter.stop="triggerStopTracking"
+              />
+            </div>
+          </div>
+        </div>
 
-        <div class="aw-card-muted space-y-2">
+        <div class="aw-card-muted space-y-2" v-if="activeTimer">
           <div class="flex items-start justify-between gap-3">
             <div>
-              <div class="text-foreground-strong text-sm font-semibold">
-                {{ activeTimer ? 'Tracking is paused' : 'Normal tracking is active' }}
-              </div>
-              <div class="text-foreground text-base">
-                {{
-                  activeTimer
-                    ? activeTimer.data.label || 'Away session'
-                    : 'ActivityWatch is still recording your computer time.'
-                }}
-              </div>
+              <div class="text-foreground-strong text-sm font-semibold">Stop timer record</div>
+              <div class="text-foreground text-base">{{ activeTimer.data.label || 'Away session' }}</div>
             </div>
-            <span class="aw-chip">{{
-              activeTimer ? friendlyduration(elapsedSeconds) : friendlyduration(liveTrackedSeconds)
-            }}</span>
+            <span class="aw-chip">{{ friendlyduration(elapsedSeconds) }}</span>
           </div>
-          <p class="aw-caption" v-if="activeTimer">
-            This manual session will shadow overlapping computer activity when you include manual
-            sessions in Activity.
+          <p class="aw-caption">
+            This interval will be written to Activity after you press Start.
           </p>
-          <p class="aw-caption" v-else>
-            Add a label, then press Stop to begin an away session. When you return, press Start to
-            resume normal tracking.
-          </p>
-        </div>
-
-        <div class="space-y-2" v-if="!activeTimer && recentLabels.length > 0">
-          <div class="text-foreground-strong text-sm font-semibold">Recent labels</div>
-          <div class="flex flex-wrap gap-2">
-            <ui-button
-              v-for="recentLabel in recentLabels"
-              :key="recentLabel"
-              class="aw-btn aw-btn-sm aw-btn-outline"
-              type="button"
-              @click="useRecentLabel(recentLabel)"
-            >
-              {{ recentLabel }}
-            </ui-button>
-          </div>
-        </div>
-
-        <div class="aw-card-muted space-y-2">
-          <div class="text-foreground-strong text-sm font-semibold">How this works</div>
-          <ul class="text-foreground-muted space-y-1 text-sm leading-6">
-            <li>
-              By default, the clock shows today's computer time already recorded by ActivityWatch.
-            </li>
-            <li>Set a label and press Stop when you leave the computer for a focused task.</li>
-            <li>Press Start when you are back to resume normal ActivityWatch tracking.</li>
-          </ul>
         </div>
       </section>
     </div>
 
-    <section class="aw-card flex min-h-0 flex-1 flex-col">
-      <div class="mb-4 space-y-1">
-        <h2 class="aw-subtitle">Recent away sessions</h2>
-        <p class="aw-caption">
-          Saved manual sessions appear here. Reuse a label quickly or edit the session afterwards.
-        </p>
-      </div>
-
-      <div class="flex-1 overflow-y-auto" v-if="loading">
-        <span class="text-sm text-foreground-muted">Loading…</span>
-      </div>
-
-      <div class="flex-1 overflow-y-auto" v-else-if="stoppedTimers.length > 0">
-        <div v-for="day in Object.keys(timersByDate).sort().reverse()" :key="day" class="space-y-2">
-          <h5 class="aw-eyebrow">{{ day }}</h5>
-          <div class="space-y-2">
-            <div class="aw-divider" v-if="timersByDate[day].length > 0"></div>
-            <div v-for="event in timersByDate[day]" :key="event.id">
-              <stopwatch-entry
-                :event="event"
-                :bucket_id="bucket_id"
-                :now="now"
-                @delete="removeTimer"
-                @update="updateTimer"
-                @reuse-label="useRecentLabel"
-              ></stopwatch-entry>
-              <div class="aw-divider"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="aw-empty flex-1" v-else>No away sessions saved yet.</div>
-    </section>
   </div>
 </template>
 
@@ -169,28 +123,85 @@
 import _ from 'lodash';
 import moment from 'moment';
 
-import StopwatchEntry from '../components/StopwatchEntry.vue';
-import { appQuery, fullDesktopQuery, multideviceQuery } from '~/app/lib/queries';
-import { get_day_period } from '~/app/lib/time';
+import { appQuery } from '~/app/lib/queries';
+import { get_day_period, get_today_with_offset } from '~/app/lib/time';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
 import { useCategoryStore } from '~/features/categorization/store/categories';
+import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 import { useSettingsStore } from '~/features/settings/store/settings';
 import { useToast } from '~/shared/composables/useToast';
 
 export default {
   name: 'Stopwatch',
   components: {
-    'stopwatch-entry': StopwatchEntry,
+    ThemeToggleButton,
   },
   data: () => {
     return {
-      loading: true,
       bucket_id: 'aw-stopwatch',
       events: [],
       bucketsStore: useBucketsStore(),
       categoryStore: useCategoryStore(),
       settingsStore: useSettingsStore(),
-      label: '',
+      customLabel: '',
+      selectedShortcutKey: '',
+      shortcuts: [
+        {
+          key: 'write-algo',
+          title: 'Write Algo',
+          description: 'Work through logic before you code it.',
+          icon: 'code',
+        },
+        {
+          key: 'design-draft',
+          title: 'Design Draft',
+          description: 'Shape structure, flow, or layout first.',
+          icon: 'palette',
+        },
+        {
+          key: 'plan-roadmap',
+          title: 'Plan Roadmap',
+          description: 'Line up next steps, tradeoffs, and order.',
+          icon: 'calendar',
+        },
+        {
+          key: 'deep-reading',
+          title: 'Deep Reading',
+          description: 'Read a paper, spec, or doc without noise.',
+          icon: 'file',
+        },
+        {
+          key: 'other',
+          title: 'Other',
+          description: 'Type something custom when none of these fit.',
+          icon: 'question-circle',
+          isOther: true,
+        },
+        {
+          key: 'whiteboard-session',
+          title: 'Whiteboard Session',
+          description: 'Think through structure away from the keyboard.',
+          icon: 'edit',
+        },
+        {
+          key: 'meeting-notes',
+          title: 'Meeting Notes',
+          description: 'Capture notes, action items, or follow-ups.',
+          icon: 'list',
+        },
+        {
+          key: 'research-review',
+          title: 'Research Review',
+          description: 'Compare sources, ideas, or implementation options.',
+          icon: 'search',
+        },
+        {
+          key: 'system-design',
+          title: 'System Design',
+          description: 'Map architecture, interfaces, or data flow.',
+          icon: 'desktop',
+        },
+      ] as { key: string; title: string; description: string; icon: string; isOther?: boolean }[],
       now: moment(),
       tickHandle: null as ReturnType<typeof setInterval> | null,
       refreshHandle: null as ReturnType<typeof setInterval> | null,
@@ -212,15 +223,14 @@ export default {
     activeTimer() {
       return this.runningTimers[0] || null;
     },
-    stoppedTimers() {
-      return _.orderBy(
-        _.filter(this.events, e => !e.data.running),
-        e => e.timestamp,
-        'desc'
-      );
+    selectedShortcutConfig() {
+      return this.shortcuts.find(shortcut => shortcut.key === this.selectedShortcutKey) || null;
     },
-    timersByDate() {
-      return _.groupBy(this.stoppedTimers, e => moment(e.timestamp).format('YYYY-MM-DD'));
+    resolvedLabel() {
+      if (this.selectedShortcutConfig?.isOther) {
+        return this.customLabel.trim();
+      }
+      return this.selectedShortcutConfig?.title || '';
     },
     elapsedSeconds() {
       if (!this.activeTimer) {
@@ -229,7 +239,7 @@ export default {
       return Math.max(0, moment(this.now).diff(moment(this.activeTimer.timestamp), 'seconds'));
     },
     canStopTracking() {
-      return this.label.trim().length > 0;
+      return this.resolvedLabel.length > 0;
     },
     liveTrackedSeconds() {
       if (!this.todayTrackedLoaded) {
@@ -258,17 +268,15 @@ export default {
       const targetSeconds = this.activeTimer ? 90 * 60 : 8 * 60 * 60;
       const progress = Math.min(referenceSeconds / targetSeconds, 0.98);
       return {
-        background: `conic-gradient(rgb(var(--primary)) ${
+        background: `conic-gradient(rgb(var(--summary-vis-normal)) ${
           progress * 360
-        }deg, rgb(var(--primary-soft)) 0deg)`,
+        }deg, rgb(var(--summary-vis-hover) / 0.18) 0deg)`,
       };
     },
-    recentLabels() {
-      return _.uniq(
-        this.stoppedTimers
-          .map(e => e.data.label)
-          .filter((label: string) => label && label.trim().length > 0)
-      ).slice(0, 6);
+    timerDisplayStyle() {
+      return {
+        color: 'rgb(var(--summary-vis-normal))',
+      };
     },
   },
   mounted: async function () {
@@ -300,6 +308,13 @@ export default {
     }
   },
   methods: {
+    selectShortcut(shortcutKey: string) {
+      if (this.activeTimer) {
+        return;
+      }
+      this.selectedShortcutKey = shortcutKey;
+    },
+
     async handlePrimaryAction() {
       if (this.activeTimer) {
         await this.resumeTracking();
@@ -309,7 +324,7 @@ export default {
       await this.triggerStopTracking();
     },
 
-    async triggerStopTracking(label = this.label) {
+    async triggerStopTracking(label = this.resolvedLabel) {
       const nextLabel = (label || '').trim();
       if (!nextLabel) {
         const { info } = useToast();
@@ -320,7 +335,7 @@ export default {
       await this.startAwaySession(nextLabel);
     },
 
-    async startAwaySession(label = this.label) {
+    async startAwaySession(label = this.resolvedLabel) {
       if (this.activeTimer) {
         const { info } = useToast();
         info(
@@ -330,15 +345,17 @@ export default {
         return;
       }
 
+      const normalizedLabel = (label || '').trim();
       const event = {
         timestamp: new Date(),
         data: {
           running: true,
-          label,
+          label: normalizedLabel,
+          $manual_away: true,
+          $category: [normalizedLabel],
         },
       };
       await this.$aw.heartbeat(this.bucket_id, 1, event);
-      this.label = label;
       await this.getEvents();
     },
 
@@ -353,21 +370,8 @@ export default {
       await this.$aw.replaceEvent(this.bucket_id, updatedEvent);
       await this.getEvents();
       await this.refreshTodayTracked();
-    },
-
-    updateTimer(new_event) {
-      const index = this.events.findIndex(e => e.id == new_event.id);
-      if (index !== -1) {
-        this.events.splice(index, 1, new_event);
-      }
-    },
-
-    removeTimer(event) {
-      this.events = _.filter(this.events, e => e.id != event.id);
-    },
-
-    useRecentLabel(label: string) {
-      this.label = label || '';
+      this.selectedShortcutKey = '';
+      this.customLabel = '';
     },
 
     desktopHosts() {
@@ -387,53 +391,41 @@ export default {
     },
 
     async queryTodayTrackedDuration() {
-      const range = get_day_period(moment(), this.settingsStore.startOfDay);
-      const categories = this.categoryStore.queryRules;
+      const today = get_today_with_offset(this.settingsStore.startOfDay);
+      const range = get_day_period(today, this.settingsStore.startOfDay);
+      let trackedSeconds = 0;
+
       const desktopHosts = this.desktopHosts();
-
-      if (desktopHosts.length > 1) {
-        const result = await this.$aw.query(
-          [range],
-          multideviceQuery({
-            hosts: desktopHosts,
-            filter_afk: true,
-            categories,
-            filter_categories: undefined,
-            host_params: {},
-            always_active_pattern: this.settingsStore.always_active_pattern,
-          })
-        );
-        return Number(result?.[0]?.window?.duration || 0);
+      const afkBuckets = _.uniq(
+        _.flatten(desktopHosts.map(host => this.bucketsStore.bucketsAFK(host)))
+      );
+      if (afkBuckets.length > 0) {
+        const notAfkQuery = ['not_afk = [];'];
+        afkBuckets.forEach(bucketId => {
+          notAfkQuery.push(`not_afk_curr = flood(query_bucket("${bucketId}"));`);
+          notAfkQuery.push('not_afk_curr = filter_keyvals(not_afk_curr, "status", ["not-afk"]);');
+          notAfkQuery.push('not_afk = union_no_overlap(not_afk, not_afk_curr);');
+        });
+        notAfkQuery.push('RETURN = sum_durations(not_afk);');
+        const result = await this.$aw.query([range], notAfkQuery);
+        trackedSeconds = Number(result?.[0] || 0);
+      } else {
+        const androidBuckets = this.androidBuckets();
+        if (androidBuckets.length > 0) {
+          const result = await this.$aw.query([range], appQuery(androidBuckets[0], [], []));
+          trackedSeconds = Number(result?.[0]?.duration || 0);
+        }
       }
 
-      if (desktopHosts.length === 1) {
-        const host = desktopHosts[0];
-        const result = await this.$aw.query(
-          [range],
-          fullDesktopQuery({
-            bid_window: this.bucketsStore.bucketsWindow(host)[0],
-            bid_afk: this.bucketsStore.bucketsAFK(host)[0],
-            bid_browsers: this.bucketsStore.bucketsBrowser(host),
-            filter_afk: true,
-            categories,
-            filter_categories: undefined,
-            include_audible: true,
-            always_active_pattern: this.settingsStore.always_active_pattern,
-          })
-        );
-        return Number(result?.[0]?.window?.duration || 0);
-      }
+      // Manual away sessions are stored in aw-stopwatch and should be added to recorded time.
+      const stopwatchDurationResult = await this.$aw.query([range], [
+        `events = query_bucket("${this.bucket_id}");`,
+        'events = filter_keyvals(events, "running", [false]);',
+        'RETURN = sum_durations(events);',
+      ]);
+      const awaySeconds = Number(stopwatchDurationResult?.[0] || 0);
 
-      const androidBuckets = this.androidBuckets();
-      if (androidBuckets.length > 0) {
-        const result = await this.$aw.query(
-          [range],
-          appQuery(androidBuckets[0], categories, undefined)
-        );
-        return Number(result?.[0]?.duration || 0);
-      }
-
-      return 0;
+      return trackedSeconds + awaySeconds;
     },
 
     async getLatestBucketEvent(bucketId: string) {
@@ -500,7 +492,6 @@ export default {
     async getEvents() {
       const events = await this.$aw.getEvents(this.bucket_id, { limit: 100 });
       this.events = _.orderBy(events, event => event.timestamp, 'desc');
-      this.loading = false;
     },
   },
 };

@@ -65,6 +65,11 @@ function getCategoryColorFromTexts(texts: Array<string | null | undefined>): str
   }
 }
 
+function getCategoryFromTexts(texts: Array<string | null | undefined>): Category | null {
+  const allCats = loadCategoryClasses();
+  return matchCategoryAgainstTexts(texts, allCats);
+}
+
 // TODO: Move into vuex?
 export function getCategoryColorFromString(str: string): string {
   return getCategoryColorFromTexts([str]);
@@ -127,4 +132,22 @@ export function getCategoryColorFromEvent(bucket: IBucket, e: IEvent) {
   } else {
     return getColorFromString(getTitleAttr(bucket, e));
   }
+}
+
+export function getCategoryNameFromEvent(bucket: IBucket, e: IEvent): string | null {
+  let category: Category | null = null;
+
+  if (bucket.type == 'currentwindow') {
+    category = getCategoryFromTexts([e.data.app, e.data.title]);
+  } else if (bucket.type == 'web.tab.current') {
+    category = getCategoryFromTexts([e.data.title, e.data.url]);
+  } else if (bucket.type == 'afkstatus') {
+    return e.data.status === 'not-afk' ? 'Active' : 'Idle';
+  } else if (bucket.type?.startsWith('app.editor')) {
+    category = getCategoryFromTexts([e.data.file]);
+  } else if (bucket.type?.startsWith('general.stopwatch')) {
+    category = getCategoryFromTexts([e.data.label]);
+  }
+
+  return category?.name?.[0] || null;
 }

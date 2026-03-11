@@ -1,8 +1,9 @@
-export const ACTIVITY_PRIMARY_BAR = '#6699ff';
-export const ACTIVITY_HIGHLIGHT = '#0f8f9c';
-export const ACTIVITY_HIGHLIGHT_BORDER = '#0a6c76';
-export const ACTIVITY_AXIS_COLOR = '#a0aab2';
-export const ACTIVITY_GRID_COLOR = '#f0f0f0';
+export const ACTIVITY_PRIMARY_BAR = '#9E9AB7';
+export const ACTIVITY_HIGHLIGHT = '#5CC0CA';
+export const ACTIVITY_HIGHLIGHT_BORDER = '#5CC0CA';
+export const ACTIVITY_HOVER = '#8B88A4';
+export const ACTIVITY_AXIS_COLOR = '#9E9AB7';
+export const ACTIVITY_GRID_COLOR = 'rgba(158, 154, 183, 0.18)';
 export const ACTIVITY_QUERY_INTERVAL = '#aaaaaa';
 export const ACTIVITY_SUNBURST_TICK = '#cccccc';
 export const ACTIVITY_SUNBURST_LABEL = '#999999';

@@ -30,166 +30,187 @@
       >
     </div>
     <div v-if="activityStore.buckets.loaded" class="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div v-if="!has_prerequisites" class="shrink-0">
-        <aw-alert class="small px-2 py-1" show variant="warning">
-          This feature is missing data from a required watcher. You can find a list of all watchers
-          in
-          <ui-link href="https://activitywatch.readthedocs.io/en/latest/watchers.html"
-            >the documentation</ui-link
-          >.
-        </aw-alert>
-      </div>
-      <div v-if="type == 'top_apps'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.window.top_apps"
-          :namefunc="e => e.data.app"
-          :colorfunc="e => e.data.app"
-          :selected-name="selectedAppName"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_titles' && !activityStore.android.available" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.window.top_titles"
-          :namefunc="e => e.data.title"
-          :colorfunc="e => e.data['$category']"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_domains'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.browser.top_domains"
-          :namefunc="e => e.data.$domain"
-          :colorfunc="e => e.data.$domain"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_urls'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.browser.top_urls"
-          :namefunc="e => e.data.url"
-          :colorfunc="e => e.data.$domain"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_browser_titles'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.browser.top_titles"
-          :namefunc="e => e.data.title"
-          :colorfunc="e => e.data.$domain"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_editor_files'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.editor.top_files"
-          :namefunc="top_editor_files_namefunc"
-          :hoverfunc="top_editor_files_hoverfunc"
-          :colorfunc="e => e.data.language"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_editor_languages'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.editor.top_languages"
-          :namefunc="e => e.data.language"
-          :colorfunc="e => e.data.language"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_editor_projects'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.editor.top_projects"
-          :namefunc="top_editor_projects_namefunc"
-          :hoverfunc="top_editor_projects_hoverfunc"
-          :colorfunc="e => e.data.language"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_categories'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.category.top"
-          :namefunc="e => e.data['$category'].join(' > ')"
-          :colorfunc="e => e.data['$category']"
-          :linkfunc="
-            e =>
-              '#' + $route.path + '?category=' + encodeURIComponent(e.data['$category'].join('>'))
-          "
-          :selected-name="selectedCategoryLabel"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'category_donut'" class="aw-vis-content aw-vis-content-center">
-        <aw-category-donut class="h-full"></aw-category-donut>
-      </div>
-      <div v-if="type == 'category_tree'" class="aw-vis-content">
-        <div class="aw-vis-content-scroll">
-          <aw-categorytree :events="activityStore.category.top"></aw-categorytree>
+      <div v-if="pluginInstallState" class="aw-vis-content aw-vis-content-center">
+        <div class="aw-plugin-callout">
+          <icon class="aw-plugin-callout-icon" :name="pluginInstallState.icon" :size="46"></icon>
+          <div class="space-y-1.5 text-center">
+            <h6 class="aw-plugin-callout-title">{{ pluginInstallState.title }}</h6>
+            <p class="aw-plugin-callout-points">{{ pluginInstallState.points }}</p>
+          </div>
+          <ui-link
+            class="aw-btn aw-btn-md aw-plugin-callout-cta"
+            :href="watcherDocsUrl"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {{ pluginInstallState.cta }}
+          </ui-link>
         </div>
       </div>
-      <div v-if="type == 'category_sunburst'" class="aw-vis-content">
-        <aw-sunburst-categories
-          class="aw-visualization-min h-full"
-          :data="top_categories_hierarchy"
-        ></aw-sunburst-categories>
-      </div>
-      <div v-if="type == 'timeline_barchart'" class="aw-vis-content">
-        <aw-timeline-barchart
-          class="h-full"
-          :datasets="datasets"
-          :timeperiod_start="activityStore.query_options?.timeperiod?.start"
-          :timeperiod_length="activityStore.query_options?.timeperiod?.length"
-        ></aw-timeline-barchart>
-      </div>
-      <div v-if="type == 'sunburst_clock'" class="aw-vis-content">
-        <aw-sunburst-clock
-          class="h-full"
-          :date="date"
-          :afkBucketId="activityStore.buckets.afk[0]"
-          :windowBucketId="activityStore.buckets.window[0]"
-        ></aw-sunburst-clock>
-      </div>
-      <div v-if="type == 'custom_vis'" class="aw-vis-content">
-        <aw-custom-vis class="h-full" :visname="props.visname" :title="props.title"></aw-custom-vis>
-      </div>
-      <div v-if="type == 'vis_timeline' && isSingleDay" class="aw-vis-content">
-        <vis-timeline
-          class="h-full"
-          :buckets="timeline_buckets"
-          :showRowLabels="true"
-          :queriedInterval="timeline_daterange"
-        ></vis-timeline>
-      </div>
-      <div v-if="type == 'score'" class="aw-vis-content">
-        <aw-score class="h-full"></aw-score>
-      </div>
-      <div v-if="type == 'top_stopwatches'" class="aw-vis-content">
-        <aw-summary
-          class="h-full"
-          :fields="activityStore.stopwatch.top_stopwatches"
-          :namefunc="e => e.data.label"
-          :colorfunc="e => e.data.label"
-          with_limit
-        ></aw-summary>
-      </div>
-      <div v-if="type == 'top_bucket_data'" class="aw-vis-content">
-        <aw-top-bucket-data
-          class="h-full"
-          :initialBucketId="props ? props.bucketId : ''"
-          :initialField="props ? props.field : ''"
-          :initialCustomField="props ? props.customField : ''"
-          @update-props="onWatcherPropsChange"
-        ></aw-top-bucket-data>
-      </div>
+      <template v-else>
+        <div v-if="!has_prerequisites" class="shrink-0">
+          <aw-alert class="small px-2 py-1" show variant="warning">
+            This feature is missing data from a required watcher. You can find a list of all
+            watchers in
+            <ui-link href="https://activitywatch.readthedocs.io/en/latest/watchers.html"
+              >the documentation</ui-link
+            >.
+          </aw-alert>
+        </div>
+        <div v-if="type == 'top_apps'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.window.top_apps"
+            :namefunc="e => e.data.app"
+            :colorfunc="e => e.data.app"
+            :selectfunc="onAppSelect"
+            :selected-name="selectedAppName"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_titles' && !activityStore.android.available" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.window.top_titles"
+            :namefunc="e => e.data.title"
+            :colorfunc="e => e.data['$category']"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_domains'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.browser.top_domains"
+            :namefunc="e => e.data.$domain"
+            :colorfunc="e => e.data.$domain"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_urls'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.browser.top_urls"
+            :namefunc="e => e.data.url"
+            :colorfunc="e => e.data.$domain"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_browser_titles'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.browser.top_titles"
+            :namefunc="e => e.data.title"
+            :colorfunc="e => e.data.$domain"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_editor_files'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.editor.top_files"
+            :namefunc="top_editor_files_namefunc"
+            :hoverfunc="top_editor_files_hoverfunc"
+            :colorfunc="e => e.data.language"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_editor_languages'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.editor.top_languages"
+            :namefunc="e => e.data.language"
+            :colorfunc="e => e.data.language"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_editor_projects'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.editor.top_projects"
+            :namefunc="top_editor_projects_namefunc"
+            :hoverfunc="top_editor_projects_hoverfunc"
+            :colorfunc="e => e.data.language"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_categories'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.category.top"
+            :namefunc="e => e.data['$category'].join(' > ')"
+            :colorfunc="e => e.data['$category']"
+            :selectfunc="onCategorySelect"
+            :selected-name="selectedCategoryLabel"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'category_donut'" class="aw-vis-content aw-vis-content-center">
+          <aw-category-donut class="h-full"></aw-category-donut>
+        </div>
+        <div v-if="type == 'category_tree'" class="aw-vis-content">
+          <div class="aw-vis-content-scroll">
+            <aw-categorytree :events="activityStore.category.top"></aw-categorytree>
+          </div>
+        </div>
+        <div v-if="type == 'category_sunburst'" class="aw-vis-content">
+          <aw-sunburst-categories
+            class="aw-visualization-min h-full"
+            :data="top_categories_hierarchy"
+          ></aw-sunburst-categories>
+        </div>
+        <div v-if="type == 'timeline_barchart'" class="aw-vis-content">
+          <aw-timeline-barchart
+            class="h-full"
+            :datasets="datasets"
+            :timeperiod_start="activityStore.query_options?.timeperiod?.start"
+            :timeperiod_length="activityStore.query_options?.timeperiod?.length"
+          ></aw-timeline-barchart>
+        </div>
+        <div v-if="type == 'sunburst_clock'" class="aw-vis-content">
+          <aw-sunburst-clock
+            class="h-full"
+            :date="date"
+            :afkBucketId="activityStore.buckets.afk[0]"
+            :windowBucketId="activityStore.buckets.window[0]"
+          ></aw-sunburst-clock>
+        </div>
+        <div v-if="type == 'custom_vis'" class="aw-vis-content">
+          <aw-custom-vis
+            class="h-full"
+            :visname="props.visname"
+            :title="props.title"
+          ></aw-custom-vis>
+        </div>
+        <div v-if="type == 'vis_timeline' && isSingleDay" class="aw-vis-content">
+          <vis-timeline
+            class="h-full"
+            :buckets="timeline_buckets"
+            :showRowLabels="true"
+            :queriedInterval="timeline_daterange"
+          ></vis-timeline>
+        </div>
+        <div v-if="type == 'score'" class="aw-vis-content">
+          <aw-score class="h-full"></aw-score>
+        </div>
+        <div v-if="type == 'top_stopwatches'" class="aw-vis-content">
+          <aw-summary
+            class="h-full"
+            :fields="activityStore.stopwatch.top_stopwatches"
+            :namefunc="e => e.data.label"
+            :colorfunc="e => e.data.label"
+            with_limit
+          ></aw-summary>
+        </div>
+        <div v-if="type == 'top_bucket_data'" class="aw-vis-content">
+          <aw-top-bucket-data
+            class="h-full"
+            :initialBucketId="props ? props.bucketId : ''"
+            :initialField="props ? props.field : ''"
+            :initialCustomField="props ? props.customField : ''"
+            @update-props="onWatcherPropsChange"
+          ></aw-top-bucket-data>
+        </div>
+      </template>
     </div>
     <div v-else class="aw-empty-state">
       <div class="aw-loading">Loading...</div>
@@ -279,6 +300,14 @@ export default {
   computed: {
     visualizations: function () {
       return {
+        browser_plugin_prompt: {
+          title: 'Browser Plugin',
+          available: true,
+        },
+        editor_plugin_prompt: {
+          title: 'Editor Plugin',
+          available: true,
+        },
         top_apps: {
           title: 'Top Applications',
           available: this.activityStore.window.available || this.activityStore.android.available,
@@ -328,7 +357,7 @@ export default {
           available: this.activityStore.category.available,
         },
         timeline_barchart: {
-          title: 'Timeline (barchart)',
+          title: 'Timeline',
           available: true,
         },
         sunburst_clock: {
@@ -357,8 +386,40 @@ export default {
         },
       };
     },
+    watcherDocsUrl() {
+      return 'https://activitywatch.readthedocs.io/en/latest/watchers.html';
+    },
     has_prerequisites() {
       return this.visualizations[this.type].available;
+    },
+    pluginInstallState() {
+      if (
+        this.type === 'browser_plugin_prompt' ||
+        (['top_domains', 'top_urls', 'top_browser_titles'].includes(this.type) &&
+          !this.activityStore.browser.available)
+      ) {
+        return {
+          icon: 'globe',
+          title: 'Unlock Browser Activity',
+          points: 'Domains • URLs • Tab Titles',
+          cta: 'Install Plugin',
+        };
+      }
+
+      if (
+        this.type === 'editor_plugin_prompt' ||
+        (['top_editor_files', 'top_editor_languages', 'top_editor_projects'].includes(this.type) &&
+          !this.activityStore.editor.available)
+      ) {
+        return {
+          icon: 'terminal',
+          title: 'Unlock Editor Activity',
+          points: 'Files • Projects • Languages',
+          cta: 'Install Plugin',
+        };
+      }
+
+      return null;
     },
     selectedAppName() {
       return this.highlightStore.app;
@@ -436,6 +497,29 @@ export default {
     }
   },
   methods: {
+    onAppSelect(event) {
+      const app = event?.data?.app || null;
+      const category = event?.data?.['$category'] || null;
+      if (!app) return;
+
+      if (this.selectedAppName === app) {
+        this.highlightStore.clear();
+        return;
+      }
+
+      this.highlightStore.setApp({ app, category });
+    },
+    onCategorySelect(event) {
+      const category = event?.data?.['$category'] || null;
+      if (!category) return;
+
+      if (this.selectedCategoryLabel === category.join(' > ')) {
+        this.highlightStore.clear();
+        return;
+      }
+
+      this.highlightStore.setCategory(category);
+    },
     onWatcherPropsChange(newProps) {
       if (!this.viewId) return;
       const mergedProps = { ...(this.props || {}), ...newProps };

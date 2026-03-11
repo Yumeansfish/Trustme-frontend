@@ -28,6 +28,7 @@ interface BaseQueryParams {
   bid_browsers?: string[];
   bid_stopwatch?: string;
   return_variable_suffix?: string;
+  browser_events_mode?: 'none' | 'presence' | 'full';
 }
 
 interface DesktopQueryParams extends BaseQueryParams {
@@ -47,6 +48,15 @@ interface MultiQueryParams extends BaseQueryParams {
   always_active_pattern: string;
   // This can be used to override params on a per-host basis
   host_params: { [host: string]: DesktopQueryParams | AndroidQueryParams };
+}
+
+interface WindowAggregationOptions {
+  include_window_titles?: boolean;
+}
+
+interface FullDesktopQueryOptions extends WindowAggregationOptions {
+  include_browser_data?: boolean;
+  include_stopwatch_data?: boolean;
 }
 
 function get_params(
@@ -90,6 +100,10 @@ function isMultiParams(object: any): object is MultiQueryParams {
   return 'hosts' in object;
 }
 
+function getBrowserEventsMode(params: BaseQueryParams): 'none' | 'presence' | 'full' {
+  return params.browser_events_mode ?? 'full';
+}
+
 // Constructs a query that returns a fully-detailed list of events from the merging of several sources (window, afk, web).
 // Performs:
 //  - AFK filtering (if filter_afk is true)
@@ -123,7 +137,7 @@ export function canonicalEvents(params: DesktopQueryParams | AndroidQueryParams)
           : '')
       : '',
     // Fetch browser events
-    isDesktopParams(params) && params.bid_browsers
+    isDesktopParams(params) && params.bid_browsers && getBrowserEventsMode(params) !== 'none'
       ? browserEvents(params) +
         // Include focused and audible browser events as indications of not-afk
         (params.include_audible
@@ -137,12 +151,18 @@ export function canonicalEvents(params: DesktopQueryParams | AndroidQueryParams)
       : '',
     params.bid_stopwatch
       ? `stopwatch_events = query_bucket("${params.bid_stopwatch}");
-         events = union_no_overlap(stopwatch_events, events);`
+         stopwatch_events = filter_keyvals(stopwatch_events, "running", [false]);
+         events = union_no_overlap(stopwatch_events, events);
+         ${
+           isDesktopParams(params) ? 'not_afk = union_no_overlap(not_afk, stopwatch_events);' : ''
+         }`
       : 'stopwatch_events = [];',
     // Categorize
-    params.categories ? `events = categorize(events, ${categories_str});` : '',
+    params.categories && params.categories.length > 0
+      ? `events = categorize(events, ${categories_str});`
+      : '',
     // Filter out selected categories
-    params.filter_categories
+    params.filter_categories && params.filter_categories.length > 0
       ? `events = filter_keyvals(events, "$category", ${cat_filter_str});`
       : '',
     // "Return" events by setting variable named with return_variable if set
@@ -260,6 +280,7 @@ export const browser_appname_regex: Record<string, string> = {
 
 // Returns a list of active browser events (where the browser was the active window) from all browser buckets
 function browserEvents(params: DesktopQueryParams): string {
+  const mode = getBrowserEventsMode(params);
   let code = `
     browser_events = [];
   `;
@@ -277,16 +298,27 @@ function browserEvents(params: DesktopQueryParams): string {
        window_${browserName} = sort_by_timestamp(concat(window_${browserName}, window_${browserName}_re));`;
     }
 
-    code += `
-       events_${browserName} = filter_period_intersect(events_${browserName}, window_${browserName});
-       events_${browserName} = split_url_events(events_${browserName});
+    code +=
+      `
+       events_${browserName} = filter_period_intersect(events_${browserName}, window_${browserName});` +
+      (mode === 'full' ? `events_${browserName} = split_url_events(events_${browserName});` : '') +
+      `
        browser_events = concat(browser_events, events_${browserName});
-       browser_events = sort_by_timestamp(browser_events);`;
+       ${mode === 'full' ? 'browser_events = sort_by_timestamp(browser_events);' : ''}`;
   });
   return code;
 }
 
-export function fullDesktopQuery(params: DesktopQueryParams): string[] {
+export function fullDesktopQuery(params: DesktopQueryParams & FullDesktopQueryOptions): string[] {
+  const include_window_titles = params.include_window_titles ?? true;
+  const include_browser_data = params.include_browser_data ?? true;
+  const include_stopwatch_data = params.include_stopwatch_data ?? true;
+  const browser_events_mode = include_browser_data
+    ? 'full'
+    : params.include_audible
+    ? 'presence'
+    : 'none';
+
   return querystr_to_array(
     `
     ${canonicalEvents({
@@ -294,19 +326,29 @@ export function fullDesktopQuery(params: DesktopQueryParams): string[] {
       // Escape `"`
       bid_window: escape_doublequote(params.bid_window),
       bid_afk: escape_doublequote(params.bid_afk),
-      bid_browsers: _.map(params.bid_browsers, escape_doublequote),
+      bid_browsers:
+        browser_events_mode === 'none' ? undefined : _.map(params.bid_browsers, escape_doublequote),
+      browser_events_mode,
     })}
-    title_events = sort_by_duration(merge_events_by_keys(events, ["app", "title"]));
-    app_events   = sort_by_duration(merge_events_by_keys(title_events, ["app"]));
+    events_with_app = filter_keyvals_regex(events, "app", "\\S");
+    events_with_app_and_title = filter_keyvals_regex(events_with_app, "title", "\\S");
+    ${
+      include_window_titles
+        ? `title_events = sort_by_duration(merge_events_by_keys(events_with_app_and_title, ["app", "title"]));
+    app_events   = sort_by_duration(merge_events_by_keys(title_events, ["app"]));`
+        : `title_events = [];
+    app_events   = sort_by_duration(merge_events_by_keys(events_with_app, ["app"]));`
+    }
     cat_events   = sort_by_duration(merge_events_by_keys(events, ["$category"]));
 
     app_events  = limit_events(app_events, ${default_limit});
-    title_events  = limit_events(title_events, ${default_limit});
+    ${include_window_titles ? `title_events  = limit_events(title_events, ${default_limit});` : ''}
     duration = sum_durations(events);
     ` + // Browser events are retrieved in canonicalQuery
       `
-    browser_events = split_url_events(browser_events);
-    browser_urls = merge_events_by_keys(browser_events, ["url"]);
+    ${
+      include_browser_data
+        ? `browser_urls = merge_events_by_keys(browser_events, ["url"]);
     browser_urls = sort_by_duration(browser_urls);
     browser_urls = limit_events(browser_urls, ${default_limit});
     browser_domains = merge_events_by_keys(browser_events, ["$domain"]);
@@ -315,10 +357,19 @@ export function fullDesktopQuery(params: DesktopQueryParams): string[] {
     browser_titles = merge_events_by_keys(browser_events, ["title"]);
     browser_titles = sort_by_duration(browser_titles);
     browser_titles = limit_events(browser_titles, ${default_limit});
-    browser_duration = sum_durations(browser_events);
-    stopwatch_events = merge_events_by_keys(stopwatch_events, ["label"]);
+    browser_duration = sum_durations(browser_events);`
+        : `browser_urls = [];
+    browser_domains = [];
+    browser_titles = [];
+    browser_duration = 0;`
+    }
+    ${
+      include_stopwatch_data
+        ? `stopwatch_events = merge_events_by_keys(stopwatch_events, ["label"]);
     stopwatch_events = sort_by_duration(stopwatch_events);
-    stopwatch_events = limit_events(stopwatch_events, ${default_limit});
+    stopwatch_events = limit_events(stopwatch_events, ${default_limit});`
+        : `stopwatch_events = [];`
+    }
 
     RETURN = {
         "window": {
@@ -341,6 +392,63 @@ export function fullDesktopQuery(params: DesktopQueryParams): string[] {
   );
 }
 
+// Fast-path desktop query that returns raw events and active periods.
+// Designed for frontend-side aggregation when browser-specific visualizations are not requested.
+export function desktopEventsQuery(
+  params: DesktopQueryParams & { include_stopwatch_data?: boolean }
+): string[] {
+  const include_stopwatch_data = params.include_stopwatch_data ?? true;
+  const browser_events_mode = params.include_audible ? 'presence' : 'none';
+
+  return querystr_to_array(
+    `
+    ${canonicalEvents({
+      ...params,
+      bid_window: escape_doublequote(params.bid_window),
+      bid_afk: escape_doublequote(params.bid_afk),
+      bid_browsers:
+        browser_events_mode === 'none' ? undefined : _.map(params.bid_browsers, escape_doublequote),
+      categories: [],
+      filter_categories: [],
+      browser_events_mode,
+    })}
+    events = sort_by_timestamp(events);
+    not_afk = sort_by_timestamp(not_afk);
+    ${
+      include_stopwatch_data
+        ? 'stopwatch_events = sort_by_timestamp(stopwatch_events);'
+        : 'stopwatch_events = [];'
+    }
+
+    RETURN = {
+      "events": events,
+      "active_events": not_afk,
+      "stopwatch_events": stopwatch_events
+    };`
+  );
+}
+
+// Fast-path multidevice query that returns raw events and active periods.
+// Designed for frontend-side categorization/aggregation to avoid expensive
+// server-side regex categorization repeated per host.
+export function multideviceEventsQuery(params: MultiQueryParams): string[] {
+  return querystr_to_array(
+    `
+    ${canonicalMultideviceEvents({
+      ...params,
+      categories: [],
+      filter_categories: [],
+    })}
+    events = sort_by_timestamp(events);
+    not_afk = sort_by_timestamp(not_afk);
+
+    RETURN = {
+      "events": events,
+      "active_events": not_afk
+    };`
+  );
+}
+
 // Performs a query that combines data from multiple devices.
 // A multidevice-variant of fullDesktopQuery (with limitations).
 //
@@ -352,16 +460,23 @@ export function fullDesktopQuery(params: DesktopQueryParams): string[] {
 // NOTE: Only supports desktop devices (for now)
 // NOTE: Doesn't support browser buckets (and therefore not browser audible detection either)
 //       This is due to the 'unknown' hostname of browser buckets (will hopefully be fixed soon).
-export function multideviceQuery(params: MultiQueryParams): string[] {
+export function multideviceQuery(params: MultiQueryParams & WindowAggregationOptions): string[] {
+  const include_window_titles = params.include_window_titles ?? true;
+
   return querystr_to_array(
     `
     ${canonicalMultideviceEvents(params)}
-    title_events = sort_by_duration(merge_events_by_keys(events, ["app", "title"]));
-    app_events   = sort_by_duration(merge_events_by_keys(title_events, ["app"]));
+    ${
+      include_window_titles
+        ? `title_events = sort_by_duration(merge_events_by_keys(events, ["app", "title"]));
+    app_events   = sort_by_duration(merge_events_by_keys(title_events, ["app"]));`
+        : `title_events = [];
+    app_events   = sort_by_duration(merge_events_by_keys(events, ["app"]));`
+    }
     cat_events   = sort_by_duration(merge_events_by_keys(events, ["$category"]));
 
     app_events  = limit_events(app_events, ${default_limit});
-    title_events  = limit_events(title_events, ${default_limit});
+    ${include_window_titles ? `title_events  = limit_events(title_events, ${default_limit});` : ''}
     duration = sum_durations(events);
 
     RETURN = {
@@ -431,12 +546,29 @@ export function categoryQuery(
   return querystr_to_array(q);
 }
 
+// Returns categorized raw events for a period. Useful when the frontend needs
+// to aggregate into many sub-periods locally (hours/days/months) without
+// sending one server query per sub-period.
+export function categoryEventsQuery(
+  params: MultiQueryParams | DesktopQueryParams | AndroidQueryParams
+): string[] {
+  const q = `
+  ${isMultiParams(params) ? canonicalMultideviceEvents(params) : canonicalEvents(params)}
+  events = sort_by_timestamp(events);
+  RETURN = { "events": events };
+`;
+  return querystr_to_array(q);
+}
+
 export default {
   fullDesktopQuery,
+  desktopEventsQuery,
+  multideviceEventsQuery,
   multideviceQuery,
   appQuery,
   activityQuery,
   activityQueryAndroid,
   categoryQuery,
+  categoryEventsQuery,
   editorActivityQuery,
 };

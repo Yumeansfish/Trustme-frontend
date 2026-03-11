@@ -2,13 +2,13 @@
 
 import _ from 'lodash';
 
-import { useCategoryStore } from '~/features/categorization/store/categories';
-import { getCategoryColorFromString } from '~/features/categorization/lib/color';
 import { IEvent } from '~/shared/lib/interfaces';
 import {
   SUMMARY_BAR_BG_COLOR,
+  SUMMARY_BAR_BG_HOVER,
   SUMMARY_BAR_BG_SELECTED,
   SUMMARY_BAR_COLOR,
+  SUMMARY_BAR_HOVER,
   SUMMARY_BAR_SELECTED,
 } from '~/features/insights/lib/visualizationTokens';
 
@@ -35,13 +35,25 @@ interface Entry {
   category?: string;
 }
 
+const SUMMARY_BAR_NORMAL_CSS = 'rgb(var(--summary-vis-normal))';
+const SUMMARY_BAR_NORMAL_BG_CSS = 'rgb(var(--summary-vis-normal) / 0.18)';
+const SUMMARY_BAR_ACTIVE_CSS = 'rgb(var(--summary-vis-active))';
+const SUMMARY_BAR_ACTIVE_BG_CSS = 'rgb(var(--summary-vis-active) / 0.18)';
+const SUMMARY_BAR_HOVER_CSS = 'rgb(var(--summary-vis-hover))';
+const SUMMARY_BAR_HOVER_BG_CSS = 'rgb(var(--summary-vis-hover) / 0.18)';
+
 function formatMinutes(seconds: number): string {
   const mins = Math.round(seconds / 60);
   if (mins < 1) return '< 1 min';
   return `${mins} min`;
 }
 
-function update(container: HTMLElement, apps: Entry[], selectedName: string | null = null) {
+function update(
+  container: HTMLElement,
+  apps: Entry[],
+  selectFunc: ((entry: Entry) => void) | null = null,
+  selectedName: string | null = null
+) {
   const list = container.querySelector('.aw-summary-list') as HTMLElement;
   if (!list) return container;
 
@@ -67,15 +79,28 @@ function update(container: HTMLElement, apps: Entry[], selectedName: string | nu
     const barWidth = longest_duration > 0 ? (app.duration / longest_duration) * 100 : 0;
     const isSelected = selectedName === app.name;
 
-    const barColor = isSelected ? SUMMARY_BAR_SELECTED : SUMMARY_BAR_COLOR;
-    const barBgColor = isSelected ? SUMMARY_BAR_BG_SELECTED : SUMMARY_BAR_BG_COLOR;
+    const barColor = isSelected
+      ? SUMMARY_BAR_ACTIVE_CSS || SUMMARY_BAR_SELECTED
+      : SUMMARY_BAR_NORMAL_CSS || SUMMARY_BAR_COLOR;
+    const barBgColor = isSelected
+      ? SUMMARY_BAR_ACTIVE_BG_CSS || SUMMARY_BAR_BG_SELECTED
+      : SUMMARY_BAR_NORMAL_BG_CSS || SUMMARY_BAR_BG_COLOR;
+    const hoverBarColor = isSelected
+      ? SUMMARY_BAR_ACTIVE_CSS || SUMMARY_BAR_SELECTED
+      : SUMMARY_BAR_HOVER_CSS || SUMMARY_BAR_HOVER;
+    const hoverBarBgColor = isSelected
+      ? SUMMARY_BAR_ACTIVE_BG_CSS || SUMMARY_BAR_BG_SELECTED
+      : SUMMARY_BAR_HOVER_BG_CSS || SUMMARY_BAR_BG_HOVER;
 
     // Row wrapper
-    const row = app.link ? document.createElement('a') : document.createElement('div');
+    const row =
+      app.link && !selectFunc ? document.createElement('a') : document.createElement('div');
     if (app.link && row instanceof HTMLAnchorElement) {
       row.href = app.link;
     }
-    row.className = `aw-row${isSelected ? ' aw-row-active' : ''}`;
+    row.className = `aw-row${isSelected ? ' aw-row-active' : ''}${
+      selectFunc || app.link ? ' aw-row-interactive' : ''
+    }`;
     row.title = app.hovertext;
 
     // 1. Percentage
@@ -93,6 +118,23 @@ function update(container: HTMLElement, apps: Entry[], selectedName: string | nu
     barFill.style.width = `${barWidth}%`;
     barFill.style.backgroundColor = barColor;
     barWrap.appendChild(barFill);
+
+    row.addEventListener('mouseenter', () => {
+      barWrap.style.backgroundColor = hoverBarBgColor;
+      barFill.style.backgroundColor = hoverBarColor;
+    });
+
+    row.addEventListener('mouseleave', () => {
+      barWrap.style.backgroundColor = barBgColor;
+      barFill.style.backgroundColor = barColor;
+    });
+
+    if (selectFunc) {
+      row.addEventListener('click', event => {
+        event.preventDefault();
+        selectFunc(app);
+      });
+    }
 
     // 3. Name
     const nameEl = document.createElement('span');
@@ -129,6 +171,7 @@ function updateSummedEvents(
   hoverKeyFunc: (event: IEvent) => string,
   colorKeyFunc: (event: IEvent) => string,
   linkKeyFunc: (event: IEvent) => string = () => null,
+  selectKeyFunc: ((event: IEvent) => void) | null = null,
   selectedName: string | null = null
 ) {
   if (hoverKeyFunc == null) {
@@ -145,7 +188,15 @@ function updateSummedEvents(
       category: e.data['$category'],
     } as Entry;
   });
-  update(container, apps, selectedName);
+  const wrappedSelectFunc = selectKeyFunc
+    ? (entry: Entry) => {
+        const matchingEvent = summedEvents.find(event => titleKeyFunc(event) === entry.name);
+        if (matchingEvent) {
+          selectKeyFunc(matchingEvent);
+        }
+      }
+    : null;
+  update(container, apps, wrappedSelectFunc, selectedName);
 }
 
 export default {

@@ -1,7 +1,7 @@
 <template>
   <div
-    class="flex h-full min-h-0 items-center justify-center overflow-hidden"
     v-if="categoryEntries.length > 0"
+    class="flex h-full min-h-0 items-center justify-center overflow-hidden"
   >
     <doughnut
       class="aw-donut-chart"
@@ -10,27 +10,39 @@
       :plugins="[centerTextPlugin]"
     ></doughnut>
   </div>
-  <div class="aw-empty-state" v-else>No data</div>
+  <div v-else class="aw-empty-state">No data</div>
 </template>
 
 <script lang="ts">
 import 'chart.js/auto';
+import { Tooltip } from 'chart.js';
 import { Doughnut } from 'vue-chartjs';
 import { defineComponent } from 'vue';
 
 import { useActivityStore } from '~/features/activity/store/activity';
 import { useActivityHighlightStore } from '~/features/activity/store/highlight';
 import {
+  ACTIVITY_HOVER,
+  ACTIVITY_PRIMARY_BAR,
   ACTIVITY_HIGHLIGHT,
-  ACTIVITY_HIGHLIGHT_BORDER,
 } from '~/features/activity/lib/visualizationTokens';
-import { getColorFromString } from '~/features/categorization/lib/color';
+import { resolveThemeColor, resolveThemeColorAlpha, THEME_CHANGE_EVENT } from '~/shared/lib/theme';
 import {
-  CATEGORY_DONUT_BORDER,
   CATEGORY_DONUT_CENTER_PRIMARY,
   CATEGORY_DONUT_CENTER_SECONDARY,
   CATEGORY_DONUT_TOOLTIP_BG,
 } from '~/features/categorization/lib/visualizationTokens';
+
+const tooltipPositioners = Tooltip.positioners as Record<string, any>;
+
+if (!tooltipPositioners.summaryCursorOffset) {
+  tooltipPositioners.summaryCursorOffset = function (_elements: unknown[], eventPosition: any) {
+    return {
+      x: eventPosition.x + 20,
+      y: eventPosition.y + 20,
+    };
+  };
+}
 
 function formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -66,24 +78,32 @@ function hexToRgba(color: string, alpha: number): string {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-function resolveThemeColor(variableName: string, fallback: string): string {
-  if (typeof window === 'undefined') {
-    return fallback;
-  }
-
-  const value = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
-  return value ? `rgb(${value})` : fallback;
-}
-
 export default defineComponent({
   name: 'CategoryDonut',
   components: { Doughnut },
+  data() {
+    return {
+      themeVersion: 0,
+    };
+  },
   computed: {
     activityStore() {
       return useActivityStore();
     },
     highlightStore() {
       return useActivityHighlightStore();
+    },
+    normalColor() {
+      void this.themeVersion;
+      return resolveThemeColor('--summary-vis-normal', ACTIVITY_PRIMARY_BAR);
+    },
+    activeColor() {
+      void this.themeVersion;
+      return resolveThemeColor('--summary-vis-active', ACTIVITY_HIGHLIGHT);
+    },
+    hoverColor() {
+      void this.themeVersion;
+      return resolveThemeColor('--summary-vis-hover', ACTIVITY_HOVER);
     },
     categoryEntries() {
       return (this.activityStore.category?.top || [])
@@ -92,8 +112,6 @@ export default defineComponent({
           label: categoryLabel(entry.data?.['$category']),
           duration: entry.duration,
           category: entry.data?.['$category'] || null,
-          color:
-            entry.data?.['$color'] || getColorFromString(categoryLabel(entry.data?.['$category'])),
         }));
     },
     appEntries() {
@@ -103,7 +121,6 @@ export default defineComponent({
           label: entry.data?.app || 'Unknown app',
           duration: entry.duration,
           category: entry.data?.['$category'] || null,
-          color: getColorFromString(entry.data?.app || 'Unknown app'),
         }));
     },
     totalDuration() {
@@ -133,28 +150,32 @@ export default defineComponent({
               const isDimmed =
                 this.selectedCategoryLabel && this.selectedCategoryLabel !== entry.label;
               return isSelected
-                ? ACTIVITY_HIGHLIGHT
+                ? this.activeColor
                 : isDimmed
-                ? hexToRgba(entry.color, 0.22)
-                : entry.color;
+                ? resolveThemeColorAlpha(
+                    '--summary-vis-normal',
+                    0.2,
+                    hexToRgba(this.normalColor, 0.2)
+                  )
+                : this.normalColor;
             }),
+            hoverBackgroundColor: this.categoryEntries.map(entry =>
+              this.selectedCategoryLabel === entry.label ? this.activeColor : this.hoverColor
+            ),
             borderWidth: this.categoryEntries.map(entry =>
-              this.selectedCategoryLabel === entry.label ? 4 : 2
+              this.selectedCategoryLabel === entry.label ? 3 : 0
             ),
             borderColor: this.categoryEntries.map(entry =>
-              this.selectedCategoryLabel === entry.label
-                ? ACTIVITY_HIGHLIGHT_BORDER
-                : CATEGORY_DONUT_BORDER
+              this.selectedCategoryLabel === entry.label ? this.activeColor : 'transparent'
             ),
             hoverBorderColor: this.categoryEntries.map(entry =>
-              this.selectedCategoryLabel === entry.label
-                ? ACTIVITY_HIGHLIGHT_BORDER
-                : CATEGORY_DONUT_BORDER
+              this.selectedCategoryLabel === entry.label ? this.activeColor : 'transparent'
             ),
             borderRadius: 6,
-            spacing: 2,
-            radius: '72%',
-            cutout: '48%',
+            spacing: 5,
+            hoverOffset: 6,
+            radius: '68%',
+            cutout: '34%',
           },
           {
             label: 'Applications',
@@ -163,26 +184,30 @@ export default defineComponent({
               const isSelected = this.selectedAppLabel === entry.label;
               const isDimmed = this.selectedAppLabel && this.selectedAppLabel !== entry.label;
               return isSelected
-                ? ACTIVITY_HIGHLIGHT
+                ? this.activeColor
                 : isDimmed
-                ? hexToRgba(entry.color, 0.22)
-                : entry.color;
+                ? resolveThemeColorAlpha(
+                    '--summary-vis-normal',
+                    0.2,
+                    hexToRgba(this.normalColor, 0.2)
+                  )
+                : this.normalColor;
             }),
+            hoverBackgroundColor: this.appEntries.map(entry =>
+              this.selectedAppLabel === entry.label ? this.activeColor : this.hoverColor
+            ),
             borderWidth: this.appEntries.map(entry =>
-              this.selectedAppLabel === entry.label ? 4 : 2
+              this.selectedAppLabel === entry.label ? 3 : 0
             ),
             borderColor: this.appEntries.map(entry =>
-              this.selectedAppLabel === entry.label
-                ? ACTIVITY_HIGHLIGHT_BORDER
-                : CATEGORY_DONUT_BORDER
+              this.selectedAppLabel === entry.label ? this.activeColor : 'transparent'
             ),
             hoverBorderColor: this.appEntries.map(entry =>
-              this.selectedAppLabel === entry.label
-                ? ACTIVITY_HIGHLIGHT_BORDER
-                : CATEGORY_DONUT_BORDER
+              this.selectedAppLabel === entry.label ? this.activeColor : 'transparent'
             ),
             borderRadius: 6,
-            spacing: 2,
+            spacing: 5,
+            hoverOffset: 6,
             radius: '100%',
             cutout: '78%',
           },
@@ -198,12 +223,17 @@ export default defineComponent({
             display: false,
           },
           tooltip: {
+            position: 'summaryCursorOffset',
             backgroundColor: CATEGORY_DONUT_TOOLTIP_BG,
             displayColors: false,
             titleFont: { size: 0 },
             bodyFont: { size: 12, weight: '600' },
             padding: 10,
             cornerRadius: 8,
+            xAlign: 'left',
+            yAlign: 'top',
+            caretSize: 0,
+            caretPadding: 0,
             callbacks: {
               title: () => '',
               label: (ctx: any) => {
@@ -259,6 +289,7 @@ export default defineComponent({
       );
       const selectedApp = this.appEntries.find(entry => entry.label === this.selectedAppLabel);
       const activeEntry = selectedApp || selectedCategory || null;
+      const totalTrackedDuration = this.totalTrackedDuration;
 
       return {
         id: 'centerText',
@@ -283,7 +314,7 @@ export default defineComponent({
           ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
           ctx.fillStyle = primaryTextColor;
           ctx.fillText(
-            formatDuration(activeEntry ? activeEntry.duration : this.totalTrackedDuration),
+            formatDuration(activeEntry ? activeEntry.duration : totalTrackedDuration),
             centerX,
             centerY - 8
           );
@@ -295,6 +326,17 @@ export default defineComponent({
           ctx.restore();
         },
       };
+    },
+  },
+  mounted() {
+    window.addEventListener(THEME_CHANGE_EVENT, this.handleThemeChange);
+  },
+  beforeUnmount() {
+    window.removeEventListener(THEME_CHANGE_EVENT, this.handleThemeChange);
+  },
+  methods: {
+    handleThemeChange() {
+      this.themeVersion += 1;
     },
   },
 });

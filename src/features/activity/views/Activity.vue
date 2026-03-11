@@ -32,76 +32,7 @@
           @next="$router.push(buildActivityRoute(nextPeriod()))"
           @select="setDate($event, periodLength)"
         ></date-navigator>
-        <ui-button
-          class="aw-icon-button relative h-9 w-9"
-          :class="showOptions ? 'bg-primary-soft text-primary' : ''"
-          @click="showOptions = !showOptions"
-          title="Filters"
-          type="button"
-        >
-          <icon class="h-4 w-4" name="filter"></icon>
-          <span class="aw-count-badge" v-if="filters_set > 0">{{ filters_set }}</span>
-        </ui-button>
-      </div>
-    </div>
-    <div class="aw-card-muted space-y-4" v-if="showOptions">
-      <h5 class="text-foreground-strong text-sm font-semibold">Filters</h5>
-      <div class="grid gap-4 lg:grid-cols-2">
-        <div class="space-y-3">
-          <label class="aw-filter-tile">
-            <ui-checkbox class="aw-checkbox mt-0.5" v-model="filter_afk" />
-            <span class="flex-1">
-              <span class="font-medium">Exclude AFK time</span>
-              <span
-                class="text-foreground-subtle ml-2 inline-flex"
-                title="Filter away time where the AFK watcher didn't detect any input."
-              >
-                <icon class="h-3.5 w-3.5" name="question-circle"></icon>
-              </span>
-            </span>
-          </label>
-          <label class="aw-filter-tile">
-            <ui-checkbox
-              class="aw-checkbox mt-0.5"
-              v-model="include_audible"
-              :disabled="!filter_afk"
-            />
-            <span class="flex-1">
-              <span class="font-medium">Count audible browser tab as active</span>
-              <span
-                class="text-foreground-subtle ml-2 inline-flex"
-                title="If the active window is an audible browser tab, count as active. Requires a browser watcher."
-              >
-                <icon class="h-3.5 w-3.5" name="question-circle"></icon>
-              </span>
-            </span>
-          </label>
-          <label class="aw-filter-tile" v-if="devmode">
-            <ui-checkbox class="aw-checkbox mt-0.5" v-model="include_stopwatch" />
-            <span class="flex-1">
-              <span class="font-medium">Include away sessions</span>
-              <span class="aw-filter-tile-note"
-                ><span class="font-semibold">Note:</span> WIP. Away sessions shadow overlapping
-                computer activity and are only shown in devmode.</span
-              >
-            </span>
-          </label>
-        </div>
-        <label class="aw-label flex flex-col gap-1">
-          <span>Show category</span>
-          <ui-select class="aw-select-sm" v-model="filter_category">
-            <option :value="null">All categories</option>
-            <option
-              v-for="category in categoryStore.category_select(true)"
-              :key="
-                Array.isArray(category.value) ? category.value.join('>') : String(category.value)
-              "
-              :value="category.value"
-            >
-              {{ category.text }}
-            </option>
-          </ui-select>
-        </label>
+        <theme-toggle-button floating></theme-toggle-button>
       </div>
     </div>
     <div class="border-base flex flex-wrap items-center gap-2 border-b pb-2">
@@ -117,46 +48,7 @@
         :class="currentView.id == view.id ? 'aw-tab-link-active' : ''"
         >{{ view.name }}</ui-link
       >
-      <ui-button
-        class="aw-btn aw-btn-md aw-btn-secondary ml-auto"
-        type="button"
-        @click="openNewViewModal"
-      >
-        <icon class="h-4 w-4" name="plus"></icon>
-        <span class="hidden md:inline">New view</span>
-      </ui-button>
     </div>
-    <app-modal
-      :open="isNewViewModalOpen"
-      title="New view"
-      panel-class="max-w-md"
-      @update:open="onNewViewModalChange"
-    >
-      <div class="space-y-3">
-        <label class="aw-label flex flex-col gap-1">
-          <span>ID</span>
-          <ui-input class="aw-input" v-model="new_view.id" type="text" placeholder="default" />
-        </label>
-        <label class="aw-label flex flex-col gap-1">
-          <span>Name</span>
-          <ui-input
-            class="aw-input"
-            v-model="new_view.name"
-            type="text"
-            placeholder="My view"
-            @keydown.enter.prevent="handleSubmit"
-          />
-        </label>
-      </div>
-      <template #footer>
-        <ui-button class="aw-btn aw-btn-secondary" type="button" @click="closeNewViewModal"
-          >Cancel</ui-button
-        >
-        <ui-button class="aw-btn aw-btn-primary" type="button" @click="handleSubmit"
-          >Create view</ui-button
-        >
-      </template>
-    </app-modal>
     <div class="min-h-0 flex-1 overflow-hidden">
       <router-view class="h-full"></router-view>
       <aw-devonly>
@@ -174,9 +66,8 @@ import moment from 'moment';
 import { get_day_start_with_offset, get_today_with_offset } from '~/app/lib/time';
 import { periodLengthConvertMoment } from '~/app/lib/timeperiod';
 import _ from 'lodash';
-import { useToast } from '~/shared/composables/useToast';
 import DateNavigator from '~/shared/navigation/DateNavigator.vue';
-import AppModal from '~/shared/ui/AppModal.vue';
+import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 
 import { useSettingsStore } from '~/features/settings/store/settings';
 import { useCategoryStore } from '~/features/categorization/store/categories';
@@ -184,7 +75,7 @@ import { useActivityStore, QueryOptions } from '~/features/activity/store/activi
 import { useActivityHighlightStore } from '~/features/activity/store/highlight';
 import { defaultViews, useViewsStore } from '~/features/activity/store/views';
 
-import { defineComponent, defineAsyncComponent } from 'vue';
+import { defineComponent } from 'vue';
 
 const VALID_PERIOD_LENGTHS = ['day', 'week', 'month', 'year', 'last7d', 'last30d'];
 
@@ -199,11 +90,8 @@ function isValidDateString(value: unknown): value is string {
 export default defineComponent({
   name: 'Activity',
   components: {
-    'aw-uncategorized-notification': defineAsyncComponent(
-      () => import('~/features/categorization/components/UncategorizedNotification.vue')
-    ),
-    AppModal,
     DateNavigator,
+    ThemeToggleButton,
   },
   props: {
     host: String,
@@ -229,28 +117,16 @@ export default defineComponent({
       highlightStore: useActivityHighlightStore(),
 
       today: null,
-      showOptions: false,
-      isNewViewModalOpen: false,
       isBootstrapping: true,
 
       include_audible: true,
-      include_stopwatch: false,
+      include_stopwatch: true,
       filter_afk: true,
-      new_view: {
-        id: '',
-        name: '',
-      },
     };
   },
   computed: {
     ...mapState(useViewsStore, ['views']),
-    ...mapState(useSettingsStore, ['devmode']),
     ...mapState(useSettingsStore, ['always_active_pattern']),
-
-    // number of filters currently set (different from defaults)
-    filters_set() {
-      return (this.filter_category ? 1 : 0) + (!this.filter_afk ? 1 : 0);
-    },
 
     // getter and setter for filter_category, getting and setting $route.query
     filter_category: {
@@ -414,6 +290,12 @@ export default defineComponent({
     include_audible: function () {
       this.handleReactiveRefresh();
     },
+    include_stopwatch: function () {
+      this.handleReactiveRefresh();
+    },
+    currentViewId: function () {
+      this.handleReactiveRefresh();
+    },
   },
 
   mounted: async function () {
@@ -530,7 +412,9 @@ export default defineComponent({
         subview: this.subview || 'view',
       } as Record<string, string>;
 
-      const activeViewId = (this.$route.params.view_id as string) || this.currentViewId;
+      const requestedViewId = this.$route.params.view_id as string;
+      const hasRequestedView = this.resolvedViews.some(view => view.id === requestedViewId);
+      const activeViewId = hasRequestedView ? requestedViewId : this.currentViewId;
       if (activeViewId) {
         params.view_id = activeViewId;
       }
@@ -556,7 +440,9 @@ export default defineComponent({
         include_audible: this.include_audible,
         include_stopwatch: this.include_stopwatch,
         filter_categories: this.filter_categories,
+        dont_query_inactive: this.filter_afk,
         always_active_pattern: this.always_active_pattern,
+        requested_visualizations: this.currentView?.elements?.map(el => el.type) || [],
       };
       try {
         await this.activityStore.ensure_loaded(queryOptions);
@@ -570,59 +456,6 @@ export default defineComponent({
 
     load_demo: async function () {
       await this.activityStore.load_demo();
-    },
-
-    checkFormValidity() {
-      // All checks must be false for check to pass
-      const checks = {
-        // Check if view id is unique
-        'ID is not unique': this.viewsStore.views.map(v => v.id).includes(this.new_view.id),
-        'Missing ID': this.new_view.id === '',
-        'Missing name': this.new_view.name === '',
-      };
-      const errors = Object.entries(checks)
-        .filter(([_k, v]) => v)
-        .map(([k, _v]) => k);
-      const valid = errors.length == 0;
-      if (!valid) {
-        const { error } = useToast();
-        error('Invalid form input', errors.join(', '));
-      }
-      return valid;
-    },
-    openNewViewModal() {
-      this.resetModal();
-      this.isNewViewModalOpen = true;
-    },
-    closeNewViewModal() {
-      this.isNewViewModalOpen = false;
-      this.resetModal();
-    },
-    onNewViewModalChange(open) {
-      this.isNewViewModalOpen = open;
-      if (!open) {
-        this.resetModal();
-      }
-    },
-
-    handleSubmit() {
-      // Exit when the form isn't valid
-      const valid = this.checkFormValidity();
-      if (!valid) {
-        return;
-      }
-
-      const viewsStore = useViewsStore();
-      viewsStore.addView({ id: this.new_view.id, name: this.new_view.name, elements: [] });
-      viewsStore.save();
-      this.closeNewViewModal();
-    },
-
-    resetModal() {
-      this.new_view = {
-        id: '',
-        name: '',
-      };
     },
   },
 });

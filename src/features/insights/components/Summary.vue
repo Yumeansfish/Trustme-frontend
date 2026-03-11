@@ -24,6 +24,10 @@ export default {
       type: Function,
       default: () => null,
     },
+    selectfunc: {
+      type: Function,
+      default: null,
+    },
     with_limit: {
       type: Boolean,
       default: false,
@@ -61,6 +65,7 @@ export default {
           this.hoverfunc,
           this.colorfunc,
           this.linkfunc,
+          this.selectfunc,
           this.selectedName
         );
       } else {

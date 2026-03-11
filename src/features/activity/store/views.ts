@@ -25,14 +25,6 @@ const desktopViews: View[] = [
     ],
   },
   {
-    id: 'window',
-    name: 'Window',
-    elements: [
-      { type: 'top_apps', size: 3 },
-      { type: 'top_titles', size: 3 },
-    ],
-  },
-  {
     id: 'browser',
     name: 'Browser',
     elements: [
@@ -67,6 +59,10 @@ const androidViews = [
 // FIXME: Decide depending on what kind of device is being viewed, not from which device it is being viewed from.
 export const defaultViews = !process.env.VUE_APP_ON_ANDROID ? desktopViews : androidViews;
 
+function normalizeViews(views: View[]): View[] {
+  return views.filter(view => view.id !== 'window');
+}
+
 interface State {
   views: View[];
 }
@@ -84,10 +80,16 @@ export const useViewsStore = defineStore('views', {
       await settingsStore.ensureLoaded();
       const views = settingsStore.views;
 
-      const isViewsEmpty = !views || (Array.isArray(views) && views.length === 0) || (typeof views === 'object' && Object.keys(views).length === 0);
+      const isViewsEmpty =
+        !views ||
+        (Array.isArray(views) && views.length === 0) ||
+        (typeof views === 'object' && Object.keys(views).length === 0);
 
       if (isViewsEmpty) {
-        console.log('ACTIVITY.VUE: settingsStore.views is empty, loading defaultViews instead', defaultViews);
+        console.log(
+          'ACTIVITY.VUE: settingsStore.views is empty, loading defaultViews instead',
+          defaultViews
+        );
         this.loadViews([...defaultViews]);
       } else {
         console.log('ACTIVITY.VUE: Loading views from settingsStore:', views);
@@ -102,7 +104,8 @@ export const useViewsStore = defineStore('views', {
       await this.load();
     },
     loadViews(views: View[]) {
-      this.views = [...views];
+      const normalized = normalizeViews(views);
+      this.views = normalized.length > 0 ? [...normalized] : [...defaultViews];
       console.log('ACTIVITY.VUE: Loaded views:', this.views);
     },
     clearViews() {
@@ -127,7 +130,12 @@ export const useViewsStore = defineStore('views', {
       el_id,
       type,
       props,
-    }: { view_id: string; el_id: string; type: string; props: Record<string, unknown> }) {
+    }: {
+      view_id: string;
+      el_id: string;
+      type: string;
+      props: Record<string, unknown>;
+    }) {
       const view = this.views.find(v => v.id == view_id);
       if (view && view.elements[el_id]) {
         view.elements[el_id].type = type;

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { split_by_hour_into_data } from '~/shared/lib/transforms';
-import { getColorFromCategory } from '~/features/categorization/lib/color';
+import { getColorFromCategory, getColorFromString } from '~/features/categorization/lib/color';
 import { Category } from '~/features/categorization/lib/classes';
 import { IEvent } from '~/shared/lib/interfaces';
 import { useCategoryStore } from '~/features/categorization/store/categories';
@@ -31,27 +31,22 @@ export function buildBarchartDataset(data_by_hour: HourlyData[], classes: Catego
     const ds: Dataset[] = [...category_names]
       .map(c_ => {
         const categoryStore = useCategoryStore();
-        const c = categoryStore.get_category(c_.split(SEP));
-
-        if (c) {
-          const values = Object.values(data).map(results => {
-            const cat = results.cat_events.find(e => _.isEqual(e.data['$category'], c.name));
-            if (cat) return Math.round((cat.duration / (60 * 60)) * 1000) / 1000;
-            else return null;
-          });
-          return {
-            label: c.name.join(' > '),
-            backgroundColor: getColorFromCategory(c, classes),
-            data: values,
-            borderRadius: 4,
-            borderSkipped: false,
-          } as any;
-        } else {
-          // FIXME: This shouldn't happen
-          // This may for example happen if one doesn't have an 'Uncategorized' category,
-          // as can happen when one upgrades from an old version where there wasn't one in the default classes.
-          console.error('missing category:', c_);
-        }
+        const rawCategory = c_.split(SEP);
+        const knownCategory = categoryStore.classes.find(category => _.isEqual(category.name, rawCategory));
+        const values = Object.values(data).map(results => {
+          const cat = results.cat_events.find(e => _.isEqual(e.data['$category'], rawCategory));
+          if (cat) return Math.round((cat.duration / (60 * 60)) * 1000) / 1000;
+          else return null;
+        });
+        return {
+          label: rawCategory.join(' > '),
+          backgroundColor: knownCategory
+            ? getColorFromCategory(categoryStore.get_category(rawCategory), classes)
+            : getColorFromString(rawCategory.join(' > ')),
+          data: values,
+          borderRadius: 4,
+          borderSkipped: false,
+        } as any;
       })
       .filter(x => x);
     return ds;

@@ -10,6 +10,7 @@ import {
   PERIOD_USAGE_EMPTY_STATE,
   PERIOD_USAGE_TODAY_LINE,
 } from '~/features/insights/lib/visualizationTokens';
+import { resolveThemeColor, resolveThemeColorAlpha } from '~/shared/lib/theme';
 
 function create(svg_elem: SVGElement) {
   // Clear element
@@ -32,9 +33,15 @@ function set_status(svg_elem: SVGElement, msg: string) {
     .attr('fill', PERIOD_USAGE_EMPTY_STATE);
 }
 
-const diagramcolor = PERIOD_USAGE_BAR;
-const diagramcolor_selected = PERIOD_USAGE_BAR_SELECTED;
-const diagramcolor_focused = PERIOD_USAGE_BAR_FOCUSED;
+function getDiagramColor() {
+  return resolveThemeColorAlpha('--summary-vis-normal', 0.35, PERIOD_USAGE_BAR);
+}
+function getDiagramColorSelected() {
+  return resolveThemeColor('--summary-vis-normal', PERIOD_USAGE_BAR_SELECTED);
+}
+function getDiagramColorFocused() {
+  return resolveThemeColorAlpha('--summary-vis-normal', 0.7, PERIOD_USAGE_BAR_FOCUSED);
+}
 
 function update(svg_elem: SVGElement, usage_arr, onPeriodClicked) {
   const dateformat = 'YYYY-MM-DD';
@@ -71,7 +78,7 @@ function update(svg_elem: SVGElement, usage_arr, onPeriodClicked) {
       // slice off so it's only the day
       date = moment(events[0].timestamp).subtract(get_hour_offset(), 'hours').format(dateformat);
     }
-    const color = i === center_elem ? diagramcolor_selected : diagramcolor;
+    const color = i === center_elem ? getDiagramColorSelected() : getDiagramColor();
     const offset = 50;
 
     const x = i * padding + i * width + 0.25 * width;
@@ -107,7 +114,7 @@ function update(svg_elem: SVGElement, usage_arr, onPeriodClicked) {
       .attr('date', date)
       .style('fill', color)
       .on('mouseover', () => {
-        rect.style('fill', diagramcolor_focused);
+        rect.style('fill', getDiagramColorFocused());
       })
       .on('mouseout', e => {
         rect.style('fill', e.target.attributes.color.value);

@@ -20,6 +20,13 @@ import {
 import { useSettingsStore } from '~/features/settings/store/settings';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
 import { useCategoryStore } from '~/features/categorization/store/categories';
+import { getColorFromString } from '~/features/categorization/lib/color';
+import {
+  compileQueryCategoryRules,
+  matchCompiledCategoryNameAgainstTexts,
+  UNCATEGORIZED_CATEGORY_NAME,
+  type QueryCategoryRule,
+} from '~/features/categorization/lib/categoryRules';
 
 import { getClient } from '~/app/lib/awclient';
 
@@ -43,7 +50,10 @@ function colorCategories(events: IEvent[]): IEvent[] {
   // Set $color for categories
   const categoryStore = useCategoryStore();
   return events.map((e: IEvent) => {
-    e.data['$color'] = categoryStore.get_category_color(e.data['$category']);
+    const category = normalizeCategory(e.data?.['$category']);
+    e.data['$color'] = categoryStore.classes.some(c => _.isEqual(c.name, category))
+      ? categoryStore.get_category_color(category)
+      : getColorFromString(category.join(' > '));
     return e;
   });
 }
@@ -52,7 +62,10 @@ function scoreCategories(events: IEvent[]): IEvent[] {
   // Set $score for categories
   const categoryStore = useCategoryStore();
   return events.map((e: IEvent) => {
-    e.data['$score'] = categoryStore.get_category_score(e.data['$category']);
+    const category = normalizeCategory(e.data?.['$category']);
+    e.data['$score'] = categoryStore.classes.some(c => _.isEqual(c.name, category))
+      ? categoryStore.get_category_score(category)
+      : 0;
     return e;
   });
 }
@@ -68,10 +81,35 @@ export interface QueryOptions {
   dont_query_inactive?: boolean;
   force?: boolean;
   always_active_pattern?: string;
+  requested_visualizations?: string[];
 }
 
 type MaybeLoadedList<T> = T[] | null;
 type CategoryPeriodData = Record<string, { cat_events: IEvent[] }>;
+interface CategoryPeriodCache {
+  key: string | null;
+  fetched_until: string | null;
+  events: IEvent[];
+}
+
+const CATEGORY_PERIOD_INCREMENTAL_GUARD_SECONDS = 120;
+const LOCAL_AGGREGATION_LIMIT = 100;
+const APP_VISUALIZATIONS = new Set(['top_apps']);
+const EDITOR_VISUALIZATIONS = new Set([
+  'top_editor_files',
+  'top_editor_languages',
+  'top_editor_projects',
+]);
+const CATEGORY_PERIOD_VISUALIZATIONS = new Set(['timeline_barchart']);
+const CATEGORY_TOP_VISUALIZATIONS = new Set([
+  'top_categories',
+  'category_donut',
+  'category_tree',
+  'category_sunburst',
+  'score',
+]);
+const WINDOW_TITLE_VISUALIZATIONS = new Set(['top_titles']);
+const BROWSER_VISUALIZATIONS = new Set(['top_domains', 'top_urls', 'top_browser_titles']);
 
 interface WindowQueryResult {
   app_events?: IEvent[] | null;
@@ -97,6 +135,12 @@ interface EditorQueryResult {
   files?: IEvent[] | null;
   languages?: IEvent[] | null;
   projects?: IEvent[] | null;
+}
+
+interface DesktopEventsQueryResult {
+  events?: IEvent[] | null;
+  active_events?: IEvent[] | null;
+  stopwatch_events?: IEvent[] | null;
 }
 
 function ensureEventList(events: unknown): IEvent[] {
@@ -137,6 +181,291 @@ function ensureByPeriod(by_period: unknown): CategoryPeriodData {
   );
 }
 
+function sumEventDurations(events: IEvent[]): number {
+  return events.reduce((total, event) => total + ensureDuration(event.duration), 0);
+}
+
+function manualAwayCategoryFromData(data: Record<string, unknown>): string[] | null {
+  const explicitCategory = data['$category'];
+  if (Array.isArray(explicitCategory) && explicitCategory.length > 0) {
+    return explicitCategory.map(part => String(part));
+  }
+  if (typeof explicitCategory === 'string' && explicitCategory.trim().length > 0) {
+    return [explicitCategory.trim()];
+  }
+
+  const isManualAway =
+    data['$manual_away'] === true ||
+    (typeof data.label === 'string' && typeof data.running === 'boolean');
+  if (!isManualAway) {
+    return null;
+  }
+
+  const label = typeof data.label === 'string' ? data.label.trim() : '';
+  return label.length > 0 ? [label] : [...UNCATEGORIZED_CATEGORY_NAME];
+}
+
+function categorizeEventsLocally(events: IEvent[], queryRules: QueryCategoryRule[]): IEvent[] {
+  const compiledRules = compileQueryCategoryRules(queryRules);
+  const categoryCache = new Map<string, string[]>();
+
+  return events.map(event => {
+    const data = event.data || {};
+    const manualAwayCategory = manualAwayCategoryFromData(data);
+    if (manualAwayCategory) {
+      return {
+        ...event,
+        data: {
+          ...data,
+          $category: [...manualAwayCategory],
+        },
+      };
+    }
+
+    const app = typeof data.app === 'string' ? data.app : '';
+    const title = typeof data.title === 'string' ? data.title : '';
+    const cacheKey = `${app}\u0000${title}`;
+
+    let matchedCategoryName = categoryCache.get(cacheKey);
+    if (!matchedCategoryName) {
+      matchedCategoryName = matchCompiledCategoryNameAgainstTexts([app, title], compiledRules) || [
+        ...UNCATEGORIZED_CATEGORY_NAME,
+      ];
+      categoryCache.set(cacheKey, matchedCategoryName);
+    }
+
+    return {
+      ...event,
+      data: {
+        ...data,
+        $category: [...matchedCategoryName],
+      },
+    };
+  });
+}
+
+function filterEventsByCategories(events: IEvent[], filterCategories?: string[][]): IEvent[] {
+  if (!Array.isArray(filterCategories) || filterCategories.length === 0) {
+    return events;
+  }
+
+  const allowed = new Set(filterCategories.map(category => JSON.stringify(category)));
+  return events.filter(event =>
+    allowed.has(JSON.stringify(normalizeCategory(event.data?.['$category'])))
+  );
+}
+
+function aggregateEventsByDataKeys(
+  events: IEvent[],
+  keys: string[],
+  limit = LOCAL_AGGREGATION_LIMIT
+): IEvent[] {
+  const grouped = new Map<string, { duration: number; timestampMs: number; values: unknown[] }>();
+
+  for (const event of events) {
+    const dataValues = keys.map(key => event.data?.[key]);
+    const groupKey = JSON.stringify(dataValues);
+    const duration = ensureDuration(event.duration);
+    const startMs = new Date(event.timestamp).getTime();
+    const timestampMs = Number.isFinite(startMs) ? startMs : Date.now();
+    const current = grouped.get(groupKey);
+
+    if (current) {
+      current.duration += duration;
+      current.timestampMs = Math.min(current.timestampMs, timestampMs);
+    } else {
+      grouped.set(groupKey, {
+        duration,
+        timestampMs,
+        values: dataValues,
+      });
+    }
+  }
+
+  return [...grouped.values()]
+    .sort((a, b) => b.duration - a.duration)
+    .slice(0, limit)
+    .map(entry => ({
+      timestamp: new Date(entry.timestampMs).toISOString(),
+      duration: entry.duration,
+      data: Object.fromEntries(keys.map((key, index) => [key, entry.values[index]])),
+    }));
+}
+
+function eventHasStringDataKey(event: IEvent, key: string): boolean {
+  const value = event.data?.[key];
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function filterEventsByNonEmptyStringData(events: IEvent[], key: string): IEvent[] {
+  return events.filter(event => eventHasStringDataKey(event, key));
+}
+
+function hasRequestedVisualization(query_options: QueryOptions, candidates: Set<string>): boolean {
+  if (!Array.isArray(query_options.requested_visualizations)) {
+    return true;
+  }
+
+  if (query_options.requested_visualizations.length === 0) {
+    return false;
+  }
+
+  return query_options.requested_visualizations.some(type => candidates.has(type));
+}
+
+function periodHasActivity(period: string, active_events: IEvent[]): boolean {
+  const [startIso, endIso] = period.split('/');
+  const periodStart = new Date(startIso).getTime();
+  const periodEnd = new Date(endIso).getTime();
+
+  return active_events.some(event => {
+    const eventStart = new Date(event.timestamp).getTime();
+    const eventEnd = eventStart + ensureDuration(event.duration) * 1000;
+    return eventStart < periodEnd && eventEnd > periodStart;
+  });
+}
+
+function buildCategoryPeriods(timeperiod: TimePeriod): string[] {
+  const count = timeperiod.length[0];
+  const resolution = timeperiod.length[1];
+
+  if (resolution.startsWith('day') && count === 1) {
+    return timeperiodsStrsHoursOfPeriod(timeperiod);
+  }
+
+  if (
+    resolution.startsWith('day') ||
+    (resolution.startsWith('week') && count === 1) ||
+    (resolution.startsWith('month') && count === 1)
+  ) {
+    return timeperiodsStrsDaysOfPeriod(timeperiod);
+  }
+
+  if (resolution.startsWith('year') && count === 1) {
+    return timeperiodsStrsMonthsOfPeriod(timeperiod);
+  }
+
+  console.error(`Unknown timeperiod length: ${timeperiod.length}`);
+  return [];
+}
+
+interface PeriodBound {
+  key: string;
+  startMs: number;
+  endMs: number;
+}
+
+function buildPeriodBounds(periods: string[]): PeriodBound[] {
+  return periods
+    .map(period => {
+      const [startIso, endIso] = period.split('/');
+      const startMs = new Date(startIso).getTime();
+      const endMs = new Date(endIso).getTime();
+      return { key: period, startMs, endMs };
+    })
+    .filter(period => Number.isFinite(period.startMs) && Number.isFinite(period.endMs));
+}
+
+function normalizeCategory(category: unknown): string[] {
+  if (Array.isArray(category) && category.length > 0) {
+    return category.map(part => String(part));
+  }
+  if (typeof category === 'string' && category.length > 0) {
+    return [category];
+  }
+  return ['Uncategorized'];
+}
+
+function findFirstOverlappingPeriod(periodBounds: PeriodBound[], eventStartTimeMs: number): number {
+  let low = 0;
+  let high = periodBounds.length;
+
+  while (low < high) {
+    const mid = (low + high) >> 1;
+    if (periodBounds[mid].endMs <= eventStartTimeMs) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+
+  return low;
+}
+
+function eventStartMs(event: IEvent): number {
+  return new Date(event.timestamp).getTime();
+}
+
+function eventEndMs(event: IEvent): number {
+  const start = eventStartMs(event);
+  const durationMs = ensureDuration(event.duration) * 1000;
+  return start + durationMs;
+}
+
+function buildCategoryByPeriodFromEvents(periods: string[], events: IEvent[]): CategoryPeriodData {
+  const periodBounds = buildPeriodBounds(periods);
+  const byPeriodMaps = periodBounds.map(
+    () => new Map<string, { category: string[]; duration: number }>()
+  );
+  const sortedEvents = [...events].sort((a, b) => eventStartMs(a) - eventStartMs(b));
+
+  for (const event of sortedEvents) {
+    const startMs = eventStartMs(event);
+    const endMs = eventEndMs(event);
+
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+      continue;
+    }
+
+    const category = normalizeCategory(event.data?.['$category']);
+    const categoryKey = JSON.stringify(category);
+    let periodIndex = findFirstOverlappingPeriod(periodBounds, startMs);
+
+    while (periodIndex < periodBounds.length && periodBounds[periodIndex].startMs < endMs) {
+      const period = periodBounds[periodIndex];
+      const overlapStart = Math.max(startMs, period.startMs);
+      const overlapEnd = Math.min(endMs, period.endMs);
+
+      if (overlapEnd > overlapStart) {
+        const durationSeconds = (overlapEnd - overlapStart) / 1000;
+        const existing = byPeriodMaps[periodIndex].get(categoryKey);
+        if (existing) {
+          existing.duration += durationSeconds;
+        } else {
+          byPeriodMaps[periodIndex].set(categoryKey, {
+            category,
+            duration: durationSeconds,
+          });
+        }
+      }
+
+      periodIndex += 1;
+    }
+  }
+
+  const byPeriod: CategoryPeriodData = {};
+  periodBounds.forEach((period, periodIndex) => {
+    const cat_events = [...byPeriodMaps[periodIndex].values()]
+      .filter(entry => entry.duration > 0)
+      .sort((a, b) => b.duration - a.duration)
+      .map(entry => ({
+        timestamp: new Date(period.startMs).toISOString(),
+        duration: entry.duration,
+        data: { $category: entry.category },
+      }));
+
+    byPeriod[period.key] = { cat_events };
+  });
+
+  periods.forEach(period => {
+    if (!byPeriod[period]) {
+      byPeriod[period] = { cat_events: [] };
+    }
+  });
+
+  return byPeriod;
+}
+
 interface State {
   loaded: boolean;
   request_nonce: number;
@@ -168,6 +497,7 @@ interface State {
     available: boolean;
     by_period: CategoryPeriodData | null;
     top: MaybeLoadedList<IEvent>;
+    period_cache: CategoryPeriodCache;
   };
 
   active: {
@@ -236,6 +566,11 @@ export const useActivityStore = defineStore('activity', {
       available: false,
       by_period: {},
       top: [],
+      period_cache: {
+        key: null,
+        fetched_until: null,
+        events: [],
+      },
     },
 
     active: {
@@ -320,6 +655,116 @@ export const useActivityStore = defineStore('activity', {
       return request_nonce === this.active_request_nonce;
     },
 
+    shouldQueryEditor(query_options: QueryOptions) {
+      return hasRequestedVisualization(query_options, EDITOR_VISUALIZATIONS);
+    },
+
+    shouldQueryCategoryTimeByPeriod(query_options: QueryOptions) {
+      return hasRequestedVisualization(query_options, CATEGORY_PERIOD_VISUALIZATIONS);
+    },
+
+    shouldIncludeWindowTitles(query_options: QueryOptions) {
+      return hasRequestedVisualization(query_options, WINDOW_TITLE_VISUALIZATIONS);
+    },
+
+    shouldIncludeBrowserData(query_options: QueryOptions) {
+      return hasRequestedVisualization(query_options, BROWSER_VISUALIZATIONS);
+    },
+
+    shouldIncludeStopwatchData(query_options: QueryOptions) {
+      return Boolean(query_options.include_stopwatch);
+    },
+
+    buildCategoryPeriodCacheKey(
+      query_options: QueryOptions,
+      isAndroid: boolean,
+      periodRange: string
+    ): string {
+      const categoryStore = useCategoryStore();
+      return JSON.stringify({
+        host: query_options.host,
+        periodRange,
+        isAndroid,
+        filter_afk: Boolean(query_options.filter_afk),
+        include_audible: Boolean(query_options.include_audible),
+        include_stopwatch: Boolean(query_options.include_stopwatch),
+        always_active_pattern: query_options.always_active_pattern || '',
+        filter_categories: query_options.filter_categories || [],
+        categories: categoryStore.queryRules,
+        buckets: {
+          afk: [...this.buckets.afk],
+          window: [...this.buckets.window],
+          browser: [...this.buckets.browser],
+          android: [...this.buckets.android],
+          stopwatch: [...this.buckets.stopwatch],
+        },
+      });
+    },
+
+    resetRequestedVisuals(query_options: QueryOptions) {
+      if (hasRequestedVisualization(query_options, APP_VISUALIZATIONS)) {
+        this.window.top_apps = null;
+      }
+
+      if (this.shouldIncludeWindowTitles(query_options)) {
+        this.window.top_titles = null;
+      }
+
+      if (hasRequestedVisualization(query_options, CATEGORY_TOP_VISUALIZATIONS)) {
+        this.category.top = null;
+      }
+
+      if (this.shouldIncludeBrowserData(query_options)) {
+        this.browser.duration = 0;
+        this.browser.top_domains = null;
+        this.browser.top_urls = null;
+        this.browser.top_titles = null;
+      }
+
+      if (this.shouldQueryEditor(query_options)) {
+        this.editor.duration = 0;
+        this.editor.top_files = null;
+        this.editor.top_languages = null;
+        this.editor.top_projects = null;
+      }
+
+      if (this.shouldQueryCategoryTimeByPeriod(query_options)) {
+        this.category.by_period = null;
+      }
+    },
+
+    async loadDeferredData(query_options: QueryOptions, request_nonce: number) {
+      try {
+        // Let the main snapshot render before starting the heavy backfill work.
+        await new Promise(resolve => setTimeout(resolve, 0));
+        if (!this.isCurrentRequest(request_nonce)) return;
+
+        if (this.shouldQueryCategoryTimeByPeriod(query_options)) {
+          if (this.window.available || this.android.available) {
+            await this.query_category_time_by_period(query_options, request_nonce);
+          } else {
+            this.query_category_time_by_period_completed(undefined, request_nonce);
+          }
+        }
+
+        if (!this.isCurrentRequest(request_nonce)) return;
+
+        if (this.active.available) {
+          await this.query_active_history(query_options, request_nonce);
+        } else if (this.android.available) {
+          await this.query_active_history_android(query_options, request_nonce);
+        } else {
+          this.query_active_history_completed(undefined, request_nonce);
+        }
+      } catch (error) {
+        if (this.isAbortError(error) || !this.isCurrentRequest(request_nonce)) {
+          return;
+        }
+
+        console.error('Deferred activity queries failed', error);
+      }
+    },
+
     async ensure_loaded(query_options: QueryOptions) {
       console.log('--- ACTIVITY STORE: ensure_loaded called with options ---', query_options);
       const settingsStore = useSettingsStore();
@@ -388,30 +833,22 @@ export const useActivityStore = defineStore('activity', {
 
           if (!this.isCurrentRequest(request_nonce)) return;
 
-          if (this.active.available) {
-            await this.query_active_history(query_options, request_nonce);
-          } else if (this.android.available) {
-            await this.query_active_history_android(query_options, request_nonce);
-          } else {
-            console.log('Cannot call query_active_history as we do not have an afk bucket');
-            this.query_active_history_completed(undefined, request_nonce);
+          if (this.shouldQueryEditor(query_options)) {
+            if (this.editor.available) {
+              await this.query_editor(query_options, request_nonce);
+            } else {
+              console.log('Cannot call query_editor as we do not have any editor buckets');
+              this.query_editor_completed(undefined, request_nonce);
+            }
           }
 
           if (!this.isCurrentRequest(request_nonce)) return;
 
-          if (this.editor.available) {
-            await this.query_editor(query_options, request_nonce);
-          } else {
-            console.log('Cannot call query_editor as we do not have any editor buckets');
-            this.query_editor_completed(undefined, request_nonce);
+          if (this.shouldQueryCategoryTimeByPeriod(query_options)) {
+            this.category.by_period = null;
           }
 
-          if (!this.isCurrentRequest(request_nonce)) return;
-
-          // Perform this last, as it takes the longest
-          if (this.window.available || this.android.available) {
-            await this.query_category_time_by_period(query_options, request_nonce);
-          }
+          void this.loadDeferredData(query_options, request_nonce);
         } catch (error) {
           if (this.isAbortError(error) || !this.isCurrentRequest(request_nonce)) {
             console.debug('Skipping aborted or stale activity request');
@@ -446,6 +883,11 @@ export const useActivityStore = defineStore('activity', {
       this.loaded = false;
       this.query_options = null;
       this.active.history = {};
+      this.category.period_cache = {
+        key: null,
+        fetched_until: null,
+        events: [],
+      };
       this.query_window_completed({});
       this.query_browser_completed({});
       this.query_stopwatch_completed({});
@@ -455,39 +897,147 @@ export const useActivityStore = defineStore('activity', {
     },
 
     async query_multidevice_full(
-      { timeperiod, filter_categories, filter_afk, always_active_pattern }: QueryOptions,
+      query_options: QueryOptions,
       hosts: string[],
       request_nonce: number
     ) {
+      const {
+        timeperiod,
+        filter_categories,
+        filter_afk,
+        include_stopwatch,
+        always_active_pattern,
+      } = query_options;
       const periods = [timeperiodToStr(timeperiod)];
       const categories = useCategoryStore().queryRules;
+      const include_window_titles = this.shouldIncludeWindowTitles(query_options);
+      const include_stopwatch_data = this.shouldIncludeStopwatchData(query_options);
 
-      const q = queries.multideviceQuery({
+      const q = queries.multideviceEventsQuery({
         hosts,
         filter_afk,
-        categories,
-        filter_categories,
+        categories: [],
+        filter_categories: [],
+        bid_stopwatch:
+          include_stopwatch && include_stopwatch_data && this.buckets.stopwatch.length > 0
+            ? this.buckets.stopwatch[0]
+            : undefined,
         host_params: {},
         always_active_pattern,
       });
-      const data = await getClient().query(periods, q, { name: 'multidevice', verbose: true });
+      const data = await getClient().query(periods, q, {
+        name: 'multideviceEventsQuery',
+        verbose: true,
+      });
       if (!this.isCurrentRequest(request_nonce)) return;
-      this.query_window_completed(data?.[0]?.window, request_nonce);
+
+      const result: DesktopEventsQueryResult = data?.[0] || {};
+      const rawEvents = ensureEventList(result.events);
+      const activeEvents = ensureEventList(result.active_events);
+      const categorizedEvents = categorizeEventsLocally(rawEvents, categories);
+      const filteredEvents = filterEventsByCategories(categorizedEvents, filter_categories);
+      const appSourceEvents = filterEventsByNonEmptyStringData(filteredEvents, 'app');
+      const titleSourceEvents = filterEventsByNonEmptyStringData(appSourceEvents, 'title');
+      const titleEvents = include_window_titles
+        ? aggregateEventsByDataKeys(titleSourceEvents, ['app', 'title'])
+        : [];
+      const appEvents = include_window_titles
+        ? aggregateEventsByDataKeys(titleEvents, ['app'])
+        : aggregateEventsByDataKeys(appSourceEvents, ['app']);
+      const catEvents = aggregateEventsByDataKeys(filteredEvents, ['$category']);
+
+      this.query_window_completed(
+        {
+          app_events: appEvents,
+          title_events: titleEvents,
+          cat_events: catEvents,
+          active_events: activeEvents,
+          duration: sumEventDurations(filteredEvents),
+        },
+        request_nonce
+      );
     },
 
-    async query_desktop_full(
-      {
+    async query_desktop_full(query_options: QueryOptions, request_nonce: number) {
+      const {
         timeperiod,
         filter_categories,
         filter_afk,
         include_audible,
         include_stopwatch,
         always_active_pattern,
-      }: QueryOptions,
-      request_nonce: number
-    ) {
+      } = query_options;
       const periods = [timeperiodToStr(timeperiod)];
       const categories = useCategoryStore().queryRules;
+      const include_window_titles = this.shouldIncludeWindowTitles(query_options);
+      const include_browser_data = this.shouldIncludeBrowserData(query_options);
+      const include_stopwatch_data = this.shouldIncludeStopwatchData(query_options);
+
+      // Browser aggregation is still done server-side. When browser visualizations are not requested,
+      // we can skip expensive server-side categorization/aggregation and do lightweight local aggregation.
+      if (!include_browser_data) {
+        const q = queries.desktopEventsQuery({
+          bid_window: this.buckets.window[0],
+          bid_afk: this.buckets.afk[0],
+          bid_browsers: this.buckets.browser,
+          bid_stopwatch:
+            include_stopwatch && this.buckets.stopwatch.length > 0
+              ? this.buckets.stopwatch[0]
+              : undefined,
+          filter_afk,
+          categories: [],
+          filter_categories: [],
+          include_audible,
+          always_active_pattern,
+          include_stopwatch_data,
+        });
+        const data = await getClient().query(periods, q, {
+          name: 'desktopEventsQuery',
+          verbose: true,
+        });
+        if (!this.isCurrentRequest(request_nonce)) return;
+
+        const result: DesktopEventsQueryResult = data?.[0] || {};
+        const rawEvents = ensureEventList(result.events);
+        const activeEvents = ensureEventList(result.active_events);
+        const categorizedEvents = categorizeEventsLocally(rawEvents, categories);
+        const filteredEvents = filterEventsByCategories(categorizedEvents, filter_categories);
+        const appSourceEvents = filterEventsByNonEmptyStringData(filteredEvents, 'app');
+        const titleSourceEvents = filterEventsByNonEmptyStringData(appSourceEvents, 'title');
+        const titleEvents = include_window_titles
+          ? aggregateEventsByDataKeys(titleSourceEvents, ['app', 'title'])
+          : [];
+        const appEvents = include_window_titles
+          ? aggregateEventsByDataKeys(titleEvents, ['app'])
+          : aggregateEventsByDataKeys(appSourceEvents, ['app']);
+        const catEvents = aggregateEventsByDataKeys(filteredEvents, ['$category']);
+
+        this.query_window_completed(
+          {
+            app_events: appEvents,
+            title_events: titleEvents,
+            cat_events: catEvents,
+            active_events: activeEvents,
+            duration: sumEventDurations(filteredEvents),
+          },
+          request_nonce
+        );
+        this.query_browser_completed(
+          { domains: [], urls: [], titles: [], duration: 0 },
+          request_nonce
+        );
+
+        if (include_stopwatch_data) {
+          const stopwatch_events = aggregateEventsByDataKeys(
+            ensureEventList(result.stopwatch_events),
+            ['label']
+          );
+          this.query_stopwatch_completed({ stopwatch_events }, request_nonce);
+        } else {
+          this.query_stopwatch_completed({ stopwatch_events: [] }, request_nonce);
+        }
+        return;
+      }
 
       const q = queries.fullDesktopQuery({
         bid_window: this.buckets.window[0],
@@ -502,6 +1052,9 @@ export const useActivityStore = defineStore('activity', {
         filter_categories,
         include_audible,
         always_active_pattern,
+        include_window_titles,
+        include_browser_data,
+        include_stopwatch_data,
       });
       const data = await getClient().query(periods, q, {
         name: 'fullDesktopQuery',
@@ -510,8 +1063,10 @@ export const useActivityStore = defineStore('activity', {
       if (!this.isCurrentRequest(request_nonce)) return;
       this.query_window_completed(data?.[0]?.window, request_nonce);
       this.query_browser_completed(data?.[0]?.browser, request_nonce);
-      if (include_stopwatch) {
+      if (include_stopwatch_data) {
         this.query_stopwatch_completed(data?.[0]?.stopwatch, request_nonce);
+      } else {
+        this.query_stopwatch_completed({ stopwatch_events: [] }, request_nonce);
       }
     },
 
@@ -574,108 +1129,164 @@ export const useActivityStore = defineStore('activity', {
     async query_category_time_by_period(
       {
         timeperiod,
+        host,
         filter_categories,
         filter_afk,
+        include_audible,
         include_stopwatch,
-        dontQueryInactive,
+        dont_query_inactive,
         always_active_pattern,
-      }: QueryOptions & { dontQueryInactive: boolean },
+      }: QueryOptions,
       request_nonce: number
     ) {
       console.log('ACTIVITY STORE: query_category_time_by_period STARTED.', {
-        dontQueryInactive,
+        dont_query_inactive,
         filters: filter_categories,
       });
-      // TODO: Needs to be adapted for Android
-      let periods: string[];
-      const count = timeperiod.length[0];
-      const res = timeperiod.length[1];
-      if (res.startsWith('day') && count == 1) {
-        // If timeperiod is a single day, we query the individual hours
-        periods = timeperiodsStrsHoursOfPeriod(timeperiod);
-      } else if (
-        res.startsWith('day') ||
-        (res.startsWith('week') && count == 1) ||
-        (res.startsWith('month') && count == 1)
-      ) {
-        // If timeperiod is several days, or a single week/month, we query the individual days
-        periods = timeperiodsStrsDaysOfPeriod(timeperiod);
-      } else if (timeperiod.length[1].startsWith('year') && timeperiod.length[0] == 1) {
-        // If timeperiod a single year, we query the individual months
-        periods = timeperiodsStrsMonthsOfPeriod(timeperiod);
-      } else {
-        console.error(`Unknown timeperiod length: ${timeperiod.length}`);
-      }
+      let periods = buildCategoryPeriods(timeperiod);
 
       // Filter out periods that start in the future
       periods = periods.filter(period => new Date(period.split('/')[0]) < new Date());
+
+      if (periods.length === 0) {
+        this.query_category_time_by_period_completed({ by_period: {} }, request_nonce);
+        return;
+      }
+
       console.log(
         'ACTIVITY STORE: query_category_time_by_period - Calculated periods:',
         periods.length
       );
 
-      // Query one period at a time, to avoid timeout on slow queries
-      let data = [];
-      for (const period of periods) {
-        if (!this.isCurrentRequest(request_nonce)) return;
+      const periodRange = timeperiodToStr(timeperiod);
+      const [periodStartIso, periodEndIso] = periodRange.split('/');
+      const periodStartMs = new Date(periodStartIso).getTime();
+      const periodEndMs = new Date(periodEndIso).getTime();
+      const nowMs = Date.now();
+      const effectiveEndMs = Math.min(periodEndMs, nowMs);
 
-        // Only query periods with known data from AFK bucket
-        if (dontQueryInactive && this.active.events.length > 0) {
-          const start = new Date(period.split('/')[0]);
-          const end = new Date(period.split('/')[1]);
+      const isAndroid = this.buckets.android[0] !== undefined;
+      const categories = useCategoryStore().queryRules;
+      const query = queries.categoryEventsQuery({
+        bid_browsers: this.buckets.browser,
+        bid_stopwatch:
+          include_stopwatch && this.buckets.stopwatch.length > 0
+            ? this.buckets.stopwatch[0]
+            : undefined,
+        categories: [],
+        filter_categories: [],
+        filter_afk,
+        include_audible,
+        browser_events_mode: include_audible ? 'presence' : 'none',
+        always_active_pattern,
+        ...(isAndroid
+          ? {
+              bid_android: this.buckets.android[0],
+            }
+          : {
+              bid_afk: this.buckets.afk[0],
+              bid_window: this.buckets.window[0],
+            }),
+      });
 
-          // Retrieve active time in period
-          const period_activity = this.active.events.find((e: IEvent) => {
-            return start < new Date(e.timestamp) && new Date(e.timestamp) < end;
-          });
-
-          // Check if there was active time
-          if (!(period_activity && period_activity.duration > 0)) {
-            data = data.concat([{ cat_events: [] }]);
-            continue;
-          }
-        }
-
-        const isAndroid = this.buckets.android[0] !== undefined;
-        const categories = useCategoryStore().queryRules;
-        // TODO: Clean up call, pass QueryParams in fullDesktopQuery as well
-        // TODO: Unify QueryOptions and QueryParams
-        const query = queries.categoryQuery({
-          bid_browsers: this.buckets.browser,
-          bid_stopwatch:
-            include_stopwatch && this.buckets.stopwatch.length > 0
-              ? this.buckets.stopwatch[0]
-              : undefined,
-          categories,
+      const cacheKey = this.buildCategoryPeriodCacheKey(
+        {
+          timeperiod,
+          host,
           filter_categories,
           filter_afk,
+          include_audible,
+          include_stopwatch,
+          dont_query_inactive,
           always_active_pattern,
-          ...(isAndroid
-            ? {
-                bid_android: this.buckets.android[0],
-              }
-            : {
-                bid_afk: this.buckets.afk[0],
-                bid_window: this.buckets.window[0],
-              }),
-        });
-        const result = await getClient().query([period], query, {
-          verbose: true,
-          name: 'categoryQuery',
-        });
-        if (!this.isCurrentRequest(request_nonce)) return;
-        data = data.concat(result);
+        },
+        isAndroid,
+        periodRange
+      );
+
+      const cacheMatches = this.category.period_cache.key === cacheKey;
+      let categorizedEvents = cacheMatches ? [...this.category.period_cache.events] : [];
+      let fetchStartMs = periodStartMs;
+
+      if (cacheMatches && this.category.period_cache.fetched_until) {
+        const fetchedUntilMs = new Date(this.category.period_cache.fetched_until).getTime();
+        if (Number.isFinite(fetchedUntilMs)) {
+          fetchStartMs = Math.max(
+            periodStartMs,
+            fetchedUntilMs - CATEGORY_PERIOD_INCREMENTAL_GUARD_SECONDS * 1000
+          );
+        }
       }
 
-      // Zip periods
-      let by_period = _.zipObject(periods, data);
-      // Filter out values that are undefined (no longer needed, only used when visualization was progressive (looks buggy))
-      by_period = _.fromPairs(_.toPairs(by_period).filter(o => o[1]));
+      if (
+        Number.isFinite(periodStartMs) &&
+        Number.isFinite(effectiveEndMs) &&
+        effectiveEndMs > fetchStartMs
+      ) {
+        if (!this.isCurrentRequest(request_nonce)) return;
+        const queryRange = `${new Date(fetchStartMs).toISOString()}/${new Date(
+          effectiveEndMs
+        ).toISOString()}`;
+        const result = await getClient().query([queryRange], query, {
+          verbose: true,
+          name: 'categoryEventsQuery',
+        });
+        if (!this.isCurrentRequest(request_nonce)) return;
+
+        const deltaEvents = filterEventsByCategories(
+          categorizeEventsLocally(ensureEventList(result?.[0]?.events), categories),
+          filter_categories
+        );
+        if (cacheMatches && categorizedEvents.length > 0) {
+          categorizedEvents = categorizedEvents.filter(event => {
+            const endMs = eventEndMs(event);
+            return Number.isFinite(endMs) && endMs <= fetchStartMs;
+          });
+          categorizedEvents = [...categorizedEvents, ...deltaEvents];
+        } else {
+          categorizedEvents = deltaEvents;
+        }
+      }
+
+      categorizedEvents = categorizedEvents
+        .filter(event => {
+          const startMs = eventStartMs(event);
+          const endMs = eventEndMs(event);
+          return (
+            Number.isFinite(startMs) &&
+            Number.isFinite(endMs) &&
+            endMs > periodStartMs &&
+            startMs < effectiveEndMs
+          );
+        })
+        .sort((a, b) => eventStartMs(a) - eventStartMs(b));
+
+      this.category.period_cache = {
+        key: cacheKey,
+        fetched_until:
+          Number.isFinite(effectiveEndMs) && effectiveEndMs > 0
+            ? new Date(effectiveEndMs).toISOString()
+            : null,
+        events: categorizedEvents,
+      };
+
+      const by_period = buildCategoryByPeriodFromEvents(periods, categorizedEvents);
+      if (dont_query_inactive && this.active.events.length > 0) {
+        periods.forEach(period => {
+          if (!periodHasActivity(period, this.active.events)) {
+            by_period[period] = { cat_events: [] };
+          }
+        });
+      }
+
+      const ordered_by_period = Object.fromEntries(
+        periods.map(period => [period, by_period[period] || { cat_events: [] }])
+      );
 
       console.log('ACTIVITY STORE: query_category_time_by_period - Data ready to commit.', {
-        periods: Object.keys(by_period).length,
+        periods: Object.keys(ordered_by_period).length,
       });
-      this.query_category_time_by_period_completed({ by_period }, request_nonce);
+      this.query_category_time_by_period_completed({ by_period: ordered_by_period }, request_nonce);
     },
 
     async query_active_history_android({ timeperiod }: QueryOptions, request_nonce: number) {
@@ -818,46 +1429,46 @@ export const useActivityStore = defineStore('activity', {
         for (let i = 0; i < 24; i++) {
           const next_hour = moment(current_hour).add(1, 'hour');
           const key = `${current_hour.format()}/${next_hour.format()}`;
-          const cat_events = [];
+          const period_cat_events = [];
 
           // Create a nice distribution of activities for a vivid chart
           if (i >= 9 && i <= 17) {
             // Code-heavy hours
-            cat_events.push({
+            period_cat_events.push({
               duration: Math.random() * 2000 + 1000,
               data: { $category: ['Code'] },
             });
             if (Math.random() > 0.4)
-              cat_events.push({
+              period_cat_events.push({
                 duration: Math.random() * 800,
                 data: { $category: ['Meetings'] },
               });
           } else if (i >= 18 && i <= 22) {
             // Evening
             if (Math.random() > 0.2)
-              cat_events.push({
+              period_cat_events.push({
                 duration: Math.random() * 1500 + 1000,
                 data: { $category: ['Gaming'] },
               });
-            cat_events.push({
+            period_cat_events.push({
               duration: Math.random() * 1000 + 200,
               data: { $category: ['Browsing'] },
             });
           } else if (i >= 8 && i <= 9) {
             // Morning
-            cat_events.push({
+            period_cat_events.push({
               duration: Math.random() * 800 + 400,
               data: { $category: ['Email'] },
             });
           } else if (i < 2 || i >= 23) {
             // Late night
-            cat_events.push({
+            period_cat_events.push({
               duration: Math.random() * 600,
               data: { $category: ['Browsing'] },
             });
           }
 
-          by_period[key] = { cat_events };
+          by_period[key] = { cat_events: period_cat_events };
           current_hour = next_hour;
         }
         return by_period;
@@ -893,6 +1504,8 @@ export const useActivityStore = defineStore('activity', {
         this.category.by_period = null;
 
         this.active.duration = null;
+      } else {
+        this.resetRequestedVisuals(query_options);
       }
 
       // Ensures that active history isn't being fully reloaded on every date change
@@ -911,13 +1524,15 @@ export const useActivityStore = defineStore('activity', {
     ) {
       if (typeof request_nonce === 'number' && request_nonce !== this.active_request_nonce) return;
       const cat_events = scoreCategories(colorCategories(ensureEventList(data?.cat_events)));
+      const active_events = ensureEventList(data?.active_events);
+      const active_duration = sumEventDurations(active_events);
 
       // Set $color and $score for categories
       this.window.top_apps = ensureEventList(data?.app_events);
       this.window.top_titles = ensureEventList(data?.title_events);
       this.category.top = cat_events;
-      this.active.duration = ensureDuration(data?.duration);
-      this.active.events = ensureEventList(data?.active_events);
+      this.active.duration = active_duration > 0 ? active_duration : ensureDuration(data?.duration);
+      this.active.events = active_events;
 
       console.log('ACTIVITY STORE: query_window_completed committed data');
     },
