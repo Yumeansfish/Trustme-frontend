@@ -11,9 +11,7 @@
           :class="viewportPage ? 'flex h-full min-h-0 flex-col overflow-hidden' : ''"
         >
           <error-boundary>
-            <new-release-notification
-              v-if="isNewReleaseCheckEnabled"
-            ></new-release-notification>
+            <new-release-notification v-if="isNewReleaseCheckEnabled"></new-release-notification>
             <router-view></router-view>
           </error-boundary>
         </div>
