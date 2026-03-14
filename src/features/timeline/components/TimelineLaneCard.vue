@@ -41,7 +41,11 @@
           class="aw-live-lane-segment"
           :class="[
             `aw-live-lane-segment-${segment.variant}`,
-            { 'aw-live-lane-segment-compact': !segment.showLabel },
+            {
+              'aw-live-lane-segment-compact': !segment.showLabel,
+              'aw-live-lane-segment-clipped-start': segment.clippedStart,
+              'aw-live-lane-segment-clipped-end': segment.clippedEnd,
+            },
           ]"
           :style="segmentStyle(segment)"
           @mouseenter="showTooltip($event, segment)"
@@ -465,6 +469,8 @@ export default defineComponent({
         source: this.getSourceLabel(bucket),
         startMs,
         endMs,
+        clippedStart: rawStartMs < this.rangeStartMs,
+        clippedEnd: rawEndMs > this.rangeEndMs,
         variant,
       };
     },
@@ -503,9 +509,15 @@ export default defineComponent({
       };
     },
     segmentStyle(segment: any) {
+      const baseInsetPx =
+        segment.widthPct > 6 ? 6 : segment.widthPct > 2.5 ? 5 : segment.widthPct > 1 ? 4 : 3;
+      const leftInsetPx = segment.clippedStart ? 0 : baseInsetPx;
+      const rightInsetPx = segment.clippedEnd ? 0 : baseInsetPx;
+      const totalInsetPx = leftInsetPx + rightInsetPx;
+
       return {
-        left: `${segment.leftPct}%`,
-        width: `${Math.max(segment.widthPct, 0.65)}%`,
+        left: `calc(${segment.leftPct}% + ${leftInsetPx}px)`,
+        width: `max(0.24rem, calc(${Math.max(segment.widthPct, 0.5)}% - ${totalInsetPx}px))`,
       };
     },
     showTooltip(event: MouseEvent, segment: any) {

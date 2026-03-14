@@ -14,9 +14,6 @@
     Loading Timeline...
   </div>
   <template v-else>
-    <aw-alert v-if="num_events === 0" class="mt-2" variant="warning" show>
-      No recent activity was found in the last 30 minutes.
-    </aw-alert>
     <section class="aw-card p-6 md:p-7">
       <div class="flex flex-col gap-4 md:gap-5">
         <timeline-lane-card
