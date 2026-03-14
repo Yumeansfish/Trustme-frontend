@@ -833,6 +833,179 @@
     box-shadow: var(--shadow-sm);
   }
 
+  .aw-date-nav {
+    position: relative;
+    gap: 0.15rem;
+    padding-right: 0.35rem;
+  }
+
+  .aw-date-nav-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 10rem;
+    max-width: 12rem;
+    height: 1.95rem;
+    padding: 0 0.85rem;
+    border-radius: 9999px;
+    color: rgb(var(--foreground-strong));
+    transition: background-color var(--duration-fast), color var(--duration-fast);
+  }
+
+  .aw-date-nav-trigger:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.1);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-popover {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    z-index: 40;
+    width: min(21rem, calc(100vw - 2rem));
+    border: 1px solid rgb(var(--border));
+    border-radius: 1.55rem;
+    background:
+      linear-gradient(180deg, rgb(var(--surface)), rgb(var(--surface-subtle))),
+      rgb(var(--surface));
+    box-shadow: var(--shadow-lg);
+    padding: 1rem;
+  }
+
+  .aw-date-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .aw-date-popover-title {
+    min-width: 0;
+    color: rgb(var(--foreground-strong));
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-align: center;
+  }
+
+  .aw-date-popover-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    color: rgb(var(--foreground-muted));
+    transition: background-color var(--duration-fast), color var(--duration-fast),
+      opacity var(--duration-fast);
+  }
+
+  .aw-date-popover-nav:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.1);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-popover-nav:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .aw-date-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .aw-date-weekdays span {
+    color: rgb(var(--foreground-muted));
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .aw-date-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .aw-date-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 1rem;
+    color: rgb(var(--foreground-strong));
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background-color var(--duration-fast), color var(--duration-fast),
+      box-shadow var(--duration-fast), opacity var(--duration-fast);
+  }
+
+  .aw-date-cell:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.12);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-cell-outside {
+    color: rgb(var(--foreground-subtle));
+  }
+
+  .aw-date-cell-disabled {
+    opacity: 0.3;
+  }
+
+  .aw-date-cell-disabled:hover {
+    background-color: transparent;
+    color: inherit;
+  }
+
+  .aw-date-cell-today {
+    box-shadow: inset 0 0 0 1px rgb(var(--summary-vis-normal) / 0.28);
+  }
+
+  .aw-date-cell-selected {
+    background-color: rgb(var(--summary-vis-normal));
+    color: rgb(var(--primary-foreground));
+    box-shadow: 0 8px 18px rgb(var(--summary-vis-normal) / 0.2);
+  }
+
+  .aw-date-cell-selected:hover {
+    background-color: rgb(var(--summary-vis-hover));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-date-popover-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.85rem;
+  }
+
+  .aw-date-popover-today {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2rem;
+    padding: 0 0.8rem;
+    border-radius: 9999px;
+    background-color: rgb(var(--summary-vis-normal) / 0.12);
+    color: rgb(var(--summary-vis-normal));
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: background-color var(--duration-fast), color var(--duration-fast);
+  }
+
+  .aw-date-popover-today:hover {
+    background-color: rgb(var(--summary-vis-active) / 0.18);
+    color: rgb(var(--summary-vis-active));
+  }
+
   .aw-icon-button {
     @apply inline-flex items-center justify-center;
     border-radius: var(--radius-control);
@@ -844,6 +1017,10 @@
   .aw-icon-button:hover {
     background-color: rgb(var(--surface-subtle));
     color: rgb(var(--foreground-strong));
+  }
+
+  .aw-date-nav .aw-icon-button:disabled {
+    cursor: default;
   }
 
   .aw-tab-link {
