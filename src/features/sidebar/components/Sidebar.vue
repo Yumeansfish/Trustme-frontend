@@ -5,7 +5,7 @@
         <img
           alt="Trustme logo"
           class="h-6 w-6 shrink-0 object-contain"
-          src="/logo.png"
+          :src="logoUrl"
         />
         <span class="aw-sidebar-title">trust-me</span>
       </div>
@@ -113,6 +113,9 @@ import { defineComponent } from 'vue';
 export default defineComponent({
   name: 'Sidebar',
   computed: {
+    logoUrl() {
+      return new URL('../../../../media/logo/logo.png', import.meta.url).href;
+    },
     buckets() {
       return useBucketsStore().buckets;
     },
