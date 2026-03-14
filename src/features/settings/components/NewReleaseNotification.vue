@@ -2,7 +2,7 @@
 <div>
   <aw-alert v-if="isVisible" variant="info" show>
     <div class="flex items-start justify-between gap-3">
-      <p class="pr-2">A new release, v{{ latestVersion }}, is available for<ui-link class="aw-link" href="https://activitywatch.net/downloads/" target="_blank">download</ui-link>, you can also<ui-link class="aw-link" href="javascript:void(0);" @click="disableCheck">disable</ui-link>future reminders and checks for updates.</p>
+      <p class="pr-2">A new release, v{{ latestVersion }}, is available on the <ui-link class="aw-link" href="https://yumeansfish.github.io/Trustme-backend/" target="_blank">download page</ui-link>. You can also <ui-link class="aw-link" href="javascript:void(0);" @click="disableCheck">disable</ui-link> future reminders and checks for updates.</p>
       <ui-button class="aw-btn aw-btn-sm aw-btn-secondary shrink-0" type="button" @click="isVisible=false">×</ui-button>
     </div>
   </aw-alert>
@@ -87,7 +87,7 @@ export default defineComponent({
     async retrieveLatestVersion() {
       try {
         const response = await axios.get(
-          'https://api.github.com/repos/ActivityWatch/activitywatch/releases/latest'
+          'https://api.github.com/repos/Yumeansfish/Trustme-backend/releases/latest'
         );
         this.latestVersion = this.cleanVersionTag(response.data.tag_name);
         this.latestVersionDate = moment(response.data.published_at);

@@ -1,7 +1,7 @@
 <template>
   <settings-card
     title="Landing Page"
-    description="Choose where ActivityWatch should open by default."
+    description="Choose where trust-me should open by default."
     icon="desktop"
   >
     <template #control>

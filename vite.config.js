@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
         if (!PRODUCTION) {
           return html.replace(placeholder, '');
         }
-        const cspContent = `default-src 'self' ${CSP} https://api.github.com/repos/ActivityWatch/activitywatch/releases/latest; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; script-src 'self' 'unsafe-eval'`;
+        const cspContent = `default-src 'self' ${CSP} https://api.github.com/repos/Yumeansfish/Trustme-backend/releases/latest; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; script-src 'self' 'unsafe-eval'`;
         return html.replace(
           placeholder,
           `<!-- Verify with https://csp-evaluator.withgoogle.com/ -->\n    <meta http-equiv="Content-Security-Policy" content="${cspContent}">`
@@ -62,9 +62,9 @@ export default defineConfig(({ mode }) => {
           enabled: false,
         },
         manifest: {
-          name: 'ActivityWatch',
-          short_name: 'ActivityWatch',
-          description: 'Automatically track your computer usage',
+          name: 'trust-me',
+          short_name: 'trust-me',
+          description: 'Local-first activity dashboard for trust-me',
           theme_color: '#ffffff',
           icons: [
             {

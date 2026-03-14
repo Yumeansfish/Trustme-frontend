@@ -3,7 +3,7 @@
   <aw-alert v-if="isPollVisible" variant="info" show>
     <div class="flex items-start justify-between gap-3">
       <form class="flex-1 space-y-4">
-        <p>Hey there! You've been using ActivityWatch for a while. How likely are you to recommend it to a friend/colleague on a scale 1-10? (with 10 being the most likely)</p>
+        <p>Hey there! You've been using trust-me for a while. How likely are you to recommend it to a friend or colleague on a scale from 1 to 10?</p>
         <div class="grid grid-cols-5 gap-2 sm:grid-cols-10">
           <label class="aw-rating-option flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-base bg-surface p-2 text-sm transition" v-for="i in options" :key="i" :for="'option' + i" :class="Number(rating) === i ? 'aw-rating-option-active' : ''">
             <ui-radio-item class="sr-only" :id="'option' + i" name="rating" :value="i" v-model="rating"  /><span class="font-medium">{{ i }}</span>
@@ -19,14 +19,11 @@
   <aw-alert v-if="isPosFollowUpVisible" variant="info" show>
     <div class="flex items-start justify-between gap-3">
       <div class="flex-1 space-y-3">
-        <p>We're happy to hear you enjoy using ActivityWatch, but we can do better!<br>To help us help you, here are a few things you can do:</p>
+        <p>We're happy to hear you enjoy using trust-me, but we can do better.<br>To help us improve, here are a few things you can do:</p>
         <ul class="list-disc space-y-1 pl-5 text-sm">
-          <li>Support us on <ui-link href="https://www.patreon.com/erikbjare">Patreon</ui-link> or <ui-link href="https://opencollective.com/activitywatch">Open Collective</ui-link> (or by <ui-link href="https://activitywatch.net/donate/">other donation methods</ui-link>).</li>
-          <li>Tell your friends and colleagues!</li>
-          <li>Post about it on social media, we are on <ui-link href="https://twitter.com/ActivityWatchIt">Twitter</ui-link> and <ui-link href="https://www.facebook.com/ActivityWatch">Facebook</ui-link>.</li>
-          <li>Rate us on <ui-link href="https://alternativeto.net/software/activitywatch/about/">AlternativeTo</ui-link> and <ui-link href="https://play.google.com/store/apps/details?id=net.activitywatch.android">Google Play Store</ui-link>.</li>
-          <li>Join our <ui-link href="https://discord.gg/vDskV9q">Discord server</ui-link>.</li>
-          <li>Sign up for the <ui-link href="http://eepurl.com/cTU6QX">newsletter</ui-link> (we rarely send anything).</li>
+          <li>Open an issue on <ui-link href="https://github.com/Yumeansfish/Trustme-backend/issues">GitHub</ui-link>.</li>
+          <li>Share feedback directly with the research team.</li>
+          <li>Download the latest build from the <ui-link href="https://yumeansfish.github.io/Trustme-backend/">release page</ui-link> when asked to test a newer version.</li>
         </ul>
       </div>
       <ui-button class="aw-btn aw-btn-sm aw-btn-secondary shrink-0" type="button" @click="isPosFollowUpVisible=false">×</ui-button>
@@ -35,10 +32,10 @@
   <aw-alert v-if="isNegFollowUpVisible" variant="info" show>
     <div class="flex items-start justify-between gap-3">
       <div class="flex-1 space-y-3">
-        <p>We are sorry to hear that you did not like ActivityWatch, but we want to improve! We would be very thankful if you helped us by:</p>
+        <p>We are sorry to hear that trust-me did not work well for you. We would be very thankful if you helped us by:</p>
         <ul class="list-disc space-y-1 pl-5 text-sm">
-          <li>Fill out the <ui-link href="https://forms.gle/q2N9K5RoERBV8kqPA">feedback form</ui-link>.</li>
-          <li>Vote for new features on the <ui-link href="https://forum.activitywatch.net/c/features">forum</ui-link>.</li>
+          <li>Filling out the <ui-link href="https://forms.gle/q2N9K5RoERBV8kqPA">feedback form</ui-link>.</li>
+          <li>Opening an issue on <ui-link href="https://github.com/Yumeansfish/Trustme-backend/issues">GitHub</ui-link>.</li>
         </ul>
       </div>
       <ui-button class="aw-btn aw-btn-sm aw-btn-secondary shrink-0" type="button" @click="isNegFollowUpVisible=false">×</ui-button>
