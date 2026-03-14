@@ -1,99 +1,82 @@
 <template>
-<!-- We want to use another colorscheme than the default 'schemeAccent',-->
-<!-- unfortunately it seems like the color-scheme prop is broken.-->
-<!-- See this issue: https://github.com/David-Desmaisons/Vue.D3.sunburst/issues/11-->
-<sunburst :data="data" :colorScale="colorfunc" :getCategoryForColor="categoryForColor" :colorScheme="null" :showLabels="true">
-  <!-- Add behaviors-->
-  <template slot-scope="{ on, actions }">
-    <highlightOnHover v-bind="{ on, actions }"></highlightOnHover>
-    <zoomOnClick v-bind="{ on, actions }"></zoomOnClick>
-  </template>
-  <!-- Add information to be displayed on top of the graph-->
-  <div slot="top" slot-scope="{ nodes }">
-    <!--nodeInfoDisplayer(:current="nodes.mouseOver" :root="nodes.root" description="time spent" :show-all-number="false")-->
+  <div class="aw-sunburst-fallback">
     <div class="aw-sunburst-overlay">
-      <div v-if="nodes.mouseOver !== null && nodes.mouseOver">
-        <div class="aw-sunburst-overlay-parent">{{ nodes.mouseOver.data.parent ? nodes.mouseOver.data.parent.join(" > ") : " " }}</div>
-        <div class="aw-sunburst-overlay-title">{{ nodes.mouseOver.data.name }}</div>
-        <div>{{ friendlyduration(nodes.mouseOver.value ) }}</div>
-        <div>({{ Math.round(100 * nodes.mouseOver.value / nodes.root.value) }}%)</div>
+      <div class="aw-sunburst-overlay-parent">Category overview</div>
+      <div class="aw-sunburst-overlay-title">Sunburst unavailable</div>
+      <div class="text-sm text-foreground-subtle">
+        This visualization is temporarily simplified for the packaged desktop build.
+      </div>
+    </div>
+
+    <div class="aw-sunburst-list">
+      <div
+        v-for="entry in flattenedEntries"
+        :key="entry.path"
+        class="aw-sunburst-list-item"
+      >
+        <div class="aw-sunburst-list-header">
+          <span class="aw-sunburst-swatch" :style="{ backgroundColor: entry.color }"></span>
+          <span class="aw-sunburst-list-title">{{ entry.label }}</span>
+        </div>
+        <span class="aw-sunburst-list-value">{{ friendlyduration(entry.value) }}</span>
       </div>
     </div>
   </div>
-  <!-- Add legend-->
-  <!--breadcrumbTrail(slot="legend" slot-scope="{ nodes, colorGetter, width }" :current="nodes.mouseOver" :root="nodes.root" :colorGetter="colorGetter" :from="nodes.clicked" :width="width" :item-width="100" :order="0")-->
-</sunburst>
 </template>
 
 <script lang="ts">
-import {
-  breadcrumbTrail,
-  highlightOnHover,
-  nodeInfoDisplayer,
-  sunburst,
-  zoomOnClick,
-} from 'vue-d3-sunburst';
-import 'vue-d3-sunburst/dist/vue-d3-sunburst.css';
 import { getColorFromCategory } from '~/features/categorization/lib/color';
-import { SUNBURST_ROOT_DARK, SUNBURST_ROOT_LIGHT } from '~/features/categorization/lib/visualizationTokens';
-
 import { useCategoryStore } from '~/features/categorization/store/categories';
-import { useSettingsStore } from '~/features/settings/store/settings';
 
 const example_data = {
-  name: 'flare',
+  name: 'All',
   children: [
-    {
-      name: 'analytics',
-      children: [
-        {
-          name: 'cluster',
-          children: [
-            { name: 'AgglomerativeCluster', size: 3938 },
-            { name: 'CommunityStructure', size: 3812 },
-            { name: 'HierarchicalCluster', size: 6714 },
-            { name: 'MergeEdge', size: 743 },
-          ],
-        },
-        {
-          name: 'optimization',
-          children: [{ name: 'AspectRatioBanker', size: 7074 }],
-        },
-      ],
-    },
+    { name: 'Coding', size: 0 },
+    { name: 'Writing', size: 0 },
   ],
 };
 
 const SEP = '>';
 
+function flattenTree(node: any, path: string[] = []) {
+  const nextPath = node?.name && node.name !== 'All' ? path.concat(node.name) : path;
+  const children = Array.isArray(node?.children) ? node.children : [];
+
+  if (children.length === 0) {
+    return [
+      {
+        path: nextPath.join(SEP) || node?.name || 'All',
+        label: nextPath.join(' > ') || node?.name || 'All',
+        value: Number(node?.size ?? node?.value ?? 0),
+      },
+    ];
+  }
+
+  return children.flatMap((child: any) => flattenTree(child, nextPath));
+}
+
 export default {
-  components: {
-    breadcrumbTrail,
-    highlightOnHover,
-    nodeInfoDisplayer,
-    sunburst,
-    zoomOnClick,
-  },
   props: {
     data: {
       type: Object,
       default: () => example_data,
     },
   },
-  methods: {
-    categoryForColor: function (d) {
-      const category = d.parent ? d.parent.concat([d.name]) : [d.name];
-      return category.join(SEP);
-    },
-    colorfunc: function (s) {
-      // 'All' needs to be bright if light theme, and dark if dark theme
-      const settings = useSettingsStore();
-      if (s == 'All') return settings.theme == 'light' ? SUNBURST_ROOT_LIGHT : SUNBURST_ROOT_DARK;
-
+  computed: {
+    flattenedEntries() {
       const categoryStore = useCategoryStore();
-      const cat = categoryStore.get_category(s.split(SEP));
-      const color = getColorFromCategory(cat, categoryStore.classes);
-      return color;
+      return flattenTree(this.data)
+        .filter((entry: any) => entry.value > 0)
+        .sort((a: any, b: any) => b.value - a.value)
+        .slice(0, 12)
+        .map((entry: any) => {
+          const category = categoryStore.get_category(entry.path.split(SEP));
+          const color = getColorFromCategory(category, categoryStore.classes);
+          return {
+            ...entry,
+            color,
+          };
+        });
     },
   },
 };
