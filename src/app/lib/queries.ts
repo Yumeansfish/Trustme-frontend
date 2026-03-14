@@ -122,12 +122,12 @@ export function canonicalEvents(params: DesktopQueryParams | AndroidQueryParams)
 
   return [
     // Fetch window/app events
-    `events = flood(query_bucket(find_bucket("${bid_window}")));`,
+    `events = flood(query_bucket("${bid_window}"));`,
     // On Android, merge events to avoid overload of events
     isAndroidParams(params) ? 'events = merge_events_by_keys(events, ["app"]);' : '',
     // Fetch not-afk events
     isDesktopParams(params)
-      ? `not_afk = flood(query_bucket(find_bucket("${params.bid_afk}")));
+      ? `not_afk = flood(query_bucket("${params.bid_afk}"));
          not_afk = filter_keyvals(not_afk, "status", ["not-afk"]);` +
         (always_active_pattern_str
           ? `not_treat_as_afk = filter_keyvals_regex(events, "app", "${always_active_pattern_str}");
@@ -428,6 +428,33 @@ export function desktopEventsQuery(
   );
 }
 
+// Returns merged app/title events plus active duration for a period.
+// Intended for summary views where the frontend can categorize/aggregate locally
+// without transferring every raw window event.
+export function desktopSummarySnapshotQuery(params: DesktopQueryParams): string[] {
+  const browser_events_mode = params.include_audible ? 'presence' : 'none';
+
+  return querystr_to_array(
+    `
+    ${canonicalEvents({
+      ...params,
+      bid_window: escape_doublequote(params.bid_window),
+      bid_afk: escape_doublequote(params.bid_afk),
+      bid_browsers:
+        browser_events_mode === 'none' ? undefined : _.map(params.bid_browsers, escape_doublequote),
+      categories: [],
+      filter_categories: [],
+      browser_events_mode,
+    })}
+    summary_events = filter_keyvals_regex(events, "app", "\\S");
+    summary_events = merge_events_by_keys(summary_events, ["app", "title"]);
+    manual_events = merge_events_by_keys(stopwatch_events, ["label"]);
+    active_duration = sum_durations(not_afk);
+
+    RETURN = {"events": summary_events, "manual_events": manual_events, "active_duration": active_duration};`
+  );
+}
+
 // Fast-path multidevice query that returns raw events and active periods.
 // Designed for frontend-side categorization/aggregation to avoid expensive
 // server-side regex categorization repeated per host.
@@ -447,6 +474,175 @@ export function multideviceEventsQuery(params: MultiQueryParams): string[] {
       "active_events": not_afk
     };`
   );
+}
+
+// Returns merged app/title events plus active duration for a multidevice period.
+// Intended for summary views where the frontend can categorize/aggregate locally
+// without transferring every raw window event.
+export function multideviceSummarySnapshotQuery(params: MultiQueryParams): string[] {
+  return querystr_to_array(
+    `
+    ${canonicalMultideviceEvents({
+      ...params,
+      categories: [],
+      filter_categories: [],
+    })}
+    summary_events = filter_keyvals_regex(events, "app", "\\S");
+    summary_events = merge_events_by_keys(summary_events, ["app", "title"]);
+    manual_events = merge_events_by_keys(stopwatch_events, ["label"]);
+    active_duration = sum_durations(not_afk);
+
+    RETURN = {"events": summary_events, "manual_events": manual_events, "active_duration": active_duration};`
+  );
+}
+
+export function desktopBrowserQuery(
+  params: Pick<DesktopQueryParams, 'bid_window' | 'bid_browsers'>
+): string[] {
+  const escapedWindowBucket = escape_doublequote(params.bid_window);
+  const escapedBrowserBuckets = _.map(params.bid_browsers || [], escape_doublequote);
+
+  return querystr_to_array(
+    `
+    events = flood(query_bucket("${escapedWindowBucket}"));
+    ${browserEvents({
+      bid_window: params.bid_window,
+      bid_afk: '',
+      bid_browsers: escapedBrowserBuckets,
+      categories: [],
+      filter_categories: [],
+      filter_afk: false,
+      browser_events_mode: 'full',
+    })}
+    browser_urls = merge_events_by_keys(browser_events, ["url"]);
+    browser_urls = sort_by_duration(browser_urls);
+    browser_urls = limit_events(browser_urls, ${default_limit});
+    browser_domains = merge_events_by_keys(browser_events, ["$domain"]);
+    browser_domains = sort_by_duration(browser_domains);
+    browser_domains = limit_events(browser_domains, ${default_limit});
+    browser_titles = merge_events_by_keys(browser_events, ["title"]);
+    browser_titles = sort_by_duration(browser_titles);
+    browser_titles = limit_events(browser_titles, ${default_limit});
+    browser_duration = sum_durations(browser_events);
+
+    RETURN = {
+      "domains": browser_domains,
+      "urls": browser_urls,
+      "titles": browser_titles,
+      "duration": browser_duration
+    };
+  `
+  );
+}
+
+export function multideviceBrowserQuery({
+  hosts,
+  browserBucketsByHost,
+}: {
+  hosts: string[];
+  browserBucketsByHost: Record<string, string[]>;
+}): string[] {
+  let query = '';
+
+  hosts.forEach(host => {
+    const browserBuckets = browserBucketsByHost[host] || [];
+    if (browserBuckets.length === 0) return;
+    const hostSuffix = safeHostname(host);
+
+    query += `
+      browser_events = [];
+      events = flood(query_bucket("${escape_doublequote(`aw-watcher-window_${host}`)}"));
+      ${browserEvents({
+        bid_window: `aw-watcher-window_${host}`,
+        bid_afk: '',
+        bid_browsers: browserBuckets.map(escape_doublequote),
+        categories: [],
+        filter_categories: [],
+        filter_afk: false,
+        browser_events_mode: 'full',
+      })}
+      browser_events_${hostSuffix} = browser_events;
+    `;
+  });
+
+  query += `
+    browser_events = [];
+    ${hosts
+      .filter(host => (browserBucketsByHost[host] || []).length > 0)
+      .map(
+        host =>
+          `browser_events = union_no_overlap(browser_events, browser_events_${safeHostname(host)});`
+      )
+      .join('\n')}
+    browser_urls = merge_events_by_keys(browser_events, ["url"]);
+    browser_urls = sort_by_duration(browser_urls);
+    browser_urls = limit_events(browser_urls, ${default_limit});
+    browser_domains = merge_events_by_keys(browser_events, ["$domain"]);
+    browser_domains = sort_by_duration(browser_domains);
+    browser_domains = limit_events(browser_domains, ${default_limit});
+    browser_titles = merge_events_by_keys(browser_events, ["title"]);
+    browser_titles = sort_by_duration(browser_titles);
+    browser_titles = limit_events(browser_titles, ${default_limit});
+    browser_duration = sum_durations(browser_events);
+
+    RETURN = {
+      "domains": browser_domains,
+      "urls": browser_urls,
+      "titles": browser_titles,
+      "duration": browser_duration
+    };
+  `;
+
+  return querystr_to_array(query);
+}
+
+export function multideviceBrowserEventsQuery({
+  hosts,
+  browserBucketsByHost,
+}: {
+  hosts: string[];
+  browserBucketsByHost: Record<string, string[]>;
+}): string[] {
+  let query = '';
+
+  hosts.forEach(host => {
+    const browserBuckets = browserBucketsByHost[host] || [];
+    if (browserBuckets.length === 0) return;
+    const hostSuffix = safeHostname(host);
+
+    query += `
+      browser_events = [];
+      events = flood(query_bucket("${escape_doublequote(`aw-watcher-window_${host}`)}"));
+      ${browserEvents({
+        bid_window: `aw-watcher-window_${host}`,
+        bid_afk: '',
+        bid_browsers: browserBuckets.map(escape_doublequote),
+        categories: [],
+        filter_categories: [],
+        filter_afk: false,
+        browser_events_mode: 'full',
+      })}
+      browser_events_${hostSuffix} = browser_events;
+    `;
+  });
+
+  query += `
+    browser_events = [];
+    ${hosts
+      .filter(host => (browserBucketsByHost[host] || []).length > 0)
+      .map(
+        host =>
+          `browser_events = union_no_overlap(browser_events, browser_events_${safeHostname(host)});`
+      )
+      .join('\n')}
+    browser_events = sort_by_timestamp(browser_events);
+
+    RETURN = {
+      "events": browser_events
+    };
+  `;
+
+  return querystr_to_array(query);
 }
 
 // Performs a query that combines data from multiple devices.
@@ -563,7 +759,12 @@ export function categoryEventsQuery(
 export default {
   fullDesktopQuery,
   desktopEventsQuery,
+  desktopSummarySnapshotQuery,
+  desktopBrowserQuery,
   multideviceEventsQuery,
+  multideviceSummarySnapshotQuery,
+  multideviceBrowserQuery,
+  multideviceBrowserEventsQuery,
   multideviceQuery,
   appQuery,
   activityQuery,
