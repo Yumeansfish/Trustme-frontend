@@ -2,11 +2,11 @@
   <aside class="group aw-sidebar">
     <nav class="flex h-full flex-col py-2">
       <div class="flex h-11 items-center px-4 select-none">
-        <span
-          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-xs font-semibold uppercase text-foreground-subtle"
-        >
-          T
-        </span>
+        <img
+          alt="Trustme logo"
+          class="h-6 w-6 shrink-0 object-contain"
+          src="/logo.png"
+        />
         <span class="aw-sidebar-title">trust-me</span>
       </div>
 
