@@ -1502,14 +1502,9 @@
 
   .aw-live-lane-track {
     position: relative;
-    min-height: 6.5rem;
+    min-height: 5.4rem;
     overflow: hidden;
-    border: 1px solid rgb(var(--border));
-    border-radius: 1.55rem;
-    background:
-      linear-gradient(180deg, rgb(var(--surface)), rgb(var(--surface-subtle))),
-      rgb(var(--surface));
-    box-shadow: inset 0 1px 0 rgb(var(--surface));
+    background: transparent;
   }
 
   .aw-live-lane-grid-line {
@@ -1528,15 +1523,15 @@
 
   .aw-live-lane-segment {
     position: absolute;
-    top: 0.82rem;
-    bottom: 0.82rem;
+    top: 0.42rem;
+    bottom: 0.42rem;
     display: inline-flex;
     align-items: center;
     overflow: hidden;
     border: 1px solid transparent;
     border-radius: 1rem;
     padding: 0 0.8rem;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 6px 16px rgb(15 23 42 / 0.08);
     transition: transform var(--duration-fast), border-color var(--duration-fast),
       filter var(--duration-fast);
   }
@@ -1573,6 +1568,16 @@
 
   .aw-live-lane-segment-compact {
     padding: 0;
+  }
+
+  .aw-live-lane-segment-clipped-start {
+    border-top-left-radius: 0.32rem;
+    border-bottom-left-radius: 0.32rem;
+  }
+
+  .aw-live-lane-segment-clipped-end {
+    border-top-right-radius: 0.32rem;
+    border-bottom-right-radius: 0.32rem;
   }
 
   .aw-live-lane-segment-label {
