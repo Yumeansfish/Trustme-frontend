@@ -38,12 +38,23 @@
             <p class="aw-plugin-callout-points">{{ pluginInstallState.points }}</p>
           </div>
           <ui-link
+            v-if="pluginInstallDownload"
             class="aw-btn aw-btn-md aw-plugin-callout-cta"
-            :href="watcherDocsUrl"
+            :href="pluginInstallHref"
+            :download="pluginInstallDownload"
             target="_blank"
             rel="noreferrer"
           >
-            {{ pluginInstallState.cta }}
+            {{ pluginInstallCtaLabel }}
+          </ui-link>
+          <ui-link
+            v-else
+            class="aw-btn aw-btn-md aw-plugin-callout-cta"
+            :href="pluginInstallHref"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {{ pluginInstallCtaLabel }}
           </ui-link>
         </div>
       </div>
@@ -386,8 +397,36 @@ export default {
         },
       };
     },
-    watcherDocsUrl() {
-      return 'https://activitywatch.readthedocs.io/en/latest/watchers.html';
+    isFirefoxBrowser() {
+      if (typeof navigator === 'undefined') return false;
+      return /firefox/i.test(navigator.userAgent);
+    },
+    pluginInstallHref() {
+      if (!this.pluginInstallState) return '#';
+
+      if (this.pluginInstallState.kind === 'browser') {
+        if (this.isFirefoxBrowser) {
+          return 'https://addons.mozilla.org/firefox/downloads/latest/aw-watcher-web/latest.xpi';
+        }
+
+        return 'https://chromewebstore.google.com/detail/activitywatch-web-watcher/nglaklhklhcoonedhgnpgddginnjdadi';
+      }
+
+      return 'https://marketplace.visualstudio.com/items?itemName=activitywatch.aw-watcher-vscode';
+    },
+    pluginInstallDownload() {
+      if (!this.pluginInstallState) return '';
+      if (this.pluginInstallState.kind === 'browser' && this.isFirefoxBrowser) {
+        return 'aw-watcher-web-latest.xpi';
+      }
+      return '';
+    },
+    pluginInstallCtaLabel() {
+      if (!this.pluginInstallState) return 'Install Plugin';
+      if (this.pluginInstallState.kind === 'browser') {
+        return this.isFirefoxBrowser ? 'Download Firefox Plugin' : 'Open Chrome Store';
+      }
+      return 'Open VS Code Marketplace';
     },
     has_prerequisites() {
       return this.visualizations[this.type].available;
@@ -399,10 +438,10 @@ export default {
           !this.activityStore.browser.available)
       ) {
         return {
+          kind: 'browser',
           icon: 'globe',
           title: 'Unlock Browser Activity',
           points: 'Domains • URLs • Tab Titles',
-          cta: 'Install Plugin',
         };
       }
 
@@ -412,10 +451,10 @@ export default {
           !this.activityStore.editor.available)
       ) {
         return {
+          kind: 'editor',
           icon: 'terminal',
           title: 'Unlock Editor Activity',
           points: 'Files • Projects • Languages',
-          cta: 'Install Plugin',
         };
       }
 
