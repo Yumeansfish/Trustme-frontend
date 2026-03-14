@@ -20,6 +20,7 @@ import { useSettingsStore } from '~/features/settings/store/settings';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
 import SettingsCard from '~/features/settings/components/SettingsCard.vue';
 import SettingsDropdown from '~/features/settings/components/SettingsDropdown.vue';
+import { getEffectiveDeviceMappings } from '~/features/settings/lib/deviceMappings';
 
 export default {
   name: 'LandingPageSettings',
@@ -45,26 +46,35 @@ export default {
         settingsStore.update({ landingpage: val });
       },
     },
-    hostnames() {
-      return this.bucketsStore.hosts;
+    effectiveActivityGroups() {
+      const settingsStore = useSettingsStore();
+      const allHosts = this.bucketsStore.hosts.filter(host => host && host !== 'unknown');
+      return getEffectiveDeviceMappings(settingsStore.deviceMappings, allHosts);
     },
     landingPageOptions() {
+      const groupEntries =
+        Object.keys(this.effectiveActivityGroups).length > 1
+          ? Object.entries(this.effectiveActivityGroups)
+              .map(([groupName, hosts]) => {
+                const validHosts = hosts.filter(host => host && host !== 'unknown');
+                if (validHosts.length <= 0) return null;
+
+                return {
+                  label: `Activity (${groupName})`,
+                  value: `/activity/${encodeURIComponent(validHosts.join(','))}`,
+                  description: 'Jump straight into one device group',
+                };
+              })
+              .filter(Boolean)
+          : [];
+
       return [
         {
           label: 'Activity',
           value: '/activity',
           description: 'Open the main dashboard',
         },
-        ...this.hostnames.map(hostname => ({
-          label: `Activity (${hostname})`,
-          value: `/activity/${encodeURIComponent(hostname)}`,
-          description: 'Jump straight into one device view',
-        })),
-        {
-          label: 'Timeline',
-          value: '/timeline',
-          description: 'Open the live timeline view',
-        },
+        ...groupEntries,
       ];
     },
   },

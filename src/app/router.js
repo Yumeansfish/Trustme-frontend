@@ -9,6 +9,7 @@ const Buckets = () => import('../features/buckets/views/Buckets.vue');
 const Bucket = () => import('../features/buckets/views/Bucket.vue');
 const Timeline = () => import('../features/timeline/views/Timeline.vue');
 const Streamdeck = () => import('../features/streamdeck/views/Streamdeck.vue');
+const PrivacySetting = () => import('../features/privacy/views/PrivacySetting.vue');
 const Settings = () => import('../features/settings/views/Settings.vue');
 const CategoryBuilder = () => import('../features/categorization/views/CategoryBuilder.vue');
 const Stopwatch = () => import('../features/stopwatch/views/Stopwatch.vue');
@@ -69,6 +70,7 @@ const router = createRouter({
       props: true,
       meta: { fullContainer: true },
     },
+    { path: '/privacy', component: PrivacySetting },
     { path: '/settings', component: Settings },
     { path: '/settings/category-builder', component: CategoryBuilder },
     { path: '/away', alias: '/stopwatch', component: Stopwatch },

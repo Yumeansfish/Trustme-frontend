@@ -8,6 +8,7 @@ import { get_today_with_offset } from '~/app/lib/time';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
 import { defaultViews } from '~/features/activity/store/views';
 import { useSettingsStore } from '~/features/settings/store/settings';
+import { getEffectiveDeviceMappings } from '~/features/settings/lib/deviceMappings';
 
 function resolveDefaultHost() {
   const bucketsStore = useBucketsStore();
@@ -15,10 +16,13 @@ function resolveDefaultHost() {
   const isActivityHost = (host: string) =>
     host && host !== 'unknown' && bucketsStore.available(host).category;
 
-  const deviceMappings = settingsStore.deviceMappings || {};
+  const deviceMappings = getEffectiveDeviceMappings(
+    settingsStore.deviceMappings,
+    bucketsStore.hosts
+  );
   for (const hosts of Object.values(deviceMappings)) {
-    const validHosts = hosts.filter(isActivityHost);
-    if (validHosts.length > 0) {
+    const validHosts = hosts.filter(host => host && host !== 'unknown');
+    if (validHosts.some(isActivityHost)) {
       return validHosts.join(',');
     }
   }

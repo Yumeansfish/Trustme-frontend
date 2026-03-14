@@ -9,7 +9,7 @@
       <div class="aw-sidebar-scroll">
         <ui-link
           v-if="singleActivityView"
-          :to="`/activity/${singleActivityView.hostname}`"
+          :to="singleActivityView.route || '/activity'"
           active-class="aw-sidebar-link-active"
           class="aw-sidebar-link h-11 px-4"
         >
@@ -39,7 +39,7 @@
             <ui-link
               v-for="view in activityViews"
               :key="view.name"
-              :to="`/activity/${view.hostname}`"
+              :to="view.route"
               active-class="aw-sidebar-link-subactive"
               class="aw-sidebar-link h-9 px-5"
             >
@@ -55,21 +55,21 @@
           class="aw-sidebar-link h-11 px-4"
         >
           <icon class="h-4 w-4 shrink-0" name="list"></icon>
-          <span class="aw-sidebar-copy">Streamdeck</span>
-        </ui-link>
-
-        <ui-link
-          to="/timeline"
-          active-class="aw-sidebar-link-active"
-          class="aw-sidebar-link h-11 px-4"
-        >
-          <icon class="h-4 w-4 shrink-0" name="stream"></icon>
-          <span class="aw-sidebar-copy">Timeline</span>
+          <span class="aw-sidebar-copy">Check-Ins</span>
         </ui-link>
 
         <ui-link to="/away" active-class="aw-sidebar-link-active" class="aw-sidebar-link h-11 px-4">
           <icon class="h-4 w-4 shrink-0" name="pause"></icon>
           <span class="aw-sidebar-copy">Away Session</span>
+        </ui-link>
+
+        <ui-link
+          to="/privacy"
+          active-class="aw-sidebar-link-active"
+          class="aw-sidebar-link h-11 px-4"
+        >
+          <icon class="h-4 w-4 shrink-0" name="eye-slash"></icon>
+          <span class="aw-sidebar-copy">Privacy Control</span>
         </ui-link>
       </div>
 
@@ -102,6 +102,7 @@ import _ from 'lodash';
 
 import { useBucketsStore } from '~/features/buckets/store/buckets';
 import { useSettingsStore } from '~/features/settings/store/settings';
+import { getEffectiveDeviceMappings } from '~/features/settings/lib/deviceMappings';
 
 import { defineComponent } from 'vue';
 
@@ -110,9 +111,6 @@ export default defineComponent({
   computed: {
     buckets() {
       return useBucketsStore().buckets;
-    },
-    deviceMappings() {
-      return useSettingsStore().deviceMappings;
     },
     singleActivityView() {
       return this.activityViews && this.activityViews.length === 1 ? this.activityViews[0] : null;
@@ -135,33 +133,39 @@ export default defineComponent({
         });
 
         const processedHosts = new Set<string>();
+        const allHosts = Object.keys(types_by_host).filter(host => host && host !== 'unknown');
+        const effectiveMappings = getEffectiveDeviceMappings(
+          settingsStore.deviceMappings,
+          allHosts
+        );
 
-        const activeMappings =
-          this.deviceMappings && Object.keys(this.deviceMappings).length > 0
-            ? this.deviceMappings
-            : null;
+        _.each(effectiveMappings, (hostsArr: string[], groupName: string) => {
+          const validGroupHosts = hostsArr.filter(h => types_by_host[h]);
+          if (validGroupHosts.length <= 0) return;
+          const hasActivityData = validGroupHosts.some(
+            h => types_by_host[h].window || types_by_host[h].android
+          );
+          if (!hasActivityData) return;
 
-        // 1. Add grouped/mapped aliases first
-        if (activeMappings) {
-          _.each(activeMappings, (hostsArr: string[], groupName: string) => {
-            const validGroupHosts = hostsArr.filter(h => types_by_host[h]);
-            if (validGroupHosts.length > 0) {
-              validGroupHosts.forEach(h => processedHosts.add(h));
-              const isMostlyAndroid = validGroupHosts.some(h => types_by_host[h].android);
+          validGroupHosts.forEach(h => processedHosts.add(h));
+          const isMostlyAndroid =
+            validGroupHosts.length > 0 &&
+            validGroupHosts.every(h => types_by_host[h].android) &&
+            validGroupHosts.some(h => types_by_host[h].android);
 
-              views.push({
-                name: groupName,
-                hostname: validGroupHosts.join(','), // comma separated payload
-                type: isMostlyAndroid ? 'android' : 'default',
-                icon: isMostlyAndroid ? 'mobile' : 'desktop',
-              });
-            }
+          views.push({
+            name: groupName,
+            hostname: validGroupHosts.join(','),
+            type: isMostlyAndroid ? 'android' : 'default',
+            icon: isMostlyAndroid ? 'mobile' : 'desktop',
+            route: `/activity/${encodeURIComponent(validGroupHosts.join(','))}`,
           });
-        }
+        });
 
-        // 2. Add any remaining unassigned discrete hosts
+        // Defensive fallback if a host somehow wasn't captured by effective mappings.
         _.each(types_by_host, (types, hostname) => {
           if (processedHosts.has(hostname) || hostname === 'unknown') return;
+          if (!types.window && !types.android) return;
 
           if (types['android']) {
             views.push({
@@ -169,6 +173,7 @@ export default defineComponent({
               hostname: hostname,
               type: 'android',
               icon: 'mobile',
+              route: `/activity/${encodeURIComponent(hostname)}`,
             });
           } else {
             views.push({
@@ -176,6 +181,7 @@ export default defineComponent({
               hostname: hostname,
               type: 'default',
               icon: 'desktop',
+              route: `/activity/${encodeURIComponent(hostname)}`,
             });
           }
         });
@@ -189,6 +195,8 @@ export default defineComponent({
   },
   mounted: async function () {
     const bucketStore = useBucketsStore();
+    const settingsStore = useSettingsStore();
+    await settingsStore.ensureLoaded();
     await bucketStore.ensureLoaded();
   },
 });

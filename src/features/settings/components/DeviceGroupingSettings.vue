@@ -7,7 +7,7 @@
     <template #meta>
       <div class="flex flex-wrap gap-2">
         <span class="aw-chip">{{ groupCountLabel }}</span>
-        <span class="aw-chip">{{ availableHosts.length }} Unassigned</span>
+        <span class="aw-chip">{{ availableHosts.length }} Available to regroup</span>
       </div>
     </template>
 
@@ -28,12 +28,13 @@
               <div class="min-w-0 space-y-2">
                 <div class="text-sm font-semibold text-foreground-strong">{{ groupName }}</div>
                 <div class="flex flex-wrap gap-2">
-                  <span v-for="host in deviceMappings[groupName]" :key="host" class="aw-chip">
+                  <span v-for="host in effectiveDeviceMappings[groupName]" :key="host" class="aw-chip">
                     {{ host }}
                   </span>
                 </div>
               </div>
               <ui-button
+                v-if="!isDefaultGroup(groupName)"
                 class="aw-btn aw-btn-outline aw-btn-sm shrink-0"
                 type="button"
                 @click="removeGroup(groupName)"
@@ -114,6 +115,11 @@ import _ from 'lodash';
 import { useSettingsStore } from '~/features/settings/store/settings';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
 import SettingsCard from '~/features/settings/components/SettingsCard.vue';
+import {
+  DEFAULT_DEVICE_GROUP_NAME,
+  getCustomDeviceMappings,
+  getEffectiveDeviceMappings,
+} from '~/features/settings/lib/deviceMappings';
 
 export default defineComponent({
   name: 'DeviceGroupingSettings',
@@ -131,28 +137,39 @@ export default defineComponent({
       const settingsStore = useSettingsStore();
       return settingsStore.deviceMappings || {};
     },
+    allHosts() {
+      const bucketsStore = useBucketsStore();
+      return bucketsStore.hosts.filter(host => host && host !== 'unknown');
+    },
+    customDeviceMappings() {
+      return getCustomDeviceMappings(this.deviceMappings, this.allHosts);
+    },
+    effectiveDeviceMappings() {
+      return getEffectiveDeviceMappings(this.deviceMappings, this.allHosts);
+    },
     groupNames() {
-      return Object.keys(this.deviceMappings);
+      return Object.keys(this.effectiveDeviceMappings);
     },
     groupCountLabel() {
       const count = this.groupNames.length;
       return count === 1 ? '1 Group' : `${count} Groups`;
     },
     availableHosts() {
-      const bucketsStore = useBucketsStore();
-      const allHosts = bucketsStore.hosts;
-
       const assignedHosts = new Set<string>();
-      _.each(this.deviceMappings, hosts => {
+      _.each(this.customDeviceMappings, hosts => {
         hosts.forEach((h: string) => assignedHosts.add(h));
       });
 
-      return allHosts.filter(h => h !== 'unknown' && !assignedHosts.has(h));
+      return this.allHosts.filter(h => !assignedHosts.has(h));
     },
   },
   methods: {
+    isDefaultGroup(groupName: string) {
+      return groupName === DEFAULT_DEVICE_GROUP_NAME;
+    },
     async addGroup() {
       if (!this.newGroupName || this.newGroupHosts.length === 0) return;
+      if (this.newGroupName.trim() === DEFAULT_DEVICE_GROUP_NAME) return;
 
       const settingsStore = useSettingsStore();
       const currentMappings = { ...this.deviceMappings };
