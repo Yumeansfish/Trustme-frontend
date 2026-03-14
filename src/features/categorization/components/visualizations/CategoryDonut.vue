@@ -311,17 +311,20 @@ export default defineComponent({
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
 
-          ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          ctx.font = 'bold 23px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
           ctx.fillStyle = primaryTextColor;
           ctx.fillText(
             formatDuration(activeEntry ? activeEntry.duration : totalTrackedDuration),
             centerX,
-            centerY - 8
+            activeEntry ? centerY - 10 : centerY
           );
 
-          ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          ctx.fillStyle = secondaryTextColor;
-          ctx.fillText(activeEntry ? activeEntry.label : 'All activity', centerX, centerY + 16);
+          if (activeEntry) {
+            ctx.font =
+              '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.fillStyle = secondaryTextColor;
+            ctx.fillText(activeEntry.label, centerX, centerY + 16);
+          }
 
           ctx.restore();
         },
