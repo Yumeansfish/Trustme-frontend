@@ -1,0 +1,157 @@
+@layer components {
+  .aw-overlay {
+    background-color: rgb(var(--overlay) / 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .aw-toast-shell,
+  .aw-modal-shell,
+  .aw-dialog-shell {
+    @apply fixed inset-0 flex p-4;
+  }
+
+  .aw-toast-shell {
+    @apply pointer-events-none right-0 top-0 w-full justify-end;
+    z-index: var(--z-toast);
+  }
+
+  .aw-modal-shell,
+  .aw-dialog-shell {
+    @apply items-center justify-center;
+  }
+
+  .aw-modal-shell {
+    z-index: var(--z-modal);
+  }
+
+  .aw-dialog-shell {
+    z-index: var(--z-dialog);
+  }
+
+  .aw-dialog-panel {
+    @apply w-full max-w-md;
+    border: 1px solid rgb(var(--border));
+    border-radius: var(--radius-panel);
+    background-color: rgb(var(--surface));
+    box-shadow: var(--shadow-xl);
+  }
+
+  .aw-modal-panel {
+    @apply w-full;
+    border: 1px solid rgb(var(--border));
+    border-radius: var(--radius-modal);
+    background-color: rgb(var(--surface));
+    box-shadow: var(--shadow-xl);
+  }
+
+  .aw-modal-panel.aw-counterfactual-panel {
+    max-width: 28rem;
+  }
+
+  .aw-card-modal {
+    border-radius: var(--radius-modal);
+  }
+
+  .aw-refresh-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem 1rem 0;
+    border-radius: var(--radius-modal);
+    background: linear-gradient(180deg, rgb(var(--surface) / 0.62), rgb(var(--surface) / 0.44));
+    backdrop-filter: blur(2px);
+    pointer-events: none;
+  }
+
+  .aw-refresh-overlay-indicator {
+    @apply inline-flex items-center justify-center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 1px solid rgb(var(--summary-vis-normal) / 0.18);
+    border-radius: 9999px;
+    background-color: rgb(var(--surface) / 0.94);
+    box-shadow: var(--shadow-sm);
+    color: rgb(var(--summary-vis-normal));
+  }
+
+  .aw-modal-body {
+    @apply overflow-y-auto px-6 py-5;
+    max-height: var(--size-modal-content-max-height);
+  }
+
+  .aw-toast {
+    @apply pointer-events-auto flex items-start justify-between gap-3 p-3;
+    border: 1px solid rgb(var(--border));
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .aw-toast-default {
+    background-color: rgb(var(--surface));
+    color: rgb(var(--foreground-strong));
+  }
+
+  .aw-toast-info {
+    border-color: rgb(var(--info-border));
+    background-color: rgb(var(--info-soft));
+    color: rgb(var(--info));
+  }
+
+  .aw-toast-theme {
+    border-color: rgb(var(--summary-vis-normal));
+    background-color: rgb(var(--summary-vis-normal));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-toast-success {
+    border-color: rgb(var(--success-border));
+    background-color: rgb(var(--success-soft));
+    color: rgb(var(--success));
+  }
+
+  .aw-toast-warning {
+    border-color: rgb(var(--warning-border));
+    background-color: rgb(var(--warning-soft));
+    color: rgb(var(--warning));
+  }
+
+  .aw-toast-error {
+    border-color: rgb(var(--danger-border));
+    background-color: rgb(var(--danger-soft));
+    color: rgb(var(--danger));
+  }
+
+  .aw-alert {
+    @apply relative mb-3 px-4 py-3 text-sm leading-6;
+    border: 1px solid rgb(var(--info-border));
+    border-radius: 0.75rem;
+  }
+
+  .aw-alert-info {
+    border-color: rgb(var(--info-border));
+    background-color: rgb(var(--info-soft));
+    color: rgb(var(--info));
+  }
+
+  .aw-alert-warning {
+    border-color: rgb(var(--warning-border));
+    background-color: rgb(var(--warning-soft));
+    color: rgb(var(--warning));
+  }
+
+  .aw-alert-danger {
+    border-color: rgb(var(--danger-border));
+    background-color: rgb(var(--danger-soft));
+    color: rgb(var(--danger));
+  }
+
+  .aw-alert-success {
+    border-color: rgb(var(--success-border));
+    background-color: rgb(var(--success-soft));
+    color: rgb(var(--success));
+  }
+
+}

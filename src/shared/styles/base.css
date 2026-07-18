@@ -1,0 +1,43 @@
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  html {
+    font-size: clamp(16px, calc(10px + 0.5556vmin), 22px);
+  }
+
+  html,
+  body {
+    @apply antialiased;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Ubuntu',
+      sans-serif;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  button {
+    color: inherit;
+    font-family: inherit;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  nav {
+    color: rgb(var(--foreground-strong));
+    font-family: inherit;
+  }
+
+  ::selection {
+    background-color: rgb(var(--summary-vis-normal));
+    color: rgb(var(--primary-foreground));
+  }
+}

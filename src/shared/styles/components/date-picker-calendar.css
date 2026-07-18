@@ -1,0 +1,400 @@
+@layer components {
+  .aw-date-popover {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    z-index: 40;
+    width: min(21rem, calc(100vw - 2rem));
+    border: 1px solid rgb(var(--border));
+    border-radius: 1.55rem;
+    background:
+      linear-gradient(180deg, rgb(var(--surface)), rgb(var(--surface-subtle))),
+      rgb(var(--surface));
+    box-shadow: var(--shadow-lg);
+    padding: 1rem;
+  }
+
+  .aw-date-range-popover {
+    width: min(42rem, calc(100vw - 2rem));
+  }
+
+  .aw-date-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .aw-date-popover-title {
+    min-width: 0;
+    color: rgb(var(--foreground-strong));
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-align: center;
+  }
+
+  .aw-date-popover-title-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    color: rgb(var(--foreground-strong));
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-align: center;
+    transition: background-color var(--duration-fast), color var(--duration-fast);
+  }
+
+  .aw-date-popover-title-button:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.1);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-popover-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    color: rgb(var(--foreground-muted));
+    transition: background-color var(--duration-fast), color var(--duration-fast),
+      opacity var(--duration-fast);
+  }
+
+  .aw-date-popover-nav:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.1);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-popover-nav:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .aw-date-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .aw-date-weekdays span {
+    color: rgb(var(--foreground-muted));
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .aw-date-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .aw-date-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 1rem;
+    color: rgb(var(--foreground-strong));
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background-color var(--duration-fast), color var(--duration-fast),
+      box-shadow var(--duration-fast), opacity var(--duration-fast);
+  }
+
+  .aw-date-cell:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.12);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-cell-outside {
+    color: rgb(var(--foreground-subtle));
+  }
+
+  .aw-date-cell-disabled {
+    opacity: 0.3;
+  }
+
+  .aw-date-cell-disabled:hover {
+    background-color: transparent;
+    color: inherit;
+  }
+
+  .aw-date-cell-marked {
+    position: relative;
+    background-color: rgb(var(--summary-vis-normal) / 0.14);
+    color: rgb(var(--summary-vis-hover));
+    box-shadow: inset 0 0 0 1px rgb(var(--summary-vis-normal) / 0.18);
+  }
+
+  .aw-date-cell-marked::after {
+    position: absolute;
+    bottom: 0.32rem;
+    left: 50%;
+    width: 0.24rem;
+    height: 0.24rem;
+    border-radius: 9999px;
+    background-color: rgb(var(--summary-vis-normal));
+    content: '';
+    transform: translateX(-50%);
+  }
+
+  .aw-date-cell-marked:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.2);
+  }
+
+  .aw-date-cell-selected {
+    background-color: rgb(var(--summary-vis-normal));
+    color: rgb(var(--primary-foreground));
+    box-shadow: 0 8px 18px rgb(var(--summary-vis-normal) / 0.2);
+  }
+
+  .aw-date-cell-selected:hover {
+    background-color: rgb(var(--summary-vis-hover));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-date-cell-selected.aw-date-cell-marked::after {
+    background-color: rgb(var(--primary-foreground));
+  }
+
+  .aw-date-cell-in-range {
+    background-color: rgb(var(--summary-vis-normal) / 0.14);
+    color: rgb(var(--foreground-strong));
+  }
+
+  .aw-date-cell-in-range:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.18);
+    color: rgb(var(--foreground-strong));
+  }
+
+  .aw-date-range-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .aw-date-range-grid-separated {
+    gap: 1.35rem;
+  }
+
+  @media (min-width: 768px) {
+    .aw-date-range-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .aw-date-panel-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .aw-date-panel-label {
+    color: rgb(var(--foreground-muted));
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .aw-date-panel-title {
+    color: rgb(var(--foreground-strong));
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .aw-date-month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .aw-date-month-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.55rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 0.95rem;
+    color: rgb(var(--foreground-strong));
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: background-color var(--duration-fast), color var(--duration-fast),
+      box-shadow var(--duration-fast), opacity var(--duration-fast);
+  }
+
+  .aw-date-month-cell:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.12);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-month-cell-disabled {
+    opacity: 0.35;
+  }
+
+  .aw-date-month-cell-disabled:hover {
+    background-color: transparent;
+    color: inherit;
+  }
+
+  .aw-date-month-cell-selected {
+    background-color: rgb(var(--summary-vis-normal) / 0.14);
+    color: rgb(var(--summary-vis-normal));
+    box-shadow: inset 0 0 0 1px rgb(var(--summary-vis-normal) / 0.18);
+  }
+
+  .aw-date-month-cell-selected:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.18);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-range-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 1rem;
+    background-color: rgb(var(--surface-subtle));
+  }
+
+  .aw-date-range-meta-label {
+    display: block;
+    color: rgb(var(--foreground-muted));
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .aw-date-range-meta-value {
+    display: block;
+    margin-top: 0.2rem;
+    color: rgb(var(--foreground-strong));
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .aw-date-range-hint {
+    margin-top: 0.9rem;
+    color: rgb(var(--foreground-muted));
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .aw-date-range-selection {
+    min-height: 1.3rem;
+    margin-top: 0.85rem;
+    color: rgb(var(--foreground-strong));
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .aw-date-range-footer {
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .aw-date-popover-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.85rem;
+  }
+
+  .aw-date-popover-footer-split {
+    justify-content: space-between;
+  }
+
+  .aw-date-popover-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2rem;
+    padding: 0 0.8rem;
+    border: 1px solid rgb(var(--border-strong));
+    border-radius: 9999px;
+    background-color: rgb(var(--surface));
+    color: rgb(var(--foreground));
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: background-color var(--duration-fast), border-color var(--duration-fast),
+      color var(--duration-fast);
+  }
+
+  .aw-date-popover-clear:hover {
+    background-color: rgb(var(--surface-subtle));
+  }
+
+  .aw-date-popover-action,
+  .aw-date-popover-today {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2rem;
+    padding: 0 0.8rem;
+    border: 1px solid rgb(var(--summary-vis-normal));
+    border-radius: 9999px;
+    background-color: rgb(var(--summary-vis-normal));
+    color: rgb(var(--primary-foreground));
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: background-color var(--duration-fast), border-color var(--duration-fast),
+      color var(--duration-fast);
+  }
+
+  .aw-date-popover-action:hover,
+  .aw-date-popover-today:hover {
+    background-color: rgb(var(--summary-vis-hover));
+    border-color: rgb(var(--summary-vis-hover));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-date-popover-apply {
+    min-width: 5.5rem;
+  }
+
+  .aw-date-popover-apply-active {
+    border-color: rgb(var(--summary-vis-normal));
+    background-color: rgb(var(--summary-vis-normal));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-date-popover-apply-active:hover {
+    border-color: rgb(var(--summary-vis-hover));
+    background-color: rgb(var(--summary-vis-hover));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-date-popover-apply-muted {
+    border-color: rgb(var(--foreground-subtle) / 0.28);
+    background-color: rgb(var(--foreground-subtle) / 0.22);
+    color: rgb(var(--foreground-muted));
+  }
+
+  .aw-date-popover-apply-muted:hover {
+    border-color: rgb(var(--foreground-subtle) / 0.28);
+    background-color: rgb(var(--foreground-subtle) / 0.22);
+    color: rgb(var(--foreground-muted));
+  }
+
+}

@@ -13,16 +13,29 @@
         class="aw-overlay aw-dialog-shell"
         @click="onOverlayClick"
       >
-        <div class="aw-dialog-panel">
+        <div
+          ref="dialogPanel"
+          class="aw-dialog-panel"
+          role="dialog"
+          aria-modal="true"
+          :aria-labelledby="titleId"
+          :aria-describedby="uiStore.dialog.description ? descriptionId : undefined"
+          tabindex="-1"
+        >
           <div class="space-y-3 px-6 py-5">
-            <h3 class="text-lg font-semibold text-foreground-strong">{{ uiStore.dialog.title }}</h3>
-            <p v-if="uiStore.dialog.description" class="text-sm leading-relaxed text-foreground-muted">
+            <h3 :id="titleId" class="text-lg font-semibold text-foreground-strong">
+              {{ uiStore.dialog.title }}
+            </h3>
+            <p
+              v-if="uiStore.dialog.description"
+              :id="descriptionId"
+              class="text-sm leading-relaxed text-foreground-muted"
+            >
               {{ uiStore.dialog.description }}
             </p>
 
             <ui-input
               v-if="uiStore.dialog.mode === 'prompt'"
-              ref="promptInput"
               v-model="uiStore.dialog.value"
               :placeholder="uiStore.dialog.placeholder"
               type="text"
@@ -42,6 +55,7 @@
             <ui-button
               type="button"
               class="aw-btn aw-btn-md aw-btn-primary"
+              data-dialog-primary
               @click="uiStore.submitDialog()"
             >
               {{ uiStore.dialog.confirmText }}
@@ -54,14 +68,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { defineComponent, onMounted, onUnmounted, ref, useId, watch } from 'vue';
 import { useUiStore } from '~/shared/stores/ui';
+import { createDialogFocusController } from '~/shared/ui/dialogFocus';
 
 export default defineComponent({
   name: 'AppDialog',
   setup() {
     const uiStore = useUiStore();
-    const promptInput = ref<HTMLInputElement | null>(null);
+    const dialogPanel = ref<HTMLElement | null>(null);
+    const titleId = `dialog-title-${useId()}`;
+    const descriptionId = `dialog-description-${useId()}`;
+    const focus = createDialogFocusController(dialogPanel);
 
     const onOverlayClick = (event: MouseEvent) => {
       if (event.target === event.currentTarget) {
@@ -71,17 +89,25 @@ export default defineComponent({
 
     const onKeydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && uiStore.dialog.open) {
+        event.preventDefault();
         uiStore.cancelDialog();
+        return;
       }
+      if (uiStore.dialog.open) focus.trapTab(event);
     };
 
     watch(
       () => uiStore.dialog.open,
-      async open => {
-        if (open && uiStore.dialog.mode === 'prompt') {
-          await nextTick();
-          promptInput.value?.focus();
-          promptInput.value?.select();
+      open => {
+        if (open) {
+          const selector = uiStore.dialog.mode === 'prompt' ? 'input' : '[data-dialog-primary]';
+          void focus.activate(selector).then(() => {
+            if (uiStore.dialog.mode === 'prompt') {
+              dialogPanel.value?.querySelector<HTMLInputElement>('input')?.select();
+            }
+          });
+        } else {
+          focus.deactivate();
         }
       }
     );
@@ -92,12 +118,15 @@ export default defineComponent({
 
     onUnmounted(() => {
       window.removeEventListener('keydown', onKeydown);
+      focus.deactivate();
     });
 
     return {
+      descriptionId,
+      dialogPanel,
       uiStore,
-      promptInput,
       onOverlayClick,
+      titleId,
     };
   },
 });

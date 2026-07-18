@@ -1,0 +1,49 @@
+@layer components {
+  .aw-icon-button {
+    @apply inline-flex items-center justify-center;
+    border-radius: var(--radius-control);
+    color: rgb(var(--foreground-muted));
+    transition: background-color var(--duration-fast), color var(--duration-fast),
+      opacity var(--duration-fast);
+  }
+
+  .aw-icon-button:hover {
+    background-color: rgb(var(--surface-subtle));
+    color: rgb(var(--foreground-strong));
+  }
+
+  .aw-date-nav .aw-icon-button:disabled {
+    cursor: default;
+  }
+
+  .aw-tab-link {
+    @apply inline-flex items-center rounded-t-lg border-b-2 px-4 py-2 text-sm font-medium;
+    border-color: transparent;
+    color: rgb(var(--foreground-muted));
+    transition: border-color var(--duration-fast), color var(--duration-fast);
+  }
+
+  .aw-tab-link:hover {
+    border-color: rgb(var(--border-strong));
+    color: rgb(var(--foreground-strong));
+  }
+
+  .aw-tab-link-active {
+    border-color: rgb(var(--summary-vis-normal));
+    color: rgb(var(--summary-vis-normal));
+  }
+
+  .aw-filter-tile {
+    @apply flex items-start gap-3 p-3 text-sm;
+    border: 1px solid rgb(var(--border));
+    border-radius: var(--radius-panel);
+    background-color: rgb(var(--surface));
+    color: rgb(var(--foreground));
+  }
+
+  .aw-filter-tile-note {
+    @apply mt-1 block text-xs leading-5;
+    color: rgb(var(--foreground-muted));
+  }
+
+}

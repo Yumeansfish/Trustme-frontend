@@ -14,15 +14,23 @@
         @click="onOverlayClick"
       >
         <div
+          ref="panel"
           :class="panelClass"
           class="aw-modal-panel"
           role="dialog"
           aria-modal="true"
+          :aria-labelledby="titleId"
+          :aria-describedby="description ? descriptionId : undefined"
+          tabindex="-1"
         >
           <div class="flex items-start justify-between gap-4 border-b border-muted px-6 py-4">
             <div class="min-w-0">
-              <h3 class="text-lg font-semibold text-foreground-strong">{{ title }}</h3>
-              <p v-if="description" class="mt-1 text-sm leading-relaxed text-foreground-muted">
+              <h3 :id="titleId" class="text-lg font-semibold text-foreground-strong">{{ title }}</h3>
+              <p
+                v-if="description"
+                :id="descriptionId"
+                class="mt-1 text-sm leading-relaxed text-foreground-muted"
+              >
                 {{ description }}
               </p>
             </div>
@@ -53,7 +61,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, onUnmounted } from 'vue';
+import { defineComponent, onMounted, onUnmounted, ref, useId, watch } from 'vue';
+
+import { createDialogFocusController } from '~/shared/ui/dialogFocus';
 
 export default defineComponent({
   name: 'AppModal',
@@ -81,6 +91,10 @@ export default defineComponent({
   },
   emits: ['update:open', 'close'],
   setup(props, { emit }) {
+    const panel = ref<HTMLElement | null>(null);
+    const titleId = `modal-title-${useId()}`;
+    const descriptionId = `modal-description-${useId()}`;
+    const focus = createDialogFocusController(panel);
     const close = () => {
       emit('update:open', false);
       emit('close');
@@ -94,9 +108,24 @@ export default defineComponent({
 
     const onKeydown = (event: KeyboardEvent) => {
       if (props.open && event.key === 'Escape') {
+        event.preventDefault();
         close();
+        return;
       }
+      if (props.open) focus.trapTab(event);
     };
+
+    watch(
+      () => props.open,
+      open => {
+        if (open) {
+          void focus.activate();
+        } else {
+          focus.deactivate();
+        }
+      },
+      { immediate: true }
+    );
 
     onMounted(() => {
       window.addEventListener('keydown', onKeydown);
@@ -104,11 +133,15 @@ export default defineComponent({
 
     onUnmounted(() => {
       window.removeEventListener('keydown', onKeydown);
+      focus.deactivate();
     });
 
     return {
       close,
+      descriptionId,
       onOverlayClick,
+      panel,
+      titleId,
     };
   },
 });

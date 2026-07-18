@@ -1,0 +1,197 @@
+@layer components {
+  .aw-card-header {
+    @apply flex items-center justify-between gap-3 px-4 py-3;
+    border-bottom: 1px solid rgb(var(--border));
+  }
+
+  .aw-card-title {
+    @apply text-base font-semibold;
+    color: rgb(var(--foreground-strong));
+  }
+
+  .aw-card-subtitle {
+    @apply text-sm;
+    color: rgb(var(--foreground-muted));
+  }
+
+  .aw-breadcrumb {
+    @apply inline-flex w-fit items-center gap-1.5 text-sm font-medium;
+    border: 0;
+    background: transparent;
+    color: rgb(var(--foreground-muted));
+    padding: 0;
+    text-decoration: none;
+    transition: color var(--duration-fast);
+  }
+
+  .aw-breadcrumb:hover {
+    color: rgb(var(--foreground-strong));
+  }
+
+  .aw-breadcrumb:focus-visible {
+    border-radius: var(--radius-control);
+    outline: 2px solid rgb(var(--summary-vis-normal) / 0.42);
+    outline-offset: 3px;
+  }
+
+  .aw-switch {
+    @apply inline-flex cursor-pointer items-center;
+  }
+
+  .aw-switch-input {
+    @apply sr-only;
+  }
+
+  .aw-switch-track {
+    position: relative;
+    display: inline-flex;
+    height: 1.5rem;
+    width: 2.75rem;
+    align-items: center;
+    border-radius: var(--radius-pill);
+    background-color: rgb(var(--border-strong));
+    transition: background-color var(--duration-fast);
+  }
+
+  .aw-switch-thumb {
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    height: 1.25rem;
+    width: 1.25rem;
+    border-radius: var(--radius-pill);
+    background-color: rgb(var(--surface));
+    transition: transform var(--duration-fast);
+  }
+
+  .aw-switch-input:checked + .aw-switch-track {
+    background-color: rgb(var(--foreground-strong));
+  }
+
+  .aw-switch-input:checked + .aw-switch-track .aw-switch-thumb {
+    transform: translateX(1.25rem);
+  }
+
+  .aw-privacy-switch-track {
+    background-color: rgb(var(--foreground-subtle) / 0.28);
+    box-shadow: inset 0 0 0 1px rgb(var(--foreground-subtle) / 0.12);
+  }
+
+  .aw-privacy-switch-thumb {
+    background-color: rgb(var(--surface));
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.14);
+  }
+
+  .aw-switch-input:checked + .aw-privacy-switch-track {
+    background-color: rgb(var(--summary-vis-normal));
+    box-shadow: inset 0 0 0 1px rgb(var(--summary-vis-normal));
+  }
+
+  .aw-switch-input:focus-visible + .aw-privacy-switch-track {
+    outline: 2px solid rgb(var(--summary-vis-hover) / 0.42);
+    outline-offset: 2px;
+  }
+
+  .aw-table {
+    @apply min-w-full divide-y text-sm;
+    border-color: rgb(var(--border));
+  }
+
+  .aw-table thead {
+    background-color: rgb(var(--surface-muted));
+  }
+
+  .aw-table th {
+    @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide;
+    color: rgb(var(--foreground-muted));
+  }
+
+  .aw-table td {
+    @apply px-3 py-3 align-top text-sm;
+    color: rgb(var(--foreground));
+  }
+
+  .aw-table tbody tr {
+    border-bottom: 1px solid rgb(var(--border-muted));
+  }
+
+  .aw-table tbody tr:last-child {
+    border-bottom-width: 0;
+  }
+
+  .aw-chip {
+    @apply inline-flex items-center px-2.5 py-1 text-xs font-medium;
+    border-radius: var(--radius-pill);
+    background-color: rgb(var(--surface-subtle));
+    color: rgb(var(--foreground-muted));
+  }
+
+  .aw-refresh-chip {
+    @apply inline-flex items-center justify-center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 9999px;
+    background-color: rgb(var(--summary-vis-normal) / 0.1);
+    color: rgb(var(--summary-vis-normal));
+  }
+
+  .aw-focus-ring {
+    @apply relative flex items-center justify-center rounded-full p-3;
+    height: 20rem;
+    width: 20rem;
+    max-width: 100%;
+    box-shadow: inset 0 0 0 1px rgb(var(--border-muted));
+  }
+
+  .aw-focus-ring-inner {
+    @apply flex h-full w-full flex-col items-center justify-center gap-2 rounded-full text-center;
+    background-color: rgb(var(--surface));
+  }
+
+  .aw-shortcut-card {
+    @apply flex w-full flex-col text-left;
+    min-height: 9.5rem;
+    cursor: default;
+    border: 1px solid rgb(var(--border));
+    border-radius: var(--radius-panel);
+    background-color: rgb(var(--surface));
+    padding: 1.1rem;
+    box-shadow: none;
+  }
+
+  .aw-interactive-card {
+    cursor: pointer;
+    transition: border-color var(--duration-fast), background-color var(--duration-fast),
+      transform var(--duration-fast);
+  }
+
+  .aw-interactive-card:hover {
+    border-color: rgb(var(--summary-vis-normal) / 0.22);
+    background-color: rgb(var(--surface-muted));
+    transform: translateY(-1px);
+  }
+
+  .aw-interactive-card.aw-shortcut-card-active:hover {
+    border-color: rgb(var(--summary-vis-normal) / 0.46);
+    background-color: rgb(var(--summary-vis-normal) / 0.1);
+  }
+
+  .aw-shortcut-card-active {
+    border-color: rgb(var(--summary-vis-normal) / 0.4);
+    background-color: rgb(var(--summary-vis-normal) / 0.08);
+    box-shadow: none;
+  }
+
+  .aw-shortcut-card-icon {
+    @apply flex h-10 w-10 items-center justify-center;
+    background: transparent;
+    color: rgb(var(--summary-vis-normal));
+    transition: color var(--duration-fast);
+  }
+
+  .aw-shortcut-card-active .aw-shortcut-card-icon {
+    background: transparent;
+    color: rgb(var(--summary-vis-hover));
+  }
+
+}

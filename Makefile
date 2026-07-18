@@ -1,29 +1,21 @@
-.PHONY: build dev test clean
+.PHONY: build dev preview test clean
 
 .FORCE: ;
 
-# This is to disable check for new release in aw-webui for aw-android
-ifdef ON_ANDROID
-# The following flag will pass --android as a command line argument to vue-cli-service
-# https://docs.npmjs.com/cli/run-script
-androidflag := -- --os=android
-else
-androidflag :=
-endif
+HOST ?= 127.0.0.1
+PORT ?= 27180
+AW_SERVER_URL ?=
 
 prebuild: node_modules/ static/logo.png static/logo.svg
 
 build: prebuild
-	npm run build ${androidflag}
+	npm run build
 
 dev: prebuild
-	npm run serve ${androidflag}
+	AW_SERVER_URL="$(AW_SERVER_URL)" npm run dev -- --host "$(HOST)" --port "$(PORT)"
 
-build-vite: prebuild
-	npx vite build
-
-dev-vite: prebuild
-	npx vite
+preview: prebuild
+	npm run serve
 
 static/logo.%: media/logo/logo.%
 	@mkdir -p static
@@ -38,9 +30,6 @@ uninstall:
 test:
 	npm test
 
-test-e2e:
-	npx testcafe chrome test/e2e/ -s takeOnFails=true
-
 typing-coverage:
 	npx typescript-coverage-report
 
@@ -48,7 +37,7 @@ clean:
 	rm -rf node_modules dist
 
 lint:
-	npx eslint --ext=js,ts,vue --max-warnings=0 src/ test/
+	npm run lint
 
 lint-fix:
-	npx eslint --ext=js,ts,vue --fix src/ test/
+	npx eslint src test scripts vite.config.ts --fix

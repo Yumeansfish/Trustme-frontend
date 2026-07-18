@@ -1,0 +1,85 @@
+@layer utilities {
+  .fa-icon {
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+    margin-top: -0.125em;
+    vertical-align: middle;
+  }
+
+  .bg-canvas {
+    background-color: rgb(var(--background));
+  }
+
+  .bg-surface {
+    background-color: rgb(var(--surface));
+  }
+
+  .bg-surface-muted {
+    background-color: rgb(var(--surface-muted));
+  }
+
+  .bg-surface-subtle {
+    background-color: rgb(var(--surface-subtle));
+  }
+
+  .bg-primary-soft {
+    background-color: rgb(var(--summary-vis-normal) / 0.14);
+  }
+
+  .bg-primary {
+    background-color: rgb(var(--summary-vis-normal));
+  }
+
+  .text-foreground {
+    color: rgb(var(--foreground));
+  }
+
+  .text-foreground-strong {
+    color: rgb(var(--foreground-strong));
+  }
+
+  .text-foreground-muted {
+    color: rgb(var(--foreground-muted));
+  }
+
+  .text-foreground-subtle {
+    color: rgb(var(--foreground-subtle));
+  }
+
+  .border-base {
+    border-color: rgb(var(--border));
+  }
+
+  .border-strong {
+    border-color: rgb(var(--border-strong));
+  }
+
+  .border-muted {
+    border-color: rgb(var(--border-muted));
+  }
+
+  .text-primary {
+    color: rgb(var(--summary-vis-normal));
+  }
+
+  .text-primary-foreground {
+    color: rgb(var(--primary-foreground));
+  }
+
+  .text-info {
+    color: rgb(var(--info));
+  }
+
+  .text-success {
+    color: rgb(var(--success));
+  }
+
+  .text-warning {
+    color: rgb(var(--warning));
+  }
+
+  .text-danger {
+    color: rgb(var(--danger));
+  }
+}
+

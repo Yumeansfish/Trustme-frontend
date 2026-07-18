@@ -12,5 +12,7 @@ export const appConfig = {
 };
 
 export const isProductionBuild = appConfig.production;
+export const isDevelopmentServer =
+  typeof __TRUSTME_DEV_SERVER__ !== 'undefined' && __TRUSTME_DEV_SERVER__;
 export const isTestRuntime =
   typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';

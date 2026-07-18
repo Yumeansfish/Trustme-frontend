@@ -1,0 +1,88 @@
+@layer components {
+  .aw-pill-control {
+    @apply inline-flex items-center px-1;
+    height: 2.25rem;
+    border: 1px solid rgb(var(--border));
+    border-radius: var(--radius-pill);
+    background-color: rgb(var(--surface));
+    box-shadow: none;
+  }
+
+  .aw-date-nav {
+    position: relative;
+    gap: 0.15rem;
+    padding-right: 0.35rem;
+  }
+
+  .aw-date-nav-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 10rem;
+    max-width: 12rem;
+    height: 1.95rem;
+    padding: 0 0.85rem;
+    border-radius: 9999px;
+    color: rgb(var(--foreground-strong));
+    transition: background-color var(--duration-fast), color var(--duration-fast);
+  }
+
+  .aw-date-nav-trigger-icon {
+    min-width: auto;
+    max-width: none;
+    padding: 0 0.65rem;
+    gap: 0.3rem;
+  }
+
+  .aw-date-nav-trigger:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.1);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-date-nav-trigger:disabled {
+    cursor: default;
+  }
+
+  .aw-date-nav-field {
+    width: 100%;
+    min-height: 3.15rem;
+    height: 3.15rem;
+    padding: 0.2rem 0.35rem;
+    border-radius: var(--radius-control);
+    background-color: rgb(var(--surface));
+    box-shadow: none;
+    transition: border-color var(--duration-fast), box-shadow var(--duration-fast),
+      opacity var(--duration-fast);
+  }
+
+  .aw-date-nav-field:hover {
+    border-color: rgb(var(--summary-vis-normal) / 0.24);
+  }
+
+  .aw-date-nav-field:focus-within {
+    border-color: rgb(var(--summary-vis-normal));
+    box-shadow: 0 0 0 3px rgb(var(--summary-vis-normal) / 0.18);
+  }
+
+  .aw-date-nav-trigger-field {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 100%;
+    padding: 0 0.65rem;
+  }
+
+  .aw-date-nav-field .aw-date-popover {
+    right: auto;
+    left: 0;
+  }
+
+  .aw-date-nav-invalid {
+    border-color: rgb(var(--danger));
+  }
+
+  .aw-date-nav-disabled {
+    opacity: 0.55;
+  }
+
+}

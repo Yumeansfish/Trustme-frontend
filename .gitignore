@@ -12,6 +12,7 @@ static/logo*
 # outputs
 coverage
 coverage-ts
+*.tsbuildinfo
 screenshots
 test/unit/coverage
 test/e2e/reports
@@ -20,9 +21,11 @@ test/e2e/reports
 # platform-specific trash
 .DS_Store
 
+# local env
+.env
+
 # editor-specific
 *.swp
-.vscode
 
 # python
 __pycache__

@@ -1,0 +1,64 @@
+/* Keep the final theme purple outside Tailwind layers so Vite/Tailwind token rewriting
+   cannot swap these selectors back to the default violet palette. */
+:root {
+  --primary: var(--aw-brand-normal);
+  --primary-hover: var(--aw-brand-hover);
+  --primary-soft: var(--aw-brand-soft);
+  --primary-ring: var(--aw-brand-ring);
+  --summary-vis-normal: var(--aw-brand-normal);
+  --summary-vis-hover: var(--aw-brand-hover);
+  --scrollbar: var(--aw-brand-normal);
+  --scrollbar-hover: var(--aw-brand-hover);
+}
+
+::selection {
+  background-color: rgb(var(--summary-vis-normal));
+  color: rgb(var(--primary-foreground));
+}
+
+.bg-primary {
+  background-color: rgb(var(--summary-vis-normal));
+}
+
+.text-primary {
+  color: rgb(var(--summary-vis-normal));
+}
+
+.aw-input:focus,
+.aw-select:focus,
+.aw-textarea:focus,
+.aw-input-sm:focus,
+.aw-select-sm:focus {
+  border-color: rgb(var(--summary-vis-normal));
+  box-shadow: 0 0 0 2px rgb(var(--summary-vis-normal) / 0.24);
+}
+
+.aw-checkbox {
+  accent-color: rgb(var(--summary-vis-normal));
+}
+
+.aw-segmented-item {
+  color: rgb(var(--summary-vis-normal));
+}
+
+.aw-tab-link-active {
+  border-color: rgb(var(--summary-vis-normal));
+  color: rgb(var(--summary-vis-normal));
+}
+
+.aw-sidebar-link-active {
+  color: rgb(var(--summary-vis-normal));
+}
+
+.aw-sidebar-link-subactive {
+  color: rgb(var(--summary-vis-normal));
+}
+
+.aw-sidebar-link-active::before {
+  background-color: rgb(var(--summary-vis-normal));
+}
+
+.aw-count-badge {
+  background-color: rgb(var(--summary-vis-normal));
+}
+

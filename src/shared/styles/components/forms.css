@@ -1,0 +1,178 @@
+@layer components {
+  .aw-input,
+  .aw-select,
+  .aw-textarea {
+    @apply w-full px-3 text-sm outline-none transition;
+    border: 1px solid rgb(var(--border-strong));
+    border-radius: var(--radius-control);
+    background-color: rgb(var(--surface));
+    color: rgb(var(--foreground-strong));
+    box-shadow: none;
+    transition-duration: var(--duration-fast);
+  }
+
+  .aw-input,
+  .aw-select {
+    @apply h-10;
+  }
+
+  .aw-input-sm,
+  .aw-select-sm {
+    @apply h-9 px-3 text-sm outline-none transition;
+    border: 1px solid rgb(var(--border-strong));
+    border-radius: var(--radius-control);
+    background-color: rgb(var(--surface));
+    color: rgb(var(--foreground-strong));
+    box-shadow: none;
+    transition-duration: var(--duration-fast);
+  }
+
+  .aw-textarea {
+    @apply min-h-28 py-2;
+  }
+
+  .aw-input:focus,
+  .aw-select:focus,
+  .aw-textarea:focus,
+  .aw-input-sm:focus,
+  .aw-select-sm:focus {
+    border-color: rgb(var(--summary-vis-normal));
+    box-shadow: 0 0 0 2px rgb(var(--summary-vis-normal) / 0.24);
+  }
+
+  .aw-checkbox {
+    @apply h-4 w-4 rounded;
+    accent-color: rgb(var(--summary-vis-normal));
+    border: 1px solid rgb(var(--border-strong));
+    color: rgb(var(--foreground-strong));
+  }
+
+  .aw-checkbox:focus {
+    box-shadow: 0 0 0 2px rgb(var(--summary-vis-normal) / 0.24);
+  }
+
+  .aw-btn {
+    @apply inline-flex items-center justify-center gap-2 border text-sm font-medium disabled:cursor-default disabled:opacity-50;
+    border-radius: var(--radius-control);
+    transition: background-color var(--duration-fast), border-color var(--duration-fast),
+      color var(--duration-fast), box-shadow var(--duration-fast);
+  }
+
+  .aw-btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+
+  .aw-btn-md {
+    @apply h-9 px-4;
+  }
+
+  .aw-btn-lg {
+    @apply h-11 px-4 text-sm;
+  }
+
+  .aw-btn-secondary {
+    border-color: rgb(var(--border-strong));
+    background-color: rgb(var(--surface));
+    color: rgb(var(--foreground));
+  }
+
+  .aw-btn-secondary:hover {
+    background-color: rgb(var(--surface-subtle));
+  }
+
+  .aw-btn-primary {
+    border-color: rgb(var(--foreground-strong));
+    background-color: rgb(var(--foreground-strong));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-btn-primary:hover {
+    background-color: rgb(var(--foreground-strong-hover));
+  }
+
+  .aw-btn-highlight {
+    border-color: rgb(var(--summary-vis-active));
+    background-color: rgb(var(--summary-vis-active));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-btn-highlight:hover {
+    filter: brightness(0.94);
+  }
+
+  .aw-btn-theme {
+    border-width: 0;
+    border-color: transparent;
+    background-color: transparent;
+    box-shadow: none;
+    color: rgb(var(--summary-vis-normal));
+  }
+
+  .aw-btn-theme:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.12);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-btn-theme-active {
+    border-color: transparent;
+    background-color: rgb(var(--summary-vis-normal) / 0.14);
+    color: rgb(var(--summary-vis-normal));
+  }
+
+  .aw-btn-theme-active:hover {
+    background-color: rgb(var(--summary-vis-normal) / 0.14);
+    color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-btn-away-session {
+    border-color: rgb(var(--summary-vis-normal));
+    background-color: rgb(var(--summary-vis-normal));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-btn-away-session:hover {
+    border-color: rgb(var(--summary-vis-hover));
+    background-color: rgb(var(--summary-vis-hover));
+  }
+
+  .aw-btn-success {
+    border-color: rgb(var(--success));
+    background-color: rgb(var(--success));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-btn-success:hover {
+    background-color: rgb(var(--success-hover));
+  }
+
+  .aw-btn-danger {
+    border-color: rgb(var(--danger));
+    background-color: rgb(var(--danger));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-btn-danger:hover {
+    background-color: rgb(var(--danger-hover));
+  }
+
+  .aw-btn-warning {
+    border-color: rgb(var(--warning));
+    background-color: rgb(var(--warning));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-btn-warning:hover {
+    background-color: rgb(var(--warning-hover));
+  }
+
+  .aw-btn-outline {
+    border-color: rgb(var(--border-strong));
+    background-color: transparent;
+    color: rgb(var(--foreground));
+  }
+
+  .aw-btn-outline:hover {
+    background-color: rgb(var(--surface-subtle));
+  }
+
+}

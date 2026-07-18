@@ -1,7 +1,9 @@
-// We will disable the no-shadow eslint rule for the entire file:
-/* eslint-disable no-shadow */
+/// <reference types="vite/client" />
 
-// Constants set at compile time
-declare const PRODUCTION: boolean;
-declare const AW_SERVER_URL: string;
-declare const COMMIT_HASH: string;
+interface TrustmeInjectedAppConfig {
+  production?: boolean;
+  awServerUrl?: string;
+}
+
+declare const __TRUSTME_APP_CONFIG__: TrustmeInjectedAppConfig | undefined;
+declare const __TRUSTME_DEV_SERVER__: boolean | undefined;

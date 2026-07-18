@@ -21,7 +21,7 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue', 'change'],
-  setup(props, { attrs, emit }) {
+  setup(_props, { attrs, emit }) {
     const textareaClasses = computed(() => ['aw-textarea', attrs.class]);
     const textareaAttrs = computed(() => {
       const baseAttrs = { ...attrs };

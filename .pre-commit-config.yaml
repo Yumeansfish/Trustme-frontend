@@ -15,4 +15,5 @@ repos:
       description: Run linting on the codebase
       entry: make lint-fix
       language: system
-      files: \.(py|js|ts|tsx|vue)$
+      pass_filenames: false
+      files: \.(js|ts|tsx|vue|mjs)$

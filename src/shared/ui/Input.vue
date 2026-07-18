@@ -81,14 +81,7 @@ export default defineComponent({
       if (inputType.value === 'file') {
         return;
       }
-      if (inputType.value === 'checkbox') {
-        emit('update:modelValue', target.checked);
-        return;
-      }
-      if (inputType.value === 'radio') {
-        if (target.checked) {
-          emit('update:modelValue', target.value);
-        }
+      if (inputType.value === 'checkbox' || inputType.value === 'radio') {
         return;
       }
       let value: string | number = target.value;

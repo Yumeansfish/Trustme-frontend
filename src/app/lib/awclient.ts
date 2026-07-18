@@ -5,7 +5,6 @@ import { appConfig, isProductionBuild } from '~/app/config/runtime';
 const DEFAULT_REQUEST_TIMEOUT_SECONDS = 30;
 
 let _client: AWClient | null;
-type AbortableAWClient = AWClient & { controller?: AbortController };
 
 export function createClient(force?: boolean): AWClient {
   let baseURL = '';
@@ -41,9 +40,4 @@ export function getClient(): AWClient {
     throw new Error('Tried to get global AWClient before instantiating it!');
   }
   return _client;
-}
-
-export function getClientAbortSignal(): AbortSignal | undefined {
-  const client = getClient() as AbortableAWClient;
-  return client.controller?.signal;
 }

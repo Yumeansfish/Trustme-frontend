@@ -1,5 +1,10 @@
 <template>
-  <component :is="componentTag" v-bind="componentProps" :class="buttonClasses">
+  <component
+    :is="componentTag"
+    v-bind="componentProps"
+    :class="buttonClasses"
+    @click="onClick"
+  >
     <slot />
   </component>
 </template>
@@ -39,6 +44,7 @@ export default defineComponent({
   },
   setup(props, { attrs }) {
     const componentTag = computed(() => {
+      if (props.disabled && (props.to || props.href)) return 'span';
       if (props.to) return RouterLink;
       if (props.href) return 'a';
       return 'button';
@@ -88,11 +94,22 @@ export default defineComponent({
     const componentProps = computed(() => {
       const baseAttrs = { ...attrs };
       delete baseAttrs.class;
+      delete baseAttrs.onClick;
+
+      if (props.disabled && (props.to || props.href)) {
+        return {
+          ...baseAttrs,
+          role: 'link',
+          'aria-disabled': 'true',
+        };
+      }
 
       if (props.to) {
         return {
           ...baseAttrs,
           to: props.to,
+          'aria-disabled': props.disabled ? 'true' : undefined,
+          tabindex: props.disabled ? -1 : baseAttrs.tabindex,
         };
       }
 
@@ -101,6 +118,7 @@ export default defineComponent({
           ...baseAttrs,
           href: props.href,
           'aria-disabled': props.disabled ? 'true' : undefined,
+          tabindex: props.disabled ? -1 : baseAttrs.tabindex,
         };
       }
 
@@ -111,10 +129,26 @@ export default defineComponent({
       };
     });
 
+    const onClick = (event: MouseEvent) => {
+      if (props.disabled) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      const handler = attrs.onClick;
+      if (typeof handler === 'function') handler(event);
+      if (Array.isArray(handler)) {
+        handler.forEach(callback => {
+          if (typeof callback === 'function') callback(event);
+        });
+      }
+    };
+
     return {
       buttonClasses,
       componentProps,
       componentTag,
+      onClick,
     };
   },
 });
