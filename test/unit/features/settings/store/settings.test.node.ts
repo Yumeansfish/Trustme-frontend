@@ -103,18 +103,18 @@ describe('settings store', () => {
     settingsStore.$patch({
       _loaded: true,
       theme: 'dark',
-      startOfWeek: 'Sunday',
+      always_active_pattern: 'Code',
     });
 
     const serverSettings = JSON.parse(JSON.stringify(settingsStore.$state));
     delete serverSettings._loaded;
     serverSettings.theme = 'auto';
-    serverSettings.startOfWeek = 'Monday';
+    serverSettings.always_active_pattern = '';
 
     const updatedServerSettings = {
       ...serverSettings,
       theme: 'dark',
-      startOfWeek: 'Sunday',
+      always_active_pattern: 'Code',
     };
 
     mockGet
@@ -126,7 +126,7 @@ describe('settings store', () => {
 
     const postedKeys = mockPost.mock.calls.map(([url]) => url);
     expect(postedKeys).toContain('/0/settings/theme');
-    expect(postedKeys).toContain('/0/settings/startOfWeek');
+    expect(postedKeys).toContain('/0/settings/always_active_pattern');
   });
 
   test('load only backfills theme from localStorage', async () => {
@@ -183,12 +183,12 @@ describe('settings store', () => {
     settingsStore.$patch({
       _loaded: true,
       theme: 'auto',
-      startOfWeek: 'Monday',
+      always_active_pattern: '',
     });
 
     const serverState: Record<string, unknown> = {
       theme: 'auto',
-      startOfWeek: 'Monday',
+      always_active_pattern: '',
       requestTimeout: 30,
     };
     const firstReloadStarted = createDeferred<void>();
@@ -217,24 +217,24 @@ describe('settings store', () => {
     await firstReloadStarted.promise;
 
     // This optimistic patch lands while the first update's stale reload is in flight.
-    const secondUpdate = settingsStore.update({ startOfWeek: 'Sunday' });
-    expect(settingsStore.startOfWeek).toBe('Sunday');
+    const secondUpdate = settingsStore.update({ always_active_pattern: 'Code' });
+    expect(settingsStore.always_active_pattern).toBe('Code');
 
     releaseFirstReload.resolve();
     await secondWriteStarted.promise;
 
     // The first reload completed, but the queued patch must still be visible.
     expect(settingsStore.theme).toBe('dark');
-    expect(settingsStore.startOfWeek).toBe('Sunday');
+    expect(settingsStore.always_active_pattern).toBe('Code');
 
     await Promise.all([firstUpdate, secondUpdate]);
 
     expect(mockPost.mock.calls.map(([url]) => url)).toEqual([
       '/0/settings/theme',
-      '/0/settings/startOfWeek',
+      '/0/settings/always_active_pattern',
     ]);
-    expect(serverState).toMatchObject({ theme: 'dark', startOfWeek: 'Sunday' });
-    expect(settingsStore.$state).toMatchObject({ theme: 'dark', startOfWeek: 'Sunday' });
+    expect(serverState).toMatchObject({ theme: 'dark', always_active_pattern: 'Code' });
+    expect(settingsStore.$state).toMatchObject({ theme: 'dark', always_active_pattern: 'Code' });
   });
 
   test('an older standalone load cannot overwrite a completed settings update', async () => {
@@ -243,7 +243,7 @@ describe('settings store', () => {
 
     const serverState: Record<string, unknown> = {
       theme: 'auto',
-      startOfWeek: 'Monday',
+      always_active_pattern: '',
       requestTimeout: 30,
     };
     const staleLoadStarted = createDeferred<void>();
@@ -284,7 +284,7 @@ describe('settings store', () => {
 
     const serverState: Record<string, unknown> = {
       theme: 'auto',
-      startOfWeek: 'Monday',
+      always_active_pattern: '',
       requestTimeout: 30,
     };
     const postSaveReloadStarted = createDeferred<void>();
@@ -442,12 +442,12 @@ describe('settings store', () => {
     settingsStore.$patch({
       _loaded: true,
       theme: 'auto',
-      startOfWeek: 'Monday',
+      always_active_pattern: '',
     });
 
     const serverState: Record<string, unknown> = {
       theme: 'auto',
-      startOfWeek: 'Monday',
+      always_active_pattern: '',
       requestTimeout: 30,
     };
     const persistGetStarted = createDeferred<void>();
@@ -478,7 +478,7 @@ describe('settings store', () => {
       serverState[key] = JSON.parse(JSON.stringify(value));
     });
 
-    const update = settingsStore.update({ theme: 'dark', startOfWeek: 'Sunday' });
+    const update = settingsStore.update({ theme: 'dark', always_active_pattern: 'Code' });
     const updateFailure = expect(update).rejects.toThrow('second key failed');
     await persistGetStarted.promise;
 
@@ -487,12 +487,12 @@ describe('settings store', () => {
 
     releasePersistGet.resolve();
     await updateFailure;
-    expect(serverState).toMatchObject({ theme: 'dark', startOfWeek: 'Monday' });
+    expect(serverState).toMatchObject({ theme: 'dark', always_active_pattern: '' });
 
     releaseStaleLoad.resolve();
     await staleLoad;
 
-    expect(settingsStore.$state).toMatchObject({ theme: 'dark', startOfWeek: 'Sunday' });
+    expect(settingsStore.$state).toMatchObject({ theme: 'dark', always_active_pattern: 'Code' });
   });
 
   test('a failed queued update does not prevent the next update from saving', async () => {
@@ -500,12 +500,12 @@ describe('settings store', () => {
     settingsStore.$patch({
       _loaded: true,
       theme: 'auto',
-      startOfWeek: 'Monday',
+      always_active_pattern: '',
     });
 
     const serverState: Record<string, unknown> = {
       theme: 'auto',
-      startOfWeek: 'Monday',
+      always_active_pattern: '',
       requestTimeout: 30,
     };
     let postCall = 0;
@@ -523,17 +523,60 @@ describe('settings store', () => {
 
     const firstUpdate = settingsStore.update({ theme: 'dark' });
     const firstFailure = expect(firstUpdate).rejects.toThrow('first settings write failed');
-    const secondUpdate = settingsStore.update({ startOfWeek: 'Sunday' });
+    const secondUpdate = settingsStore.update({ always_active_pattern: 'Code' });
 
     await firstFailure;
     await expect(secondUpdate).resolves.toBeUndefined();
 
     expect(mockPost.mock.calls.map(([url]) => url)).toEqual([
       '/0/settings/theme',
-      '/0/settings/startOfWeek',
+      '/0/settings/always_active_pattern',
     ]);
-    expect(serverState).toMatchObject({ theme: 'auto', startOfWeek: 'Sunday' });
-    expect(settingsStore.$state).toMatchObject({ theme: 'auto', startOfWeek: 'Sunday' });
+    expect(serverState).toMatchObject({ theme: 'auto', always_active_pattern: 'Code' });
+    expect(settingsStore.$state).toMatchObject({ theme: 'auto', always_active_pattern: 'Code' });
+  });
+
+  test('a failed remote update rolls back optimistic state and can be retried', async () => {
+    const settingsStore = useSettingsStore();
+    const previousRemote = {
+      sshTarget: 'trust-old',
+      setupDir: '~/trust-me-setup',
+      participantName: 'Chengyu',
+      reviewSyncStartDate: '',
+    };
+    const nextRemote = {
+      ...previousRemote,
+      sshTarget: 'trust-new',
+    };
+    settingsStore.$patch({ _loaded: true, remote: previousRemote });
+
+    let serverRemote = previousRemote;
+    let failNextWrite = true;
+    mockGet.mockImplementation(async () =>
+      settingsResponse({
+        remote: JSON.parse(JSON.stringify(serverRemote)),
+        requestTimeout: 30,
+      })
+    );
+    mockPost.mockImplementation(async (_url: string, value: unknown) => {
+      if (failNextWrite) {
+        failNextWrite = false;
+        throw new Error('remote settings write failed');
+      }
+      serverRemote = JSON.parse(JSON.stringify(value));
+    });
+
+    const failedUpdate = settingsStore.updateRemote(nextRemote);
+    expect(settingsStore.remote).toEqual(nextRemote);
+    await expect(failedUpdate).rejects.toThrow('remote settings write failed');
+    expect(settingsStore.remote).toEqual(previousRemote);
+
+    await expect(settingsStore.updateRemote(nextRemote)).resolves.toBeUndefined();
+    expect(settingsStore.remote).toEqual(nextRemote);
+    expect(mockPost.mock.calls.map(([url]) => url)).toEqual([
+      '/0/settings/remote',
+      '/0/settings/remote',
+    ]);
   });
 
   test('load with save enabled completes without enqueueing itself behind its own work', async () => {

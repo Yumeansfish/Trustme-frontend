@@ -39,7 +39,6 @@ describe('settings cancellation isolation', () => {
     const consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
     const serverState: Record<string, unknown> = {
       theme: 'auto',
-      startOfWeek: 'Monday',
       requestTimeout: 30,
     };
     const firstGetStarted = createDeferred<void>();

@@ -5,7 +5,7 @@
       <theme-toggle-button floating></theme-toggle-button>
     </div>
     <div class="aw-settings-stack">
-      <DaystartSettings></DaystartSettings>
+      <RemoteSetupSettings></RemoteSetupSettings>
     </div>
   </div>
 </template>
@@ -13,13 +13,13 @@
 <script lang="ts">
 import { useSettingsStore } from '~/features/settings/store/settings';
 
-import DaystartSettings from '~/features/settings/components/DaystartSettings.vue';
+import RemoteSetupSettings from '~/features/settings/components/RemoteSetupSettings.vue';
 import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 
 export default {
   name: 'Settings',
   components: {
-    DaystartSettings,
+    RemoteSetupSettings,
     ThemeToggleButton,
   },
   async created() {

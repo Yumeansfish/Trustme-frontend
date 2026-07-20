@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia';
-import { getClient } from '~/app/lib/awclient';
-import { Category } from '~/features/categorization/lib/classes';
+import type { Category } from '~/features/categorization/lib/classes';
+import { setServerRequestTimeout } from '~/features/settings/lib/settingsClient';
+import {
+  createDefaultRemoteSettings,
+  normalizeRemoteSettings,
+  type RemoteSettings,
+} from '~/features/settings/lib/remoteSettings';
 import {
   loadServerBackedSettings,
   persistSettingsSubset,
@@ -8,13 +13,14 @@ import {
 } from './settingsPersistence';
 
 interface State {
-  startOfWeek: string;
   theme: 'light' | 'dark' | 'auto';
 
   always_active_pattern: string;
   classes: Category[];
 
   requestTimeout: number;
+
+  remote: RemoteSettings;
 
   // Set to true if settings loaded
   _loaded: boolean;
@@ -107,7 +113,7 @@ function applyLoadedSettings(
 
   // `requestTimeout` is applied when the client is created, so the live client has to be
   // updated after settings load as well.
-  getClient().req.defaults.timeout = store.requestTimeout * 1000;
+  setServerRequestTimeout(store.requestTimeout);
 }
 
 function enqueueSettingsWrite(
@@ -165,13 +171,14 @@ function enqueueSettingsWrite(
 
 export const useSettingsStore = defineStore('settings', {
   state: (): State => ({
-    startOfWeek: 'Monday',
     theme: 'auto',
 
     always_active_pattern: '',
     classes: [],
 
     requestTimeout: 30,
+
+    remote: createDefaultRemoteSettings(),
 
     _loaded: false,
   }),
@@ -233,6 +240,17 @@ export const useSettingsStore = defineStore('settings', {
       }
 
       await enqueueSettingsWrite(this, snapshot);
+    },
+    async updateRemote(remote: RemoteSettings) {
+      const previousRemote = normalizeRemoteSettings(this.remote);
+      try {
+        await this.update({ remote });
+      } catch (error) {
+        this.$patch(state => {
+          state.remote = previousRemote;
+        });
+        throw error;
+      }
     },
   },
 });
