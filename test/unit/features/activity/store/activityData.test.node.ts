@@ -15,16 +15,16 @@ jest.mock('~/app/lib/awclient', () => ({
 
 import {
   buildCompactSummaryLogicalPeriods,
-  buildCompactSummarySnapshotPeriods,
+  buildCompactSummaryPeriods,
   buildExecutionQueryPeriods,
-} from '~/features/activity-dashboard/store/activityData';
+} from '~/features/activity/store/activityData';
 import {
-  fetchDashboardDetails,
-  fetchDashboardResolvedScope,
-  fetchDashboardSummarySnapshot,
-} from '~/features/activity-dashboard/store/dashboardClient';
-import { shouldUseDashboardDtoFlow } from '~/features/activity-dashboard/store/activityVisualizations';
-import type { QueryOptions } from '~/features/activity-dashboard/store/activityTypes';
+  fetchSummary,
+} from '~/features/summary/lib/summaryClient';
+import { fetchBrowserActivity } from '~/features/browser/lib/browserClient';
+import { fetchActivityScope } from '~/features/activity/lib/activityScopeClient';
+import { shouldUseActivityDataFlow } from '~/features/activity/store/activityQueryPlan';
+import type { QueryOptions } from '~/features/activity/store/activityTypes';
 import type { TimePeriod } from '~/app/lib/timeperiod';
 
 function loadDashboardFixture(name: string) {
@@ -61,20 +61,20 @@ describe('activityData helpers', () => {
       length: [1, 'day'],
     };
 
-    const snapshotPeriods = buildCompactSummarySnapshotPeriods(timeperiod, 'custom');
-    expect(snapshotPeriods).toHaveLength(24);
+    const summaryPeriods = buildCompactSummaryPeriods(timeperiod, 'custom');
+    expect(summaryPeriods).toHaveLength(24);
 
-    const [startIso, endIso] = snapshotPeriods[0].split('/');
+    const [startIso, endIso] = summaryPeriods[0].split('/');
     expect(new Date(endIso).getTime() - new Date(startIso).getTime()).toBe(60 * 60 * 1000);
 
     expect(buildCompactSummaryLogicalPeriods(timeperiod, 'custom')).toHaveLength(24);
   });
 
-  test('fetchDashboardSummarySnapshot normalizes DTO payloads', async () => {
+  test('fetchDashboardSummary normalizes DTO payloads', async () => {
     const fixture = loadDashboardFixture('dashboard-summary-grouped-multidevice.json');
     mockPost.mockResolvedValue({ data: fixture });
 
-    const result = await fetchDashboardSummarySnapshot({
+    const result = await fetchSummary({
       range: {
         start: new Date('2026-03-02T08:00:00.000Z'),
         end: new Date('2026-03-02T10:00:00.000Z'),
@@ -86,7 +86,7 @@ describe('activityData helpers', () => {
     });
 
     expect(mockPost).toHaveBeenCalledWith(
-      '/0/dashboard/summary-snapshot',
+      '/0/dashboard/summary',
       {
         range: {
           start: '2026-03-02T08:00:00.000Z',
@@ -101,11 +101,11 @@ describe('activityData helpers', () => {
     expect(result).toEqual(fixture);
   });
 
-  test('fetchDashboardSummarySnapshot keeps the empty-state contract fixture stable', async () => {
+  test('fetchDashboardSummary keeps the empty-state contract fixture stable', async () => {
     const fixture = loadDashboardFixture('dashboard-summary-empty.json');
     mockPost.mockResolvedValue({ data: fixture });
 
-    const result = await fetchDashboardSummarySnapshot({
+    const result = await fetchSummary({
       range: {
         start: new Date('2026-03-01T10:00:00.000Z'),
         end: new Date('2026-03-01T12:00:00.000Z'),
@@ -119,24 +119,36 @@ describe('activityData helpers', () => {
     expect(result).toEqual(fixture);
   });
 
-  test('fetchDashboardDetails and scope normalize mirrored contract fixtures', async () => {
-    const detailsFixture = loadDashboardFixture('dashboard-details-browser.json');
+  test('fetchDashboardBrowser and scope normalize mirrored contract fixtures', async () => {
+    const browserFixture = loadDashboardFixture('dashboard-browser.json');
     const scopeFixture = loadDashboardFixture('dashboard-scope-grouped-multidevice.json');
 
     mockPost
-      .mockResolvedValueOnce({ data: detailsFixture })
+      .mockResolvedValueOnce({ data: browserFixture })
       .mockResolvedValueOnce({ data: scopeFixture });
 
-    const details = await fetchDashboardDetails({
+    const browser = await fetchBrowserActivity({
       range: {
         start: new Date('2026-03-02T08:00:00.000Z'),
         end: new Date('2026-03-02T11:00:00.000Z'),
         period: 'periodA',
       },
     });
-    const scope = await fetchDashboardResolvedScope();
+    const scope = await fetchActivityScope();
 
-    expect(details).toEqual(detailsFixture);
+    expect(mockPost).toHaveBeenNthCalledWith(
+      1,
+      '/0/dashboard/browser',
+      {
+        range: {
+          start: '2026-03-02T08:00:00.000Z',
+          end: '2026-03-02T11:00:00.000Z',
+        },
+      },
+      undefined
+    );
+    expect(mockPost).toHaveBeenNthCalledWith(2, '/0/dashboard/scope', {}, undefined);
+    expect(browser).toEqual(browserFixture);
     expect(scope).toEqual({
       group_name: '',
       resolved_hosts: scopeFixture.resolved_hosts,
@@ -150,7 +162,7 @@ describe('activityData helpers', () => {
     });
   });
 
-  test('fetchDashboardSummarySnapshot backfills partial payloads from ad-hoc responses', async () => {
+  test('fetchDashboardSummary rejects incomplete responses instead of backfilling', async () => {
     mockPost.mockResolvedValue({
       data: {
         window: {
@@ -168,7 +180,7 @@ describe('activityData helpers', () => {
       },
     });
 
-    const result = await fetchDashboardSummarySnapshot({
+    await expect(fetchSummary({
       range: {
         start: new Date('2026-03-01T10:00:00.000Z'),
         end: new Date('2026-03-01T11:00:00.000Z'),
@@ -177,10 +189,9 @@ describe('activityData helpers', () => {
       categoryPeriods: ['periodA', 'periodB'],
       filterAfk: true,
       filterCategories: [],
-    });
+    })).rejects.toThrow('Invalid activity event list');
 
-    expect(result?.window.app_events[0].data.app).toBe('Code');
-    expect(result?.by_period.periodB).toEqual({ cat_events: [] });
+
   });
 
   test('dashboard DTO flow stays on the supported path for dashboard and standalone views', () => {
@@ -193,7 +204,23 @@ describe('activityData helpers', () => {
       requested_visualizations: [],
     };
 
-    expect(shouldUseDashboardDtoFlow(dashboardQuery)).toBe(true);
-    expect(shouldUseDashboardDtoFlow(standaloneOnlyQuery)).toBe(true);
+    expect(shouldUseActivityDataFlow(dashboardQuery)).toBe(true);
+    expect(shouldUseActivityDataFlow(standaloneOnlyQuery)).toBe(true);
   });
 });
+
+test.each([{}, { domains: [], urls: [], titles: null }, { domains: [{}], urls: [], titles: [] }])(
+  'rejects malformed browser payload %p', async data => {
+    mockPost.mockResolvedValue({ data });
+    await expect(fetchBrowserActivity({ range: {
+      start: new Date('2026-09-07T09:00:00Z'), end: new Date('2026-09-07T10:00:00Z'), period: 'hour',
+    } })).rejects.toThrow('Invalid activity event list');
+  }
+);
+
+test.each([{}, { ...loadDashboardFixture('dashboard-scope-grouped-multidevice.json'), resolved_hosts: [null] }])(
+  'rejects malformed scope payload %p', async data => {
+    mockPost.mockResolvedValue({ data });
+    await expect(fetchActivityScope()).rejects.toThrow('Invalid activity scope');
+  }
+);

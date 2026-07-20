@@ -1,4 +1,4 @@
-import { defaultViews, resolveDefaultViewId } from '~/features/activity-layouts/lib/activityViewCatalog';
+import { defaultViews, resolveDefaultViewId } from '~/features/activity/lib/layout/activityViewCatalog';
 
 describe('activityViewCatalog', () => {
   test('resolves the default fixed activity view id', () => {

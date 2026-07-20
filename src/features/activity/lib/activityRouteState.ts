@@ -1,15 +1,16 @@
 import moment from 'moment';
 import { get_day_start, get_today } from '~/app/lib/time';
+import type { ActivityPeriodMode } from '~/features/activity/store/activityTypes';
 
-const VALID_PERIOD_LENGTHS = ['day', 'week', 'month', 'year', 'custom'];
+const VALID_PERIOD_LENGTHS: ActivityPeriodMode[] = ['day', 'week', 'month', 'year', 'custom'];
 
 export interface ActivityTimeperiod {
   start: string;
   length: [number, string];
 }
 
-function isValidPeriodLength(value: unknown): value is string {
-  return typeof value === 'string' && VALID_PERIOD_LENGTHS.includes(value);
+function isValidPeriodLength(value: unknown): value is ActivityPeriodMode {
+  return typeof value === 'string' && VALID_PERIOD_LENGTHS.includes(value as ActivityPeriodMode);
 }
 
 function isValidDateString(value: unknown): value is string {
@@ -18,8 +19,7 @@ function isValidDateString(value: unknown): value is string {
 
 export function normalizeDateForPeriod(
   date: string,
-  periodLength: string,
-  startOfWeek: string
+  periodLength: string
 ): string {
   const parsed = moment(date);
   if (!parsed.isValid()) {
@@ -35,14 +35,16 @@ export function normalizeDateForPeriod(
   }
 
   if (periodLength === 'week') {
-    const unit = startOfWeek === 'Monday' ? 'isoWeek' : 'week';
-    return parsed.startOf(unit).format('YYYY-MM-DD');
+    return parsed.startOf('isoWeek').format('YYYY-MM-DD');
   }
 
   return parsed.startOf(periodLength as 'month' | 'year').format('YYYY-MM-DD');
 }
 
-export function resolveNormalizedPeriodLength(periodLength: unknown, date: unknown): string {
+export function resolveNormalizedPeriodLength(
+  periodLength: unknown,
+  date: unknown
+): ActivityPeriodMode {
   if (isValidPeriodLength(periodLength)) {
     return periodLength;
   }
@@ -144,26 +146,24 @@ export function shiftPeriodDate(
 
 function resolveAvailablePeriodStart(
   date: string,
-  periodLength: string,
-  startOfWeek: string
+  periodLength: string
 ): string {
   if (!date) {
     return '';
   }
 
-  return normalizeDateForPeriod(date, periodLength, startOfWeek);
+  return normalizeDateForPeriod(date, periodLength);
 }
 
 function resolveAvailablePeriodEnd(
   date: string,
-  periodLength: string,
-  startOfWeek: string
+  periodLength: string
 ): string {
   if (!date) {
     return '';
   }
 
-  const start = moment(resolveAvailablePeriodStart(date, periodLength, startOfWeek), 'YYYY-MM-DD', true);
+  const start = moment(resolveAvailablePeriodStart(date, periodLength), 'YYYY-MM-DD', true);
   if (!start.isValid()) {
     return '';
   }
@@ -186,14 +186,12 @@ function resolveAvailablePeriodEnd(
 export function canNavigateActivityPeriod({
   targetDate,
   periodLength,
-  startOfWeek,
   earliestAvailableDate,
   latestAvailableDate,
   availableDates,
 }: {
   targetDate: string;
   periodLength: string;
-  startOfWeek: string;
   earliestAvailableDate?: string;
   latestAvailableDate?: string;
   availableDates?: string[] | null;
@@ -211,8 +209,7 @@ export function canNavigateActivityPeriod({
   if (hasLowerBound) {
     const earliestPeriodDate = resolveAvailablePeriodStart(
       earliestAvailableDate!,
-      periodLength,
-      startOfWeek
+      periodLength
     );
     if (earliestPeriodDate && targetDate < earliestPeriodDate) {
       return false;
@@ -224,8 +221,8 @@ export function canNavigateActivityPeriod({
   }
 
   if (Array.isArray(availableDates) && availableDates.length > 0) {
-    const periodStart = resolveAvailablePeriodStart(targetDate, periodLength, startOfWeek);
-    const periodEnd = resolveAvailablePeriodEnd(targetDate, periodLength, startOfWeek);
+    const periodStart = resolveAvailablePeriodStart(targetDate, periodLength);
+    const periodEnd = resolveAvailablePeriodEnd(targetDate, periodLength);
     if (
       !availableDates.some(
         availableDate => availableDate >= periodStart && availableDate < periodEnd

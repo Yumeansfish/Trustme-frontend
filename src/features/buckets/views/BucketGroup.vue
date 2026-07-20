@@ -1,11 +1,11 @@
 <template>
   <div class="flex h-full min-h-0 flex-col gap-3">
-    <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+    <div class="flex shrink-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
       <div class="space-y-2">
-        <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" to="/buckets">
-          <icon name="arrow-left"></icon>
-          <span>Back To Raw Data</span>
-        </ui-button>
+        <ui-link class="aw-breadcrumb" to="/buckets">
+          <icon name="chevron-left" class="h-4 w-4"></icon>
+          <span>Back to Raw Data</span>
+        </ui-link>
         <div>
           <span class="aw-page-title aw-title-system">{{ groupTitle }}</span>
         </div>
@@ -32,19 +32,40 @@
 
     <section
       v-if="loading"
-      class="rounded-3xl border border-base bg-surface px-6 py-8 text-sm text-foreground-muted shadow-card"
+      class="aw-card-muted px-6 py-8 text-sm text-foreground-muted"
     >
       Loading raw events...
     </section>
 
-    <section v-else-if="displayEvents.length" class="aw-panel overflow-hidden">
-      <div class="aw-card-header">
+    <section v-else-if="sortedEvents.length" class="aw-panel flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div class="aw-card-header shrink-0">
         <div>
           <h4 class="aw-card-title">Events</h4>
-          <p class="aw-card-subtitle">Showing {{ displayEvents.length }} events</p>
+          <p class="aw-card-subtitle">
+            Showing {{ pageStart }}–{{ pageEnd }} of {{ sortedEvents.length }} events
+          </p>
+        </div>
+        <div v-if="pageCount > 1" class="flex items-center gap-2">
+          <ui-button
+            class="aw-btn aw-btn-sm aw-btn-secondary"
+            type="button"
+            :disabled="currentPage === 1"
+            @click="goToPage(currentPage - 1)"
+          >
+            Previous
+          </ui-button>
+          <span class="aw-caption whitespace-nowrap">Page {{ currentPage }} of {{ pageCount }}</span>
+          <ui-button
+            class="aw-btn aw-btn-sm aw-btn-secondary"
+            type="button"
+            :disabled="currentPage === pageCount"
+            @click="goToPage(currentPage + 1)"
+          >
+            Next
+          </ui-button>
         </div>
       </div>
-      <ul class="aw-list-scroll aw-list-scroll-expanded">
+      <ul ref="eventsList" class="min-h-0 flex-1 overflow-y-auto overscroll-contain whitespace-nowrap" aria-label="Raw events">
         <li
           v-for="(event, eventIndex) in displayEvents"
           :key="eventRowKey(event, eventIndex)"
@@ -75,11 +96,35 @@
           </div>
         </li>
       </ul>
+      <div
+        v-if="pageCount > 1"
+        class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-base px-4 py-3"
+      >
+        <span class="aw-caption">Page {{ currentPage }} of {{ pageCount }}</span>
+        <div class="flex items-center gap-2">
+          <ui-button
+            class="aw-btn aw-btn-sm aw-btn-secondary"
+            type="button"
+            :disabled="currentPage === 1"
+            @click="goToPage(currentPage - 1)"
+          >
+            Previous
+          </ui-button>
+          <ui-button
+            class="aw-btn aw-btn-sm aw-btn-secondary"
+            type="button"
+            :disabled="currentPage === pageCount"
+            @click="goToPage(currentPage + 1)"
+          >
+            Next
+          </ui-button>
+        </div>
+      </div>
     </section>
 
     <section
       v-else
-      class="rounded-3xl border border-base bg-surface px-6 py-10 text-center text-sm text-foreground-muted shadow-card"
+      class="aw-card-muted px-6 py-10 text-center text-sm text-foreground-muted"
     >
       No raw events found for this day.
     </section>
@@ -94,18 +139,20 @@ import { useDialog } from '~/shared/composables/useDialog';
 import DateNavigator from '~/shared/navigation/DateNavigator.vue';
 import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
-import { getClient } from '~/app/lib/awclient';
+import { deleteBucketEvent } from '~/features/buckets/lib/bucketsClient';
 import { get_today } from '~/app/lib/time';
 import { friendlyduration } from '~/shared/lib/filters';
 import { buildBucketGroups, type BucketGroup } from '~/features/buckets/lib/bucketGroups';
 
 type GroupEvent = {
-  id?: number | string;
+  id?: number;
   timestamp: string | Date;
   duration: number;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   source_bucket_id: string;
 };
+
+const RAW_EVENT_PAGE_SIZE = 100;
 
 export default defineComponent({
   name: 'BucketGroup',
@@ -129,6 +176,7 @@ export default defineComponent({
       loading: false,
       error: '',
       events: [] as GroupEvent[],
+      currentPage: 1,
       availableDates: [] as string[],
       group: null as BucketGroup | null,
     };
@@ -162,10 +210,24 @@ export default defineComponent({
     disableNext(): boolean {
       return this.availableDates.length > 0 ? !this.availableDates.includes(this.nextDate) : false;
     },
-    displayEvents(): GroupEvent[] {
+    sortedEvents(): GroupEvent[] {
       return [...this.events].sort((left, right) => {
         return moment(right.timestamp).valueOf() - moment(left.timestamp).valueOf();
       });
+    },
+    pageCount(): number {
+      return Math.max(1, Math.ceil(this.sortedEvents.length / RAW_EVENT_PAGE_SIZE));
+    },
+    pageStart(): number {
+      if (!this.sortedEvents.length) return 0;
+      return (this.currentPage - 1) * RAW_EVENT_PAGE_SIZE + 1;
+    },
+    pageEnd(): number {
+      return Math.min(this.currentPage * RAW_EVENT_PAGE_SIZE, this.sortedEvents.length);
+    },
+    displayEvents(): GroupEvent[] {
+      const start = (this.currentPage - 1) * RAW_EVENT_PAGE_SIZE;
+      return this.sortedEvents.slice(start, start + RAW_EVENT_PAGE_SIZE);
     },
     groupTitle(): string {
       return this.group?.title || 'bucket';
@@ -195,6 +257,13 @@ export default defineComponent({
     goToDate(date: string) {
       if (date === this.selectedDate) return;
       this.$router.push(this.buildRoute(date)).catch(() => undefined);
+    },
+    goToPage(page: number) {
+      this.currentPage = Math.max(1, Math.min(page, this.pageCount));
+      this.$nextTick(() => {
+        const list = this.$refs.eventsList as HTMLUListElement | undefined;
+        if (list) list.scrollTop = 0;
+      });
     },
     formatTimestamp(value: string | Date): string {
       return moment(value).format('YYYY-MM-DD HH:mm:ss');
@@ -237,6 +306,7 @@ export default defineComponent({
       if (!this.group) return;
       this.loading = true;
       this.error = '';
+      this.currentPage = 1;
       try {
         const start = moment(this.selectedDate, 'YYYY-MM-DD', true).startOf('day').toDate();
         const end = moment(this.selectedDate, 'YYYY-MM-DD', true).endOf('day').toDate();
@@ -276,10 +346,13 @@ export default defineComponent({
       if (!shouldDelete) {
         return;
       }
-      await getClient().deleteEvent(event.source_bucket_id, Number(event.id));
+      await deleteBucketEvent(event.source_bucket_id, Number(event.id));
       this.events = this.events.filter(entry => {
         return !(entry.source_bucket_id === event.source_bucket_id && entry.id === event.id);
       });
+      if (this.currentPage > this.pageCount) {
+        this.currentPage = this.pageCount;
+      }
     },
   },
 });

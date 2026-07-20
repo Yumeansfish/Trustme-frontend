@@ -2,10 +2,10 @@
   <div class="space-y-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div class="space-y-3">
-        <ui-button class="aw-btn aw-btn-sm aw-btn-secondary" type="button" to="/buckets">
-          <icon name="arrow-left"></icon>
-          <span>Back To Raw Data</span>
-        </ui-button>
+        <ui-link class="aw-breadcrumb" to="/buckets">
+          <icon name="chevron-left" class="h-4 w-4"></icon>
+          <span>Back to Raw Data</span>
+        </ui-link>
         <div class="space-y-1">
           <h2 class="aw-section-title aw-title-system break-all">{{ bucketDisplayName }}</h2>
           <p class="aw-caption">
@@ -28,7 +28,7 @@
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <article v-for="item in summaryCards" :key="item.label" class="aw-card space-y-3">
           <div
-            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-soft text-primary"
+            class="flex h-8 w-8 items-center justify-center text-primary"
           >
             <icon :name="item.icon"></icon>
           </div>
@@ -75,14 +75,15 @@
           >
             Loading Events...
           </div>
-          <aw-eventlist
+          <EventList
             v-else
             :key="eventListKey"
-            :bucket_id="id"
+            :bucket-id="id"
             :events="events"
             editable
-            @save="updateEvent"
-          ></aw-eventlist>
+            @saved="updateEvent"
+            @deleted="removeEvent"
+          />
         </div>
       </div>
     </template>
@@ -93,9 +94,10 @@
 import { defineComponent } from 'vue';
 import moment from 'moment';
 
-import { getClient } from '~/app/lib/awclient';
+import { countBucketEvents } from '~/features/buckets/lib/bucketsClient';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
 import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
+import EventList from '~/features/buckets/components/EventList.vue';
 import type { IBucket, IEvent } from '~/shared/lib/interfaces';
 import { formatBucketDisplayName, formatModuleDisplayName } from '~/shared/lib/bucketDisplay';
 
@@ -109,6 +111,7 @@ type BucketRecord = Partial<IBucket> & {
 export default defineComponent({
   name: 'Bucket',
   components: {
+    EventList,
     ThemeToggleButton,
   },
   props: {
@@ -182,12 +185,12 @@ export default defineComponent({
         },
         {
           label: 'First Seen',
-          value: this.formatDate(this.bucket.first_seen || this.bucket.metadata?.start),
+          value: this.formatDate(this.bucket.first_seen),
           icon: 'clock',
         },
         {
           label: 'Last Updated',
-          value: this.formatDate(this.bucket.last_updated || this.bucket.metadata?.end),
+          value: this.formatDate(this.bucket.last_updated),
           icon: 'clock',
         },
         {
@@ -223,7 +226,7 @@ export default defineComponent({
       }
       try {
         return JSON.stringify(value);
-      } catch (_error) {
+      } catch {
         return String(value);
       }
     },
@@ -247,12 +250,11 @@ export default defineComponent({
 
       try {
         await this.bucketsStore.ensureLoaded();
-        const response = await getClient().countEvents(this.id);
+        const count = await countBucketEvents(this.id);
         if (pageToken !== this.pageRequestKey) {
           return;
         }
-        const parsedCount = Number(response.data);
-        this.eventcount = Number.isNaN(parsedCount) ? null : parsedCount;
+        this.eventcount = count;
       } catch (error) {
         if (pageToken !== this.pageRequestKey) {
           return;
@@ -268,37 +270,46 @@ export default defineComponent({
 
       await this.loadEvents(pageToken);
     },
-    async loadEvents(pageToken = this.pageRequestKey) {
+    async loadEvents(pageToken?: number) {
+      const requestedPageToken = pageToken ?? this.pageRequestKey;
       const eventsToken = ++this.eventsRequestKey;
       this.loadingEvents = true;
       this.eventsError = '';
 
       try {
         const bucket = await this.bucketsStore.getBucketWithEvents({ id: this.id });
-        if (pageToken !== this.pageRequestKey || eventsToken !== this.eventsRequestKey) {
+        if (requestedPageToken !== this.pageRequestKey || eventsToken !== this.eventsRequestKey) {
           return;
         }
         this.events = Array.isArray(bucket.events) ? bucket.events : [];
       } catch (error) {
-        if (pageToken !== this.pageRequestKey || eventsToken !== this.eventsRequestKey) {
+        if (requestedPageToken !== this.pageRequestKey || eventsToken !== this.eventsRequestKey) {
           return;
         }
         console.error('Failed to load bucket events:', error);
         this.events = [];
         this.eventsError = 'Failed To Load Bucket Events.';
       } finally {
-        if (pageToken === this.pageRequestKey && eventsToken === this.eventsRequestKey) {
+        if (requestedPageToken === this.pageRequestKey && eventsToken === this.eventsRequestKey) {
           this.loadingEvents = false;
         }
       }
     },
-    updateEvent(event: IEvent & { id?: string }) {
-      const index = this.events.findIndex((existing: IEvent & { id?: string }) => {
+    updateEvent(event: IEvent) {
+      const index = this.events.findIndex((existing: IEvent) => {
         return existing.id === event.id;
       });
 
       if (index !== -1) {
         this.events.splice(index, 1, event);
+      }
+    },
+    removeEvent(event: IEvent) {
+      const index = this.events.findIndex(existing => existing.id === event.id);
+      if (index === -1) return;
+      this.events.splice(index, 1);
+      if (typeof this.eventcount === 'number' && this.eventcount > 0) {
+        this.eventcount -= 1;
       }
     },
   },

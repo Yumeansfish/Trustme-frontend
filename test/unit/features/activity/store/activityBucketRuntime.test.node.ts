@@ -1,16 +1,16 @@
-import { createInitialActivityState } from '~/features/activity-dashboard/store/activityState';
+import { createInitialActivityState } from '~/features/activity/store/activityState';
 import {
   syncActivityScope,
   syncActivityBuckets,
   updateActivityAvailability,
-} from '~/features/activity-dashboard/store/activityBucketRuntime';
+} from '~/features/activity/store/activityBucketRuntime';
 
 describe('activityBucketRuntime', () => {
   test('syncActivityScope stores backend-owned group scope and availability', () => {
     const state = createInitialActivityState();
 
     syncActivityScope(state, {
-      group_name: 'My macbook',
+      group_name: 'MacBook',
       resolved_hosts: ['alpha.local'],
       window_buckets: ['window:resolved'],
       afk_buckets: ['afk:resolved'],
@@ -21,16 +21,16 @@ describe('activityBucketRuntime', () => {
       latest_available_date: '2026-03-03',
     });
 
-    expect(state.scope.group_name).toBe('My macbook');
+    expect(state.scope.group_name).toBe('MacBook');
     expect(state.scope.resolved_hosts).toEqual(['alpha.local']);
     expect(state.scope.available_dates).toEqual(['2026-03-01', '2026-03-03']);
   });
 
-  test('syncActivityBuckets prefers backend-owned resolved scope buckets', () => {
+  test('syncActivityBuckets prefers backend-owned scope buckets', () => {
     const state = createInitialActivityState();
 
     syncActivityBuckets(state, {
-      group_name: 'My macbook',
+      group_name: 'MacBook',
       resolved_hosts: ['alpha.local'],
       window_buckets: ['window:resolved'],
       afk_buckets: ['afk:resolved'],
@@ -51,7 +51,7 @@ describe('activityBucketRuntime', () => {
     const state = createInitialActivityState();
 
     syncActivityBuckets(state, {
-      group_name: 'My macbook',
+      group_name: 'MacBook',
       resolved_hosts: ['alpha.local'],
       window_buckets: ['window:resolved'],
       afk_buckets: ['afk:resolved'],

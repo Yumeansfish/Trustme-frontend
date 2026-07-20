@@ -4,8 +4,7 @@ import {
   resolveActivityVisualizationHeightClass,
   resolveActivityVisualizationSpanClass,
   resolveActivityVisualizationType,
-  shouldShowWholeActivityViewLoading,
-} from '~/features/activity-layouts/lib/activityViewLayout';
+} from '~/features/activity/lib/layout/activityViewLayout';
 
 describe('activityViewLayout', () => {
   test('resolves the requested activity page view with a default fallback', () => {
@@ -62,7 +61,7 @@ describe('activityViewLayout', () => {
     ).toBe('lg:col-span-6 xl:col-span-12');
   });
 
-  test('computes readiness and whole-view loading from activity data state', () => {
+  test('computes visualization readiness from activity data state', () => {
     const activityStore = {
       loaded: true,
       query_options: { host: 'alpha.local' },
@@ -78,13 +77,8 @@ describe('activityViewLayout', () => {
     };
 
     expect(isActivityVisualizationReady('top_domains', activityStore)).toBe(true);
-    expect(
-      shouldShowWholeActivityViewLoading({
-        editing: false,
-        view: { id: 'summary', name: 'Summary', elements: [{ type: 'top_apps' }] },
-        elements: [{ type: 'top_apps' }],
-        activityStore,
-      })
-    ).toBe(false);
+    expect(isActivityVisualizationReady('top_apps', activityStore)).toBe(true);
+    activityStore.window.top_apps = null;
+    expect(isActivityVisualizationReady('top_apps', activityStore)).toBe(false);
   });
 });

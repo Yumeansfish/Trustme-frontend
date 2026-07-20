@@ -1,5 +1,5 @@
 import moment from 'moment';
-import _ from 'lodash';
+import { arraysEqual } from '~/shared/lib/objects';
 
 interface ActivityTimeperiodLike {
   start: string;
@@ -61,7 +61,7 @@ export function expandActivityFilterCategories(
     return null;
   }
   const isChild = (parent: string[]) => (candidate: string[]) =>
-    candidate.length > parent.length && _.isEqual(parent, candidate.slice(0, parent.length));
-  const children = _.filter(allCategories, isChild(filterCategory));
+    candidate.length > parent.length && arraysEqual(parent, candidate.slice(0, parent.length));
+  const children = allCategories.filter(isChild(filterCategory));
   return [filterCategory].concat(children);
 }

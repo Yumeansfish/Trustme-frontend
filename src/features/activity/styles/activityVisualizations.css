@@ -1,0 +1,110 @@
+@layer components {
+  .aw-time-range-grid {
+    @apply grid gap-3;
+  }
+
+  @media (min-width: 640px) {
+    .aw-time-range-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    }
+  }
+
+  .aw-form-kv-grid {
+    @apply grid gap-3;
+  }
+
+  @media (min-width: 768px) {
+    .aw-form-kv-grid {
+      grid-template-columns: 180px minmax(0, 1fr);
+      align-items: center;
+    }
+  }
+
+  .aw-input-invalid,
+  .aw-input-invalid:focus {
+    border-color: rgb(var(--danger));
+    box-shadow: none;
+  }
+
+  .aw-chart-frame > svg,
+  .aw-plot-frame > svg {
+    max-width: 100%;
+    border: 1px solid rgb(var(--border-strong));
+    border-radius: var(--radius-panel);
+  }
+
+  .aw-chart-surface {
+    border-radius: var(--radius-panel);
+    background-color: rgb(var(--surface-muted));
+  }
+
+  .aw-donut-chart {
+    height: 100% !important;
+    width: 100% !important;
+    max-height: var(--size-donut-chart);
+    max-width: var(--size-donut-chart);
+  }
+
+  .aw-display-sm {
+    font-size: var(--font-size-display-sm);
+  }
+
+  .aw-chart-height {
+    @apply h-full min-h-0;
+  }
+
+  .aw-chart-height canvas {
+    height: 100% !important;
+    width: 100% !important;
+  }
+
+  .aw-vis-card-standard {
+    min-height: var(--size-vis-card-standard-min-height);
+  }
+
+  .aw-vis-card-timeline {
+    min-height: var(--size-vis-card-timeline-min-height);
+  }
+
+  .aw-vis-card-tall {
+    min-height: var(--size-vis-card-tall-min-height);
+  }
+
+  .aw-activity-grid {
+    align-content: start;
+  }
+
+  @media (min-width: 1024px) {
+    .aw-activity-grid {
+      align-content: stretch;
+      grid-auto-rows: minmax(var(--size-vis-card-timeline-min-height), 1fr);
+    }
+  }
+
+  .aw-vis-content {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  .aw-vis-content-scroll {
+    @apply min-h-0 flex-1 overflow-y-auto pr-1;
+  }
+
+  .aw-vis-content-center {
+    @apply items-center justify-center;
+  }
+
+  .aw-visualization-min {
+    min-height: var(--size-visualization-min-height);
+  }
+
+  .aw-rating-option-active {
+    border-color: rgb(var(--foreground-strong));
+    background-color: rgb(var(--foreground-strong));
+    color: rgb(var(--primary-foreground));
+  }
+
+  .aw-rating-option:hover {
+    border-color: rgb(var(--border-strong));
+    background-color: rgb(var(--surface-muted));
+  }
+}

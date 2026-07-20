@@ -1,19 +1,63 @@
 import {
-  buildTimelineBarBuckets,
   buildTimelineBarAxisLabels,
-  buildTimelineBarChartData,
   buildTimelineBarLabels,
-  buildTimelineBarSelectionOverlay,
-  buildTimelineBarTooltipPreview,
-  buildTimelineBarTooltipSummary,
-  buildTimelineBarVisibleBuckets,
-  buildTimelineBarVisibleDataset,
   formatTimelineBarHourTick,
   isTimelineBarSingleDay,
+} from '~/features/summary/lib/timelineBarAxis';
+import {
+  buildTimelineBarBuckets,
+  buildTimelineBarChartData,
+  buildTimelineBarSelectionOverlay,
+  buildTimelineBarVisibleBuckets,
+  buildTimelineBarVisibleDataset,
   resolveTimelineBarVisibleHourWindow,
-} from '~/features/activity-visualizations/lib/timelineBarChartState';
+} from '~/features/summary/lib/timelineBarDataset';
+import {
+  buildTimelineBarChartOptions,
+  syncTimelineBarChartOptions,
+} from '~/features/summary/lib/timelineBarChartConfig';
+import {
+  buildTimelineBarTooltipPreview,
+  buildTimelineBarTooltipSummary,
+} from '~/features/summary/lib/timelineBarTooltip';
 
 describe('timelineBarChartState', () => {
+  test('refreshes axis labels when switching period modes', () => {
+    const palette = {
+      normal: '#111111',
+      active: '#222222',
+      hover: '#333333',
+      axis: '#444444',
+      grid: '#555555',
+    };
+    const options = buildTimelineBarChartOptions({
+      palette,
+      isSingleDay: false,
+      axisLabels: ['Jan', 'Feb'],
+      clearTooltip: jest.fn(),
+      clearSelection: jest.fn(),
+      showTooltip: jest.fn(),
+    });
+    const tickLabel = (index: number) =>
+      (options.scales.x.ticks.callback as (
+        value: string | number,
+        index: number
+      ) => string)(index, index);
+
+    expect(tickLabel(0)).toBe('Jan');
+
+    syncTimelineBarChartOptions({
+      options,
+      palette,
+      isSingleDay: false,
+      axisLabels: ['1st', '2nd'],
+      selectionRatios: [],
+    });
+
+    expect(tickLabel(0)).toBe('1st');
+    expect(tickLabel(1)).toBe('2nd');
+  });
+
   test('formatTimelineBarHourTick formats hours and minutes compactly', () => {
     expect(formatTimelineBarHourTick(0)).toBe('0');
     expect(formatTimelineBarHourTick(0.5)).toBe('30m');

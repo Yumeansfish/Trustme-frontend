@@ -1,7 +1,7 @@
 import {
-  buildDashboardDegradedNotice,
+  buildActivityDataDegradedNotice,
   formatActivityVisualizationType,
-} from '~/features/activity-dashboard/store/activityNotices';
+} from '~/features/activity/store/activityNotices';
 
 describe('activityNotices', () => {
   test('formatActivityVisualizationType turns store ids into readable labels', () => {
@@ -9,10 +9,10 @@ describe('activityNotices', () => {
     expect(formatActivityVisualizationType('timeline_barchart')).toBe('Timeline Barchart');
   });
 
-  test('buildDashboardDegradedNotice deduplicates dto names', () => {
-    const notice = buildDashboardDegradedNotice(['details', 'summary snapshot', 'details']);
+  test('buildActivityDataDegradedNotice deduplicates dto names', () => {
+    const notice = buildActivityDataDegradedNotice(['browser', 'summary', 'browser']);
 
     expect(notice.variant).toBe('danger');
-    expect(notice.items).toEqual(['details unavailable', 'summary snapshot unavailable']);
+    expect(notice.items).toEqual(['browser unavailable', 'summary unavailable']);
   });
 });

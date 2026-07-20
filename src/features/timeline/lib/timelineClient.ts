@@ -1,10 +1,11 @@
-import { getClient, getClientAbortSignal } from '~/app/lib/awclient';
-import { API_ENDPOINTS } from '~/shared/api/endpoints';
+import { getClient } from '~/app/lib/awclient';
 import type {
   TimelineLane,
   TimelineResponse,
   TimelineSegment,
-} from '~/shared/contracts/activity.generated';
+} from '~/shared/contracts/timeline.generated';
+
+const TIMELINE_ENDPOINT = '/0/dashboard/timeline';
 
 function normalizeSegment(value: unknown): TimelineSegment | null {
   if (!value || typeof value !== 'object') return null;
@@ -48,13 +49,14 @@ function normalizeLane(value: unknown): TimelineLane {
 export async function fetchTimeline({
   start,
   end,
+  signal,
 }: {
   start: Date;
   end: Date;
+  signal?: AbortSignal;
 }): Promise<TimelineResponse> {
-  const signal = getClientAbortSignal();
   const response = await getClient().req.post(
-    API_ENDPOINTS.activity.timeline,
+    TIMELINE_ENDPOINT,
     {
       range: {
         start: start.toISOString(),

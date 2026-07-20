@@ -39,13 +39,13 @@
           <div
             v-for="shortcut in shortcuts"
             :key="shortcut.key"
-            class="aw-shortcut-card"
+            class="aw-shortcut-card aw-interactive-card"
             :class="[
               selectedShortcutKey === shortcut.key ? 'aw-shortcut-card-active' : '',
-              activeTimer ? 'cursor-not-allowed opacity-60' : '',
+              activeTimer ? 'cursor-default opacity-60' : '',
             ]"
             role="button"
-            :tabindex="activeTimer ? -1 : 0"
+            tabindex="0"
             :aria-disabled="Boolean(activeTimer)"
             :aria-pressed="selectedShortcutKey === shortcut.key"
             @click="selectShortcut(shortcut.key)"
@@ -86,10 +86,14 @@
 </template>
 
 <script lang="ts">
-import _ from 'lodash';
 import moment from 'moment';
-
-import { getClient } from '~/app/lib/awclient';
+import { defineComponent } from 'vue';
+import {
+  ensureAwaySessionBucket,
+  fetchAwaySessionEvents,
+  replaceAwaySessionEvent,
+  startAwaySessionHeartbeat,
+} from '~/features/away-session/lib/awaySessionClient';
 import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 import {
   buildAwaySessionStartEvent,
@@ -103,12 +107,15 @@ import {
   resolveAwaySessionLabel,
   resolveSelectedAwayShortcut,
 } from '~/features/away-session/lib/awaySessionPresentation';
-import { orderAwaySessionEvents } from '~/features/away-session/lib/awaySessionRuntime';
+import {
+  orderAwaySessionEvents,
+  type AwaySessionEvent,
+} from '~/features/away-session/lib/awaySessionRuntime';
 import { resolveAwaySessionPrimaryActionCopy } from '~/features/away-session/lib/awaySessionState';
 import { AWAY_SESSION_SHORTCUTS } from '~/features/away-session/lib/awaySessionShortcuts';
 import { useToast } from '~/shared/composables/useToast';
 
-export default {
+export default defineComponent({
   name: 'AwaySessionView',
   components: {
     ThemeToggleButton,
@@ -116,7 +123,7 @@ export default {
   data: () => {
     return {
       bucket_id: 'aw-stopwatch',
-      events: [],
+      events: [] as AwaySessionEvent[],
       customLabel: '',
       selectedShortcutKey: '',
       shortcuts: AWAY_SESSION_SHORTCUTS,
@@ -125,12 +132,10 @@ export default {
     };
   },
   computed: {
-    runningTimers() {
-      return _.orderBy(
-        _.filter(this.events, e => e.data.running),
-        e => e.timestamp,
-        'desc'
-      );
+    runningTimers(): AwaySessionEvent[] {
+      return this.events
+        .filter(event => Boolean(event.data?.running))
+        .sort((left, right) => moment(right.timestamp).valueOf() - moment(left.timestamp).valueOf());
     },
     activeTimer() {
       return this.runningTimers[0] || null;
@@ -164,7 +169,7 @@ export default {
     },
   },
   mounted: async function () {
-    await getClient().ensureBucket(this.bucket_id, 'general.stopwatch', 'unknown');
+    await ensureAwaySessionBucket(this.bucket_id);
     await this.getEvents();
     this.tickHandle = setInterval(() => {
       this.now = moment();
@@ -192,8 +197,8 @@ export default {
       await this.triggerStopTracking();
     },
 
-    async triggerStopTracking(label = this.resolvedLabel) {
-      const nextLabel = (label || '').trim();
+    async triggerStopTracking(label?: string) {
+      const nextLabel = (label || this.resolvedLabel || '').trim();
       if (!nextLabel) {
         const { info } = useToast();
         info(
@@ -206,7 +211,7 @@ export default {
       await this.startAwaySession(nextLabel);
     },
 
-    async startAwaySession(label = this.resolvedLabel) {
+    async startAwaySession(label?: string) {
       if (this.activeTimer) {
         const { info } = useToast();
         info(
@@ -216,8 +221,8 @@ export default {
         return;
       }
 
-      const event = buildAwaySessionStartEvent(label);
-      await getClient().heartbeat(this.bucket_id, 1, event as any);
+      const event = buildAwaySessionStartEvent(label || this.resolvedLabel);
+      await startAwaySessionHeartbeat(this.bucket_id, event);
       await this.getEvents();
     },
 
@@ -227,16 +232,16 @@ export default {
       }
 
       const updatedEvent = buildAwaySessionStopEvent(this.activeTimer, moment());
-      await getClient().replaceEvent(this.bucket_id, updatedEvent);
+      await replaceAwaySessionEvent(this.bucket_id, updatedEvent);
       await this.getEvents();
       Object.assign(this, createAwaySessionSelectionReset());
     },
 
     async getEvents() {
       this.events = orderAwaySessionEvents(
-        await getClient().getEvents(this.bucket_id, { limit: 100 })
+        await fetchAwaySessionEvents(this.bucket_id)
       );
     },
   },
-};
+});
 </script>

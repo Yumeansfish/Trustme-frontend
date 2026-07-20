@@ -3,6 +3,7 @@ import {
   normalizeCustomDateRange,
   normalizeDateForPeriod,
 } from '~/features/activity/lib/activityRouteState';
+import type { LocationQueryRaw, RouteParamsRawGeneric } from 'vue-router';
 
 interface ViewLike {
   id: string;
@@ -10,7 +11,7 @@ interface ViewLike {
 
 interface RouteLike {
   name?: string | symbol | null;
-  query: Record<string, unknown>;
+  query: LocationQueryRaw;
   params: Record<string, unknown>;
 }
 
@@ -23,21 +24,7 @@ export function resolveActivityViewId(
   return hasRequestedView ? requestedViewId : fallbackViewId;
 }
 
-export function serializeRouteQuery(query: Record<string, unknown>): string {
-  return new URLSearchParams(
-    Object.entries(query).flatMap(([key, value]) => {
-      if (Array.isArray(value)) {
-        return value.map(entry => [key, String(entry)] as [string, string]);
-      }
-      if (value == null) {
-        return [];
-      }
-      return [[key, String(value)] as [string, string]];
-    })
-  ).toString();
-}
-
-export function readCategoryFilter(query: Record<string, unknown>): string[] | null {
+export function readCategoryFilter(query: LocationQueryRaw): string[] | null {
   const raw = query.category;
   if (typeof raw !== 'string' || raw.length === 0) {
     return null;
@@ -46,9 +33,9 @@ export function readCategoryFilter(query: Record<string, unknown>): string[] | n
 }
 
 export function writeCategoryFilterQuery(
-  query: Record<string, unknown>,
+  query: LocationQueryRaw,
   value: string[] | null
-): Record<string, unknown> {
+): LocationQueryRaw {
   if (value == null) {
     const nextQuery = { ...query };
     delete nextQuery.category;
@@ -60,32 +47,10 @@ export function writeCategoryFilterQuery(
   };
 }
 
-export function buildCalendarSelectionHash({
-  host,
-  date,
-  startOfWeek,
-  activeViewId,
-  query,
-}: {
-  host: string;
-  date: string;
-  startOfWeek: string;
-  activeViewId: string;
-  query: Record<string, unknown>;
-}): string {
-  const normalizedDate = normalizeDateForPeriod(date, 'day', startOfWeek);
-  const encodedHost = encodeURIComponent(host);
-  const encodedViewId = activeViewId ? `/${encodeURIComponent(activeViewId)}` : '';
-  const queryString = serializeRouteQuery(query);
-  const path = `/activity/${encodedHost}/day/${normalizedDate}/view${encodedViewId}`;
-  return queryString ? `#${path}?${queryString}` : `#${path}`;
-}
-
 export function normalizeDateSelection(
   date: string,
   periodLength: string,
-  normalizedPeriodLength: string,
-  startOfWeek: string
+  normalizedPeriodLength: string
 ): { date: string; periodLength: string } | null {
   const nextPeriodLength = periodLength || normalizedPeriodLength;
   const momentDate = moment(date, 'YYYY-MM-DD', true);
@@ -95,7 +60,7 @@ export function normalizeDateSelection(
 
   return {
     periodLength: nextPeriodLength,
-    date: normalizeDateForPeriod(momentDate.format('YYYY-MM-DD'), nextPeriodLength, startOfWeek),
+    date: normalizeDateForPeriod(momentDate.format('YYYY-MM-DD'), nextPeriodLength),
   };
 }
 
@@ -104,7 +69,6 @@ export function buildActivityRouteDescriptor({
   date,
   endDate,
   periodLength,
-  startOfWeek,
   subview,
   query,
   requestedViewId,
@@ -115,20 +79,19 @@ export function buildActivityRouteDescriptor({
   date: string;
   endDate?: string;
   periodLength: string;
-  startOfWeek: string;
   subview?: string;
-  query: Record<string, unknown>;
+  query: LocationQueryRaw;
   requestedViewId: string;
   fallbackViewId: string;
   resolvedViews: ViewLike[];
 }): {
   name: 'activity-view' | 'activity-custom-view';
-  params: Record<string, string>;
-  query: Record<string, unknown>;
+  params: RouteParamsRawGeneric;
+  query: LocationQueryRaw;
 } {
   if (periodLength === 'custom') {
     const normalizedRange = normalizeCustomDateRange(date, endDate);
-    const params: Record<string, string> = {
+    const params: RouteParamsRawGeneric = {
       host,
       date: normalizedRange.start,
       end: normalizedRange.end,
@@ -147,8 +110,8 @@ export function buildActivityRouteDescriptor({
     };
   }
 
-  const normalizedRouteDate = normalizeDateForPeriod(date, periodLength, startOfWeek);
-  const params: Record<string, string> = {
+  const normalizedRouteDate = normalizeDateForPeriod(date, periodLength);
+  const params: RouteParamsRawGeneric = {
     host,
     periodLength,
     date: normalizedRouteDate,
@@ -169,8 +132,8 @@ export function buildActivityRouteDescriptor({
 
 export function buildViewTabRoute({ route, viewId }: { route: RouteLike; viewId: string }): {
   name: 'activity-view' | 'activity-custom-view';
-  params: Record<string, unknown>;
-  query: Record<string, unknown>;
+  params: RouteParamsRawGeneric;
+  query: LocationQueryRaw;
 } {
   return {
     name: route.name === 'activity-custom-view' ? 'activity-custom-view' : 'activity-view',

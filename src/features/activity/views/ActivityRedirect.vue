@@ -1,6 +1,6 @@
 <template>
   <div v-if="state.kind === 'loading'" class="aw-activity-redirect">Loading activity…</div>
-  <div v-else class="aw-activity-redirect px-4">
+  <div v-else-if="state.kind === 'empty'" class="aw-activity-redirect px-4">
     <section
       class="w-full max-w-2xl rounded-3xl border border-base bg-surface px-6 py-8 text-center shadow-card"
     >
@@ -44,15 +44,13 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { fetchDashboardResolvedScope } from '~/features/activity-dashboard/store/dashboardClient';
+import { fetchActivityScope } from '~/features/activity/lib/activityScopeClient';
 import {
   resolveActivityRedirectOutcome,
   type ActivityRedirectOutcome,
 } from '../lib/activityRedirect';
 
-type ActivityRedirectViewState =
-  | Extract<ActivityRedirectOutcome, { kind: 'empty' }>
-  | { kind: 'loading' };
+type ActivityRedirectViewState = ActivityRedirectOutcome | { kind: 'loading' };
 
 export default defineComponent({
   name: 'ActivityRedirect',
@@ -71,7 +69,7 @@ export default defineComponent({
       this.state = { kind: 'loading' };
 
       try {
-        const activityScope = await fetchDashboardResolvedScope();
+        const activityScope = await fetchActivityScope();
         const outcome = resolveActivityRedirectOutcome({
           activityScope,
         });

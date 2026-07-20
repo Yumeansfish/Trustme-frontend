@@ -1,7 +1,7 @@
 import moment from 'moment';
 
 import { seconds_to_duration } from '~/app/lib/time';
-import type { TimelineSegment } from '~/shared/contracts/activity.generated';
+import type { TimelineSegment } from '~/shared/contracts/timeline.generated';
 
 const TOOLTIP_OFFSET = 16;
 const TOOLTIP_FALLBACK_WIDTH = 240;
@@ -24,7 +24,6 @@ export interface TimelineDecoratedSegment extends TimelineSegment {
   durationLabel: string;
   rangeLabel: string;
   fields: Array<{ label: string; value: string; wide?: boolean }>;
-  showLabel: boolean;
 }
 
 export function buildTimelineTooltipPosition({
@@ -104,7 +103,6 @@ export function decorateTimelineSegments(
         durationLabel: seconds_to_duration((endMs - startMs) / 1000),
         rangeLabel: `${moment(startMs).format('HH:mm:ss')} - ${moment(endMs).format('HH:mm:ss')}`,
         fields: buildTimelineFields(segment, laneType),
-        showLabel: widthPct >= (laneType === 'status' ? 5 : 7),
       },
     ];
   });
@@ -149,7 +147,9 @@ export function buildTimelineLaneTickMarks({
     cursor.add(TICK_INTERVAL_MINUTES, 'minutes');
   }
   const labelStep = Math.max(1, Math.ceil(internalTicks.length / 4));
-  internalTicks.forEach((tick, index) => ticks.push({ ...tick, showLabel: index % labelStep === 0 }));
+  internalTicks.forEach((tick, index) =>
+    ticks.push({ ...tick, showLabel: index % labelStep === 0 })
+  );
   ticks.push({
     key: 'end',
     label: moment(rangeEndMs).format('HH:mm'),
@@ -163,7 +163,10 @@ export function buildTimelineLaneTickMarks({
   for (let index = 1; index < ticks.length - 1; index += 1) {
     const tick = ticks[index];
     if (tick.showLabel === false) continue;
-    const previous = ticks.slice(0, index).reverse().find(candidate => candidate.showLabel !== false);
+    const previous = ticks
+      .slice(0, index)
+      .reverse()
+      .find(candidate => candidate.showLabel !== false);
     const next = ticks.slice(index + 1).find(candidate => candidate.showLabel !== false);
     if (
       (previous && tick.timeMs - previous.timeMs < minEdgeGapMs) ||
@@ -175,20 +178,9 @@ export function buildTimelineLaneTickMarks({
   return ticks;
 }
 
-export function buildTimelineLaneSegmentStyle(segment: {
-  widthPct: number;
-  clipped_start: boolean;
-  clipped_end: boolean;
-  leftPct: number;
-}) {
-  let baseInsetPx = 3;
-  if (segment.widthPct > 6) baseInsetPx = 6;
-  else if (segment.widthPct > 2.5) baseInsetPx = 5;
-  else if (segment.widthPct > 1) baseInsetPx = 4;
-  const leftInsetPx = segment.clipped_start ? 0 : baseInsetPx;
-  const rightInsetPx = segment.clipped_end ? 0 : baseInsetPx;
+export function buildTimelineLaneSegmentStyle(segment: { widthPct: number; leftPct: number }) {
   return {
-    left: `calc(${segment.leftPct}% + ${leftInsetPx}px)`,
-    width: `max(0.24rem, calc(${Math.max(segment.widthPct, 0.5)}% - ${leftInsetPx + rightInsetPx}px))`,
+    left: `${segment.leftPct}%`,
+    width: `${segment.widthPct}%`,
   };
 }

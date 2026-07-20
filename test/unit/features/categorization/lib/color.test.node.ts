@@ -21,13 +21,13 @@ describe('categorization color helpers', () => {
   test('maps categories to a stable palette color', () => {
     const category = { name: ['Work', 'Coding'] } as Category;
 
-    expect(getColorFromCategory(category, [])).toBe(getColorFromCategory(category, []));
-    expect(CATEGORY_SCALE_PALETTE).toContain(getColorFromCategory(category, []));
+    expect(getColorFromCategory(category)).toBe(getColorFromCategory(category));
+    expect(CATEGORY_SCALE_PALETTE).toContain(getColorFromCategory(category));
   });
 
   test('returns uncategorized color for uncategorized categories', () => {
     const category = { name: ['Uncategorized'] } as Category;
 
-    expect(getColorFromCategory(category, [])).toBe(CATEGORY_UNCATEGORIZED);
+    expect(getColorFromCategory(category)).toBe(CATEGORY_UNCATEGORIZED);
   });
 });

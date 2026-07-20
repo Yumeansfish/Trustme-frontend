@@ -19,10 +19,10 @@ describe('activityRouteState', () => {
   });
 
   test('normalizes dates for browseable periods', () => {
-    expect(normalizeDateForPeriod('2026-03-18', 'day', 'Monday')).toBe('2026-03-18');
-    expect(normalizeDateForPeriod('2026-03-18', 'week', 'Monday')).toBe('2026-03-16');
-    expect(normalizeDateForPeriod('2026-03-18', 'month', 'Monday')).toBe('2026-03-01');
-    expect(normalizeDateForPeriod('2026-03-18', 'year', 'Monday')).toBe('2026-01-01');
+    expect(normalizeDateForPeriod('2026-03-18', 'day')).toBe('2026-03-18');
+    expect(normalizeDateForPeriod('2026-03-18', 'week')).toBe('2026-03-16');
+    expect(normalizeDateForPeriod('2026-03-18', 'month')).toBe('2026-03-01');
+    expect(normalizeDateForPeriod('2026-03-18', 'year')).toBe('2026-01-01');
   });
 
   test('builds timeperiods and adjacent dates', () => {
@@ -47,7 +47,6 @@ describe('activityRouteState', () => {
       canNavigateActivityPeriod({
         targetDate: '2025-01-01',
         periodLength: 'year',
-        startOfWeek: 'Monday',
         earliestAvailableDate: '2025-05-09',
         latestAvailableDate: '2026-03-18',
         availableDates: ['2025-05-09', '2026-03-18'],
@@ -58,7 +57,6 @@ describe('activityRouteState', () => {
       canNavigateActivityPeriod({
         targetDate: '2024-01-01',
         periodLength: 'year',
-        startOfWeek: 'Monday',
         earliestAvailableDate: '2025-05-09',
         latestAvailableDate: '2026-03-18',
         availableDates: ['2025-05-09', '2026-03-18'],
@@ -69,7 +67,6 @@ describe('activityRouteState', () => {
       canNavigateActivityPeriod({
         targetDate: '2025-05-01',
         periodLength: 'month',
-        startOfWeek: 'Monday',
         earliestAvailableDate: '2025-05-09',
         latestAvailableDate: '2026-03-18',
         availableDates: ['2025-05-09', '2026-03-18'],
@@ -80,7 +77,6 @@ describe('activityRouteState', () => {
       canNavigateActivityPeriod({
         targetDate: '2026-04-01',
         periodLength: 'month',
-        startOfWeek: 'Monday',
         earliestAvailableDate: '2025-05-09',
         latestAvailableDate: '2026-03-18',
         availableDates: ['2025-05-09', '2026-03-18'],
@@ -91,7 +87,6 @@ describe('activityRouteState', () => {
       canNavigateActivityPeriod({
         targetDate: '2025-06-01',
         periodLength: 'month',
-        startOfWeek: 'Monday',
         earliestAvailableDate: '2025-05-09',
         latestAvailableDate: '2026-03-18',
         availableDates: ['2025-05-09', '2026-03-18'],
@@ -102,7 +97,6 @@ describe('activityRouteState', () => {
       canNavigateActivityPeriod({
         targetDate: '2026-03-17',
         periodLength: 'day',
-        startOfWeek: 'Monday',
         earliestAvailableDate: '',
         latestAvailableDate: '',
       })

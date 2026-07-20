@@ -3,6 +3,13 @@ type BucketPresentation = {
   groupTitle: string;
 };
 
+type BucketIdentity = {
+  id?: string;
+  hostname?: string;
+  device_id?: string;
+  data?: Record<string, unknown>;
+};
+
 const KNOWN_BUCKET_PRESENTATIONS: Record<string, BucketPresentation> = {
   'aw-watcher-window': {
     displayName: 'trustme-window bucket',
@@ -40,11 +47,12 @@ const KNOWN_MODULE_LABELS: Record<string, string> = {
   'aw-notify': 'trustme-checkins',
 };
 
-export function getBucketHostname(bucket: Record<string, any>): string {
-  return bucket.hostname || bucket.data?.hostname || bucket.device_id || 'Unknown';
+export function getBucketHostname(bucket: BucketIdentity): string {
+  const dataHostname = bucket.data?.hostname;
+  return bucket.hostname || (typeof dataHostname === 'string' ? dataHostname : '') || bucket.device_id || 'Unknown';
 }
 
-export function getBucketBaseId(bucket: Record<string, any> | string, hostname = ''): string {
+export function getBucketBaseId(bucket: BucketIdentity | string, hostname = ''): string {
   let bucketId = typeof bucket === 'string' ? bucket : bucket.id || '';
   const resolvedHostname = typeof bucket === 'string' ? hostname : getBucketHostname(bucket);
   const suffix = resolvedHostname && resolvedHostname !== 'Unknown' ? `_${resolvedHostname}` : '';
@@ -54,7 +62,7 @@ export function getBucketBaseId(bucket: Record<string, any> | string, hostname =
   return bucketId;
 }
 
-export function formatBucketDisplayName(bucket: Record<string, any> | string, hostname = ''): string {
+export function formatBucketDisplayName(bucket: BucketIdentity | string, hostname = ''): string {
   const bucketId = getBucketBaseId(bucket, hostname);
   const presentation = KNOWN_BUCKET_PRESENTATIONS[bucketId];
   if (presentation) {

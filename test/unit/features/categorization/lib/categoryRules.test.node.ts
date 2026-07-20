@@ -1,9 +1,7 @@
 import { Category } from '~/features/categorization/lib/classes';
 import {
-  classifyEvents,
-  matchCategoryAgainstTexts,
+  matchCategoryNameAgainstTexts,
   toQueryCategoryRules,
-  UNCATEGORIZED_CATEGORY_NAME,
 } from '~/features/categorization/lib/categoryRules';
 
 describe('category rules', () => {
@@ -40,28 +38,21 @@ describe('category rules', () => {
       },
     ];
 
-    const match = matchCategoryAgainstTexts(
+    const match = matchCategoryNameAgainstTexts(
       ['GitHub', 'Trust-me dashboard', 'https://github.com/Yumeansfish/Trustme'],
-      categories
+      toQueryCategoryRules(categories)
     );
 
-    expect(match).toEqual(categories[1]);
+    expect(match).toEqual(categories[1].name);
   });
 
-  test('classifies events and falls back to uncategorized', () => {
+  test('returns null for unmatched category text', () => {
     const categories: Category[] = [
       { name: ['Email'], rule: { type: 'regex', title_keywords: ['Gmail'], ignore_case: true } },
     ];
 
-    const events = classifyEvents(
-      [
-        { timestamp: new Date().toISOString(), duration: 1, data: { app: 'Firefox', title: 'Gmail' } },
-        { timestamp: new Date().toISOString(), duration: 1, data: { app: 'Terminal', title: 'shell' } },
-      ],
-      categories
-    );
-
-    expect(events[0].data.$category).toEqual(['Email']);
-    expect(events[1].data.$category).toEqual([...UNCATEGORIZED_CATEGORY_NAME]);
+    const rules = toQueryCategoryRules(categories);
+    expect(matchCategoryNameAgainstTexts(['Firefox', 'Gmail'], rules)).toEqual(['Email']);
+    expect(matchCategoryNameAgainstTexts(['Terminal', 'shell'], rules)).toBeNull();
   });
 });

@@ -1,11 +1,11 @@
-import { createInitialActivityState } from '~/features/activity-dashboard/store/activityState';
+import { createInitialActivityState } from '~/features/activity/store/activityState';
 import {
   finishActivityLoading,
   isAbortActivityError,
   isCurrentActivityRequest,
   resetActivityRuntimeState,
   startActivityLoading,
-} from '~/features/activity-dashboard/store/activityRequestLifecycle';
+} from '~/features/activity/store/activityRequestLifecycle';
 
 describe('activityRequestLifecycle', () => {
   test('isAbortActivityError recognizes canceled request variants', () => {
@@ -19,13 +19,14 @@ describe('activityRequestLifecycle', () => {
     const state = createInitialActivityState();
     state.request_nonce = 4;
     state.active_request_nonce = 4;
-    state.data_path = 'dashboard';
+    state.data_path = 'activity';
     state.data_notice = {
       variant: 'warning',
       title: 'old',
       message: 'stale',
       items: ['one'],
     };
+    state.window.duration = 10;
     state.window.top_apps = [{ duration: 10, data: { app: 'Code' } } as any];
     state.browser.top_domains = [{ duration: 10, data: { $domain: 'example.com' } } as any];
     state.editor.top_files = [{ duration: 10, data: { file: 'main.ts' } } as any];
@@ -38,6 +39,7 @@ describe('activityRequestLifecycle', () => {
     expect(state.query_options).toEqual({ host: 'alpha.local' });
     expect(state.data_path).toBeNull();
     expect(state.data_notice).toBeNull();
+    expect(state.window.duration).toBe(0);
     expect(state.window.top_apps).toBeNull();
     expect(state.browser.top_domains).toBeNull();
     expect(state.editor.top_files).toBeNull();
@@ -102,6 +104,7 @@ describe('activityRequestLifecycle', () => {
     state.loaded = true;
     state.query_options = { host: 'alpha.local' };
     state.editor.available = true;
+    state.window.duration = 10;
     state.category.top = null;
 
     resetActivityRuntimeState(state);
@@ -111,6 +114,7 @@ describe('activityRequestLifecycle', () => {
     expect(state.is_initial_loading).toBe(false);
     expect(state.is_refreshing).toBe(false);
     expect(state.refresh_kind).toBeNull();
+    expect(state.window.duration).toBe(0);
     expect(state.editor.available).toBe(false);
     expect(state.category.top).toEqual([]);
   });

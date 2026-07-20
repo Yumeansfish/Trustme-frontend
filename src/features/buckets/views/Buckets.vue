@@ -4,7 +4,7 @@
       <h2 class="aw-section-title aw-title-system">Raw Data</h2>
       <theme-toggle-button floating></theme-toggle-button>
     </div>
-    <section class="aw-card space-y-5 p-5 md:p-6">
+    <section class="space-y-5">
       <div v-if="visibleBuckets.length" class="aw-bucket-grid">
         <div
           v-for="bucket in visibleBuckets"
@@ -57,25 +57,26 @@
 </template>
 
 <script lang="ts">
-import _ from 'lodash';
 import Papa from 'papaparse';
 import moment from 'moment';
+import { defineComponent } from 'vue';
 import { useDialog } from '~/shared/composables/useDialog';
 
-import { getClient } from '~/app/lib/awclient';
+import { deleteBucketEvent } from '~/features/buckets/lib/bucketsClient';
 import { useBucketsStore } from '~/features/buckets/store/buckets';
 import { buildBucketGroups, type BucketGroup } from '~/features/buckets/lib/bucketGroups';
+import type { IBucket } from '~/shared/lib/interfaces';
 
 type GroupExportEvent = {
   id?: number;
-  timestamp: Date;
-  duration?: number;
+  timestamp: string;
+  duration: number;
   data: Record<string, unknown>;
   source_bucket_id: string;
 };
 import ThemeToggleButton from '~/features/settings/components/ThemeToggleButton.vue';
 
-export default {
+export default defineComponent({
   name: 'Buckets',
   components: {
     ThemeToggleButton,
@@ -98,16 +99,10 @@ export default {
     await this.bucketsStore.loadBuckets();
   },
   methods: {
-    isRecent: function (date) {
-      return moment().diff(date) / 1000 < 120;
-    },
-    formatDate: function (date) {
-      return date ? new Date(date).toLocaleString() : '';
-    },
     bucketTitle: function (bucket: BucketGroup) {
       return bucket.title;
     },
-    isEmptyBucket: function (bucket) {
+    isEmptyBucket: function (bucket: IBucket) {
       if (!bucket.last_updated) {
         return true;
       }
@@ -119,12 +114,11 @@ export default {
 
       return lastUpdated.isBefore(moment().subtract(1, 'month'));
     },
-    sortedBuckets: function (buckets) {
-      return _.orderBy(
-        buckets,
-        [bucket => bucket.last_updated, bucket => bucket.id],
-        ['desc', 'asc']
-      );
+    sortedBuckets: function (buckets: IBucket[]): IBucket[] {
+      return [...buckets].sort((left, right) => {
+        const byUpdated = moment(right.last_updated).valueOf() - moment(left.last_updated).valueOf();
+        return byUpdated || left.id.localeCompare(right.id);
+      });
     },
     openBucketGroup: function (bucket: BucketGroup) {
       const date = bucket.latestAvailableDate || moment().format('YYYY-MM-DD');
@@ -150,7 +144,7 @@ export default {
         const sourceBucket = await this.bucketsStore.getBucketWithEvents({ id: bucketId });
         for (const event of sourceBucket.events || []) {
           if (event?.id === undefined || event?.id === null) continue;
-          await getClient().deleteEvent(bucketId, event.id);
+          await deleteBucketEvent(bucketId, event.id);
         }
       }
       this.hiddenGroupKeys = [...this.hiddenGroupKeys, bucket.key];
@@ -167,7 +161,9 @@ export default {
           }));
         })
       );
-      return _.orderBy(buckets.flat(), [event => event.timestamp], ['desc']);
+      return buckets
+        .flat()
+        .sort((left, right) => right.timestamp.localeCompare(left.timestamp));
     },
     async exportGroupJson(bucket: BucketGroup) {
       const events = await this.loadGroupEvents(bucket);
@@ -223,5 +219,5 @@ export default {
       URL.revokeObjectURL(url);
     },
   },
-};
+});
 </script>

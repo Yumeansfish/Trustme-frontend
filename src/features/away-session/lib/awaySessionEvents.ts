@@ -1,4 +1,5 @@
 import moment from 'moment';
+import type { AwaySessionEvent } from './awaySessionRuntime';
 
 export function buildAwaySessionStartEvent(label: string, timestamp = new Date()) {
   const normalizedLabel = (label || '').trim();
@@ -14,9 +15,17 @@ export function buildAwaySessionStartEvent(label: string, timestamp = new Date()
   };
 }
 
-export function buildAwaySessionStopEvent(activeTimer: any, now = moment()) {
-  const updatedEvent = JSON.parse(JSON.stringify(activeTimer));
-  updatedEvent.data.running = false;
+export function buildAwaySessionStopEvent(
+  activeTimer: AwaySessionEvent,
+  now = moment()
+): AwaySessionEvent {
+  const updatedEvent: AwaySessionEvent = {
+    ...activeTimer,
+    data: { ...activeTimer.data },
+  };
+  if (updatedEvent.data) {
+    updatedEvent.data.running = false;
+  }
   updatedEvent.duration = now.diff(moment(updatedEvent.timestamp), 'seconds', true);
   return updatedEvent;
 }

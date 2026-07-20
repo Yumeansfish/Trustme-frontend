@@ -1,8 +1,12 @@
 import {
   buildActivityRouteDescriptor,
-  buildCalendarSelectionHash,
   normalizeDateSelection,
 } from '~/features/activity/lib/activityNavigation';
+import type {
+  LocationQueryRaw,
+  RouteParamsRawGeneric,
+  Router,
+} from 'vue-router';
 
 interface ViewLike {
   id: string;
@@ -10,29 +14,16 @@ interface ViewLike {
 
 interface RouteLike {
   fullPath: string;
-  query: Record<string, unknown>;
+  query: LocationQueryRaw;
 }
 
-interface RouterLike {
-  resolve(route: ActivityRouteDescriptor): { fullPath: string };
-  replace(route: ActivityRouteDescriptor): Promise<unknown>;
-  push(route: ActivityRouteDescriptor): Promise<unknown> | void;
-}
+type RouterLike = Pick<Router, 'resolve' | 'replace' | 'push'>;
 
 export interface ActivityRouteDescriptor {
   name: 'activity-view' | 'activity-custom-view';
-  params: Record<string, string>;
-  query: Record<string, unknown>;
+  params: RouteParamsRawGeneric;
+  query: LocationQueryRaw;
 }
-
-export const ACTIVITY_REACTIVE_REFRESH_WATCHERS = Object.freeze({
-  host: 'handleReactiveRefresh',
-  timeperiod: 'handleReactiveRefresh',
-  filter_category: 'handleReactiveRefresh',
-  filter_afk: 'handleReactiveRefresh',
-  include_audible: 'handleReactiveRefresh',
-  currentViewId: 'handleReactiveRefresh',
-});
 
 export function resolveCurrentActivityView<T extends ViewLike>(
   resolvedViews: T[],
@@ -53,7 +44,6 @@ export function buildResolvedActivityRoute({
   date,
   endDate,
   periodLength,
-  startOfWeek,
   subview,
   query,
   requestedViewId,
@@ -64,9 +54,8 @@ export function buildResolvedActivityRoute({
   date: string;
   endDate?: string;
   periodLength: string;
-  startOfWeek: string;
   subview?: string;
-  query: Record<string, unknown>;
+  query: LocationQueryRaw;
   requestedViewId: string;
   fallbackViewId: string;
   resolvedViews: ViewLike[];
@@ -76,7 +65,6 @@ export function buildResolvedActivityRoute({
     date,
     endDate,
     periodLength,
-    startOfWeek,
     subview,
     query,
     requestedViewId,
@@ -104,33 +92,10 @@ export async function normalizeActivityRouteIfNeeded({
   return true;
 }
 
-export function buildCalendarSelectionLocationHash({
-  host,
-  date,
-  startOfWeek,
-  activeViewId,
-  query,
-}: {
-  host: string;
-  date: string;
-  startOfWeek: string;
-  activeViewId: string;
-  query: Record<string, unknown>;
-}): string {
-  return buildCalendarSelectionHash({
-    host,
-    date,
-    startOfWeek,
-    activeViewId,
-    query,
-  });
-}
-
 export function buildActivityDateSelectionRoute({
   date,
   periodLength,
   normalizedPeriodLength,
-  startOfWeek,
   host,
   subview,
   query,
@@ -141,10 +106,9 @@ export function buildActivityDateSelectionRoute({
   date: string;
   periodLength: string;
   normalizedPeriodLength: string;
-  startOfWeek: string;
   host: string;
   subview?: string;
-  query: Record<string, unknown>;
+  query: LocationQueryRaw;
   requestedViewId: string;
   fallbackViewId: string;
   resolvedViews: ViewLike[];
@@ -152,8 +116,7 @@ export function buildActivityDateSelectionRoute({
   const nextRouteState = normalizeDateSelection(
     date,
     periodLength,
-    normalizedPeriodLength,
-    startOfWeek
+    normalizedPeriodLength
   );
   if (!nextRouteState) {
     return null;
@@ -163,7 +126,6 @@ export function buildActivityDateSelectionRoute({
     host,
     date: nextRouteState.date,
     periodLength: nextRouteState.periodLength,
-    startOfWeek,
     subview,
     query,
     requestedViewId,

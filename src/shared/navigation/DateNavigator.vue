@@ -1,9 +1,19 @@
 <template>
-  <div ref="root" class="aw-pill-control aw-date-nav">
+  <div
+    ref="root"
+    class="aw-pill-control aw-date-nav"
+    :class="[
+      fieldMode ? 'aw-date-nav-field' : '',
+      invalid ? 'aw-date-nav-invalid' : '',
+      disabled ? 'aw-date-nav-disabled' : '',
+    ]"
+  >
     <ui-button
+      v-if="!fieldMode"
       class="aw-icon-button h-7 w-7 rounded-full disabled:opacity-40"
       type="button"
       :disabled="disablePrevious"
+      aria-label="Previous period"
       @click="$emit('previous')"
     >
       <icon class="h-3 w-3" name="chevron-left"></icon>
@@ -11,14 +21,24 @@
 
     <div class="relative">
       <button
+        ref="trigger"
         class="aw-date-nav-trigger"
-        :class="iconOnly ? 'aw-date-nav-trigger-icon' : ''"
+        :class="[
+          iconOnly ? 'aw-date-nav-trigger-icon' : '',
+          fieldMode ? 'aw-date-nav-trigger-field' : '',
+        ]"
         type="button"
         :title="formattedValue"
+        :disabled="disabled"
+        :aria-invalid="invalid || undefined"
+        :aria-expanded="isOpen"
+        aria-haspopup="dialog"
         @click="togglePopover"
       >
         <icon class="h-3.5 w-3.5 shrink-0" name="calendar"></icon>
-        <span v-if="!iconOnly" class="truncate">{{ formattedValue }}</span>
+        <span v-if="!iconOnly" class="min-w-0 flex-1 truncate text-left">
+          {{ formattedValue }}
+        </span>
         <icon
           v-if="!iconOnly"
           class="h-3.5 w-3.5 shrink-0 transition-transform"
@@ -27,12 +47,13 @@
         ></icon>
       </button>
 
-      <div v-if="isOpen" class="aw-date-popover">
+      <div v-if="isOpen" class="aw-date-popover" role="dialog" aria-label="Choose a date">
         <div class="aw-date-popover-header">
           <button
             class="aw-date-popover-nav"
             type="button"
             :disabled="!canGoPreviousMonth"
+            aria-label="Previous month"
             @click="showPreviousMonth"
           >
             <icon class="h-4 w-4" name="chevron-left"></icon>
@@ -42,13 +63,14 @@
             class="aw-date-popover-nav"
             type="button"
             :disabled="!canGoNextMonth"
+            aria-label="Next month"
             @click="showNextMonth"
           >
             <icon class="h-4 w-4" name="chevron-right"></icon>
           </button>
         </div>
 
-        <div class="aw-date-weekdays">
+        <div class="aw-date-weekdays" aria-hidden="true">
           <span v-for="weekday in weekdays" :key="weekday">{{ weekday }}</span>
         </div>
 
@@ -57,37 +79,56 @@
             v-for="day in calendarDays"
             :key="day.iso"
             type="button"
+            :data-date="day.iso"
             :disabled="day.disabled"
+            :aria-label="day.accessibleLabel"
+            :aria-selected="day.isSelected"
+            :aria-current="day.isToday ? 'date' : undefined"
             :class="[
               'aw-date-cell',
               day.inMonth ? '' : 'aw-date-cell-outside',
               day.disabled ? 'aw-date-cell-disabled' : '',
+              markedDates.includes(day.iso) ? 'aw-date-cell-marked' : '',
               day.isToday ? 'aw-date-cell-today' : '',
               day.isSelected ? 'aw-date-cell-selected' : '',
             ]"
             @click="selectDate(day.iso)"
+            @keydown="handleDayKeydown($event, day.iso)"
           >
             {{ day.label }}
           </button>
         </div>
 
-        <div class="aw-date-popover-footer">
+        <div
+          class="aw-date-popover-footer"
+          :class="clearable && hasSelectedDate ? 'aw-date-popover-footer-split' : ''"
+        >
+          <button
+            v-if="clearable && hasSelectedDate"
+            class="aw-date-popover-clear"
+            type="button"
+            @click="clearDate"
+          >
+            Clear
+          </button>
           <button
             class="aw-date-popover-action"
             type="button"
             :disabled="!latestSelectableDate"
             @click="jumpToLatest"
           >
-            Latest
+            {{ latestLabel }}
           </button>
         </div>
       </div>
     </div>
 
     <ui-button
+      v-if="!fieldMode"
       class="aw-icon-button h-7 w-7 rounded-full disabled:opacity-40"
       type="button"
       :disabled="disableNext"
+      aria-label="Next period"
       @click="$emit('next')"
     >
       <icon class="h-3 w-3" name="chevron-right"></icon>
@@ -96,34 +137,15 @@
 </template>
 
 <script lang="ts">
-import moment from 'moment';
-import { PropType, computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import {
-  isDateAvailable,
-  normalizeAvailableDates,
-} from '~/shared/navigation/dateAvailability';
-
-type CalendarDay = {
-  iso: string;
-  label: string;
-  inMonth: boolean;
-  disabled: boolean;
-  isToday: boolean;
-  isSelected: boolean;
-};
-
-const DATE_FORMAT = 'YYYY-MM-DD';
-
-function parseDate(value: string) {
-  return moment(value, DATE_FORMAT, true);
-}
+import { PropType, defineComponent } from 'vue';
+import { useDateNavigator } from '~/shared/navigation/useDateNavigator';
 
 export default defineComponent({
   name: 'DateNavigator',
   props: {
     modelValue: {
       type: String,
-      required: true,
+      default: '',
     },
     min: {
       type: String,
@@ -137,6 +159,10 @@ export default defineComponent({
       type: Array as PropType<string[] | null | undefined>,
       default: undefined,
     },
+    markedDates: {
+      type: Array as PropType<string[]>,
+      default: () => [],
+    },
     disablePrevious: {
       type: Boolean,
       default: false,
@@ -149,165 +175,34 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    fieldMode: {
+      type: Boolean,
+      default: false,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+    invalid: {
+      type: Boolean,
+      default: false,
+    },
+    clearable: {
+      type: Boolean,
+      default: false,
+    },
+    placeholder: {
+      type: String,
+      default: 'Select date',
+    },
+    latestLabel: {
+      type: String,
+      default: 'Latest',
+    },
   },
   emits: ['next', 'previous', 'select', 'update:modelValue'],
-  setup(props, { emit }) {
-    const isOpen = ref(false);
-    const root = ref<HTMLElement | null>(null);
-    const selectedDate = computed(() => parseDate(props.modelValue));
-    const minDate = computed(() => (props.min ? parseDate(props.min) : null));
-    const maxDate = computed(() => (props.max ? parseDate(props.max) : null));
-    const visibleMonth = ref(selectedDate.value.clone().startOf('month'));
-
-    const formattedValue = computed(() => selectedDate.value.format('MMM D, YYYY'));
-    const visibleMonthLabel = computed(() => visibleMonth.value.format('MMMM YYYY'));
-
-    const firstDayOfWeek = computed(() => moment.localeData().firstDayOfWeek());
-    const weekdays = computed(() => {
-      const localeWeekdays = moment.weekdaysMin();
-      return localeWeekdays
-        .slice(firstDayOfWeek.value)
-        .concat(localeWeekdays.slice(0, firstDayOfWeek.value));
-    });
-
-    const isDisabledDate = (date: moment.Moment) => {
-      if (minDate.value && date.isBefore(minDate.value, 'day')) return true;
-      if (maxDate.value && date.isAfter(maxDate.value, 'day')) return true;
-      if (!isDateAvailable(date.format(DATE_FORMAT), props.availableDates)) {
-        return true;
-      }
-      return false;
-    };
-
-    const latestSelectableDate = computed(() => {
-      if (props.availableDates !== undefined) {
-        const candidates = normalizeAvailableDates(props.availableDates).reverse();
-        const latest = candidates.find(value => {
-          const parsed = parseDate(value);
-          return parsed.isValid() && !isDisabledDate(parsed);
-        });
-        return latest ? parseDate(latest) : null;
-      }
-
-      return maxDate.value || moment().startOf('day');
-    });
-
-    const calendarDays = computed<CalendarDay[]>(() => {
-      const monthStart = visibleMonth.value.clone().startOf('month');
-      const offset = (monthStart.day() - firstDayOfWeek.value + 7) % 7;
-      const gridStart = monthStart.clone().subtract(offset, 'days');
-      const today = moment().startOf('day');
-
-      return Array.from({ length: 42 }, (_, index) => {
-        const date = gridStart.clone().add(index, 'days');
-        return {
-          iso: date.format(DATE_FORMAT),
-          label: date.format('D'),
-          inMonth: date.month() === visibleMonth.value.month(),
-          disabled: isDisabledDate(date),
-          isToday: date.isSame(today, 'day'),
-          isSelected: date.isSame(selectedDate.value, 'day'),
-        };
-      });
-    });
-
-    const canGoPreviousMonth = computed(() => {
-      if (!minDate.value) return true;
-      return visibleMonth.value.clone().subtract(1, 'month').endOf('month').isSameOrAfter(minDate.value, 'day');
-    });
-
-    const canGoNextMonth = computed(() => {
-      if (!maxDate.value) return true;
-      return visibleMonth.value.clone().add(1, 'month').startOf('month').isSameOrBefore(maxDate.value, 'day');
-    });
-
-    const closePopover = () => {
-      isOpen.value = false;
-    };
-
-    const togglePopover = () => {
-      visibleMonth.value = selectedDate.value.clone().startOf('month');
-      isOpen.value = !isOpen.value;
-    };
-
-    const showPreviousMonth = () => {
-      if (!canGoPreviousMonth.value) return;
-      visibleMonth.value = visibleMonth.value.clone().subtract(1, 'month');
-    };
-
-    const showNextMonth = () => {
-      if (!canGoNextMonth.value) return;
-      visibleMonth.value = visibleMonth.value.clone().add(1, 'month');
-    };
-
-    const commitDate = (value: string) => {
-      emit('update:modelValue', value);
-      emit('select', value);
-    };
-
-    const selectDate = (value: string) => {
-      const parsed = parseDate(value);
-      if (!parsed.isValid() || isDisabledDate(parsed)) return;
-      commitDate(value);
-      closePopover();
-    };
-
-    const jumpToLatest = () => {
-      const latest = latestSelectableDate.value;
-      if (!latest) return;
-      commitDate(latest.format(DATE_FORMAT));
-      visibleMonth.value = latest.clone().startOf('month');
-      closePopover();
-    };
-
-    const handleDocumentClick = (event: MouseEvent) => {
-      const target = event.target as Node | null;
-      if (!root.value || !target || root.value.contains(target)) return;
-      closePopover();
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closePopover();
-      }
-    };
-
-    watch(
-      () => props.modelValue,
-      value => {
-        const parsed = parseDate(value);
-        if (parsed.isValid()) {
-          visibleMonth.value = parsed.clone().startOf('month');
-        }
-      }
-    );
-
-    onMounted(() => {
-      document.addEventListener('click', handleDocumentClick);
-      document.addEventListener('keydown', handleEscape);
-    });
-
-    onBeforeUnmount(() => {
-      document.removeEventListener('click', handleDocumentClick);
-      document.removeEventListener('keydown', handleEscape);
-    });
-
-    return {
-      calendarDays,
-      canGoNextMonth,
-      canGoPreviousMonth,
-      formattedValue,
-      isOpen,
-      jumpToLatest,
-      latestSelectableDate,
-      root,
-      selectDate,
-      showNextMonth,
-      showPreviousMonth,
-      togglePopover,
-      visibleMonthLabel,
-      weekdays,
-    };
+  setup(props, context) {
+    return useDateNavigator(props, context);
   },
 });
 </script>

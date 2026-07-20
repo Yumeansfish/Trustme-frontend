@@ -1,7 +1,12 @@
+// ActivityWatch event payloads are schemaless and watcher-specific at this boundary.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type DynamicEventData = Record<string, any>;
+
 export interface IEvent {
+  id?: number;
   timestamp: string;
   duration: number;
-  data: Record<string, any>;
+  data: DynamicEventData;
 }
 
 export interface IBucket {
@@ -9,8 +14,7 @@ export interface IBucket {
   hostname: string;
   device_id: string;
   type: string;
-  data: Record<string, any>;
-  metadata?: { start: Date; end: Date };
+  data: DynamicEventData;
   last_updated?: Date;
   first_seen?: Date;
   created?: Date;

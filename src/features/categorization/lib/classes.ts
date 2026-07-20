@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneJson } from '~/shared/lib/objects';
 
 const level_sep = '>';
 const MATCHER_METADATA_KEYS = ['exact_apps', 'aliases', 'domains', 'title_keywords'] as const;
@@ -21,7 +21,7 @@ export interface Category {
   name_pretty?: string;
   subname?: string;
   rule: Rule;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   depth?: number;
   parent?: string[];
   children?: Category[];
@@ -38,7 +38,7 @@ export function annotate(c: Category) {
 
 export function createMissingParents(classes: Category[]): Category[] {
   // Creates parents for categories that are missing theirs (implicit parents)
-  classes = _.cloneDeep(classes);
+  classes = cloneJson(classes);
   classes = classes.slice().map(c => annotate(c));
   const all_full_names = new Set(classes.map(c => c.name.join(level_sep)));
 
@@ -63,7 +63,7 @@ export function createMissingParents(classes: Category[]): Category[] {
 }
 
 export function cleanCategory(cat: Category): Category {
-  cat = _.cloneDeep(cat);
+  cat = cloneJson(cat);
   delete cat.children;
   delete cat.parent;
   delete cat.subname;

@@ -1,10 +1,9 @@
 const mockEnsureLoaded = jest.fn();
-const mockFetchDashboardResolvedScope = jest.fn();
-const mockAbort = jest.fn();
+const mockFetchDashboardScope = jest.fn();
 const mockSyncActivityScope = jest.fn();
 const mockSyncActivityBuckets = jest.fn();
 const mockUpdateActivityAvailability = jest.fn();
-const mockShouldUseDashboardDtoFlow = jest.fn(() => true);
+const mockShouldUseActivityDataFlow = jest.fn(() => true);
 
 jest.mock('~/features/settings/store/settings', () => ({
   useSettingsStore: () => ({
@@ -12,28 +11,22 @@ jest.mock('~/features/settings/store/settings', () => ({
   }),
 }));
 
-jest.mock('~/features/activity-dashboard/store/dashboardClient', () => ({
-  fetchDashboardResolvedScope: mockFetchDashboardResolvedScope,
+jest.mock('~/features/activity/lib/activityScopeClient', () => ({
+  fetchActivityScope: mockFetchDashboardScope,
 }));
 
-jest.mock('~/app/lib/awclient', () => ({
-  getClient: () => ({
-    abort: mockAbort,
-  }),
-}));
-
-jest.mock('~/features/activity-dashboard/store/activityBucketRuntime', () => ({
+jest.mock('~/features/activity/store/activityBucketRuntime', () => ({
   syncActivityScope: mockSyncActivityScope,
   syncActivityBuckets: mockSyncActivityBuckets,
   updateActivityAvailability: mockUpdateActivityAvailability,
 }));
 
-jest.mock('~/features/activity-dashboard/store/activityVisualizations', () => ({
-  shouldUseDashboardDtoFlow: (...args: any[]) => mockShouldUseDashboardDtoFlow(...args),
+jest.mock('~/features/activity/store/activityQueryPlan', () => ({
+  shouldUseActivityDataFlow: (...args: any[]) => mockShouldUseActivityDataFlow(...args),
 }));
 
-import { ensureActivityLoaded } from '~/features/activity-dashboard/store/activityCoordinator';
-import type { QueryOptions } from '~/features/activity-dashboard/store/activityTypes';
+import { ensureActivityLoaded } from '~/features/activity/store/activityCoordinator';
+import type { QueryOptions } from '~/features/activity/store/activityTypes';
 
 function createStoreStub() {
   return {
@@ -57,7 +50,7 @@ function createStoreStub() {
     isCurrentRequest: jest.fn(() => true),
     start_loading: jest.fn(() => 7),
     finish_loading: jest.fn(),
-    query_dashboard_view: jest.fn(async () => undefined),
+    query_activity: jest.fn(async () => undefined),
     query_window_completed: jest.fn(),
     query_browser_completed: jest.fn(),
     query_category_time_by_period_completed: jest.fn(),
@@ -72,8 +65,8 @@ describe('activityCoordinator', () => {
   });
 
   test('ensureActivityLoaded routes supported queries through the dashboard dto path', async () => {
-    mockFetchDashboardResolvedScope.mockResolvedValue({
-      group_name: 'My macbook',
+    mockFetchDashboardScope.mockResolvedValue({
+      group_name: 'MacBook',
       resolved_hosts: ['alpha.local'],
       window_buckets: ['window-a'],
       afk_buckets: ['afk-a'],
@@ -100,18 +93,22 @@ describe('activityCoordinator', () => {
     await ensureActivityLoaded(store, queryOptions);
 
     expect(mockEnsureLoaded).toHaveBeenCalled();
-    expect(mockFetchDashboardResolvedScope).toHaveBeenCalledWith();
+    expect(mockFetchDashboardScope).toHaveBeenCalledWith(expect.anything());
     expect(store.start_loading).toHaveBeenCalledWith(queryOptions);
     expect(mockSyncActivityScope).toHaveBeenCalled();
     expect(mockSyncActivityBuckets).toHaveBeenCalled();
-    expect(store.query_dashboard_view).toHaveBeenCalledWith(queryOptions, 7);
+    expect(store.query_activity).toHaveBeenCalledWith(
+      queryOptions,
+      7,
+      mockFetchDashboardScope.mock.calls[0][0]
+    );
     expect(store.finish_loading).toHaveBeenCalledWith(7);
     expect(store.setActivityDataPath).not.toHaveBeenCalledWith('legacy');
   });
 
   test('ensureActivityLoaded no longer falls back to legacy activity queries', async () => {
-    mockFetchDashboardResolvedScope.mockResolvedValue({
-      group_name: 'My macbook',
+    mockFetchDashboardScope.mockResolvedValue({
+      group_name: 'MacBook',
       resolved_hosts: ['alpha.local'],
       window_buckets: [],
       afk_buckets: [],
@@ -137,7 +134,11 @@ describe('activityCoordinator', () => {
 
     await ensureActivityLoaded(store, queryOptions);
 
-    expect(store.query_dashboard_view).toHaveBeenCalledWith(queryOptions, 7);
+    expect(store.query_activity).toHaveBeenCalledWith(
+      queryOptions,
+      7,
+      mockFetchDashboardScope.mock.calls[0][0]
+    );
     expect(store.finish_loading).toHaveBeenCalledWith(7);
   });
 });

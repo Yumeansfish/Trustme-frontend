@@ -1,8 +1,8 @@
 <template>
-  <div v-if="view" class="flex h-full min-h-0 flex-col">
-    <div class="relative min-h-0 flex-1">
+  <div v-if="view" class="aw-activity-view flex h-full min-h-0 flex-col">
+    <div class="relative flex min-h-0 flex-1">
       <div
-        class="grid min-h-0 flex-1 content-start overflow-y-auto pr-1 grid-cols-1 gap-3 lg:grid-cols-6 xl:grid-cols-12"
+        class="grid h-full min-h-0 w-full grid-cols-1 gap-3 overflow-y-auto pr-1 lg:grid-cols-6 xl:grid-cols-12"
       >
         <template v-for="(el, index) in elements" :key="el.id || `${el.type}-${index}`">
           <div
@@ -10,10 +10,10 @@
             class="min-h-0"
             :class="[visualizationSpanClass(el, index), visualizationHeightClass(el, index)]"
           >
-            <div class="aw-card aw-card-modal flex h-full min-h-0 flex-col overflow-hidden p-3">
-              <aw-selectable-vis
-                :type="resolvedVisualizationType(el.type, index)"
-              ></aw-selectable-vis>
+            <div class="aw-card flex h-full min-h-0 flex-col overflow-hidden p-3">
+              <SelectableVisualization
+                :type="resolvedVisualizationType(el.type, index) || el.type"
+              />
             </div>
           </div>
         </template>
@@ -28,19 +28,21 @@
 </template>
 
 <script lang="ts">
-import { useActivityStore } from '~/features/activity-dashboard/store/activity';
-import { defaultViews } from '~/features/activity-layouts/lib/activityViewCatalog';
+import { useActivityStore } from '~/features/activity/store/activity';
+import { defaultViews, type ViewElement } from '~/features/activity/lib/layout/activityViewCatalog';
+import SelectableVisualization from '~/features/activity/components/SelectableVisualization.vue';
 import {
   resolveActivityPageView,
   resolveActivityVisualizationHeightClass,
   resolveActivityVisualizationSpanClass,
   resolveActivityVisualizationType,
-} from '~/features/activity-layouts/lib/activityViewLayout';
+} from '~/features/activity/lib/layout/activityViewLayout';
 
 import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'ActivityView',
+  components: { SelectableVisualization },
   props: {
     view_id: { type: String, default: 'default' },
   },
@@ -64,7 +66,7 @@ export default defineComponent({
     },
   },
   methods: {
-    resolvedVisualizationType(type, index) {
+    resolvedVisualizationType(type: string, index: number) {
       return resolveActivityVisualizationType({
         type,
         index,
@@ -73,12 +75,12 @@ export default defineComponent({
         browserAvailable: this.activityStore.browser.available,
       });
     },
-    visualizationSpanClass(el, index) {
+    visualizationSpanClass(el: ViewElement, index: number) {
       return resolveActivityVisualizationSpanClass({
         resolvedType: this.resolvedVisualizationType(el.type, index),
       });
     },
-    visualizationHeightClass(el, index) {
+    visualizationHeightClass(el: ViewElement, index: number) {
       return resolveActivityVisualizationHeightClass({
         resolvedType: this.resolvedVisualizationType(el.type, index),
       });

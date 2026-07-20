@@ -1,7 +1,7 @@
 import {
   resolveActivityRedirectOutcome,
 } from '~/features/activity/lib/activityRedirect';
-import { resolveDefaultViewId } from '~/features/activity-layouts/lib/activityViewCatalog';
+import { resolveDefaultViewId } from '~/features/activity/lib/layout/activityViewCatalog';
 
 describe('activity redirect helper', () => {
   test('falls back to the default summary view when configured views are empty', () => {
@@ -12,7 +12,7 @@ describe('activity redirect helper', () => {
     expect(
       resolveActivityRedirectOutcome({
         activityScope: {
-          group_name: 'My macbook',
+          group_name: 'MacBook',
           resolved_hosts: ['workstation', 'laptop'],
           window_buckets: ['window'],
           afk_buckets: ['afk'],
@@ -26,7 +26,7 @@ describe('activity redirect helper', () => {
       })
     ).toEqual({
       kind: 'redirect',
-      path: '/activity/My%20macbook/day/2026-03-21/view/summary',
+      path: '/activity/MacBook/day/2026-03-21/view/summary',
     });
   });
 

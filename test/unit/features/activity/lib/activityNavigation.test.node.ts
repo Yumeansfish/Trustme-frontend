@@ -1,11 +1,9 @@
 import {
   buildActivityRouteDescriptor,
-  buildCalendarSelectionHash,
   buildViewTabRoute,
   normalizeDateSelection,
   readCategoryFilter,
   resolveActivityViewId,
-  serializeRouteQuery,
   writeCategoryFilterQuery,
 } from '~/features/activity/lib/activityNavigation';
 
@@ -14,22 +12,6 @@ describe('activityNavigation', () => {
     const views = [{ id: 'summary' }, { id: 'buckets' }];
     expect(resolveActivityViewId(views, 'summary', 'buckets')).toBe('summary');
     expect(resolveActivityViewId(views, 'missing', 'buckets')).toBe('buckets');
-  });
-
-  test('serializes route query and calendar hash', () => {
-    const query = { category: 'Code>Debug', tags: ['one', 'two'], empty: null };
-    expect(serializeRouteQuery(query)).toBe('category=Code%3EDebug&tags=one&tags=two');
-    expect(
-      buildCalendarSelectionHash({
-        host: 'alpha.local,beta.local',
-        date: '2026-03-19',
-        startOfWeek: 'Monday',
-        activeViewId: 'summary',
-        query,
-      })
-    ).toBe(
-      '#/activity/alpha.local%2Cbeta.local/day/2026-03-19/view/summary?category=Code%3EDebug&tags=one&tags=two'
-    );
   });
 
   test('reads and writes category filters in route query', () => {
@@ -45,11 +27,11 @@ describe('activityNavigation', () => {
   });
 
   test('normalizes date selection for browseable periods', () => {
-    expect(normalizeDateSelection('2026-03-19', 'month', 'day', 'Monday')).toEqual({
+    expect(normalizeDateSelection('2026-03-19', 'month', 'day')).toEqual({
       periodLength: 'month',
       date: '2026-03-01',
     });
-    expect(normalizeDateSelection('not-a-date', 'month', 'day', 'Monday')).toBeNull();
+    expect(normalizeDateSelection('not-a-date', 'month', 'day')).toBeNull();
   });
 
   test('builds route descriptors for activity view and tabs', () => {
@@ -57,7 +39,6 @@ describe('activityNavigation', () => {
       host: 'alpha.local',
       date: '2026-03-19',
       periodLength: 'week',
-      startOfWeek: 'Monday',
       subview: 'view',
       query: { category: 'Code' },
       requestedViewId: 'missing',
@@ -98,7 +79,6 @@ describe('activityNavigation', () => {
         date: '2026-03-19',
         endDate: '2026-03-23',
         periodLength: 'custom',
-        startOfWeek: 'Monday',
         subview: 'view',
         query: { category: 'Code' },
         requestedViewId: 'missing',

@@ -1,4 +1,8 @@
 {
+  "group_name": "",
+  "available_dates": [],
+  "earliest_available_date": "",
+  "latest_available_date": "",
   "resolved_hosts": ["alpha.local", "beta.local"],
   "window_buckets": [
     "aw-watcher-window_alpha.local",

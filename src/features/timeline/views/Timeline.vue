@@ -2,15 +2,14 @@
 <div class="space-y-8 pb-8 md:space-y-10 md:pb-10">
   <div class="flex flex-wrap items-start justify-between gap-3">
     <div class="space-y-2">
-      <button
+      <ui-link
         v-if="showBreadcrumb"
-        type="button"
-        class="inline-flex items-center gap-1.5 text-sm font-medium text-foreground-muted transition-colors hover:text-foreground-emphasis"
-        @click="goBackToReturnPage"
+        class="aw-breadcrumb"
+        :to="returnToPath"
       >
         <icon name="chevron-left" class="h-4 w-4"></icon>
         <span>{{ breadcrumbLabel }}</span>
-      </button>
+      </ui-link>
       <h2 class="aw-section-title aw-title-system">Timeline</h2>
     </div>
     <theme-toggle-button floating></theme-toggle-button>
@@ -25,7 +24,7 @@
     Loading Timeline...
   </div>
   <template v-else>
-    <section class="aw-card p-6 md:p-7">
+    <section>
       <div class="flex flex-col gap-4 md:gap-5">
         <timeline-lane-card
           laneType="status"
@@ -65,7 +64,7 @@ import {
   buildTimelineRange,
   parseTimelineFixedRange,
 } from '~/features/timeline/lib/timelineViewState';
-import type { TimelineLane } from '~/shared/contracts/activity.generated';
+import type { TimelineLane } from '~/shared/contracts/timeline.generated';
 
 const REFRESH_INTERVAL_MS = 30 * 1000;
 
@@ -86,6 +85,8 @@ export default defineComponent({
       errorMessage: '',
       refreshTimer: null as ReturnType<typeof setInterval> | null,
       lastRefreshedAt: null as moment.Moment | null,
+      latestRequestId: 0,
+      activeRequestController: null as AbortController | null,
     };
   },
   computed: {
@@ -113,6 +114,9 @@ export default defineComponent({
     },
   },
   beforeUnmount() {
+    this.latestRequestId += 1;
+    this.activeRequestController?.abort();
+    this.activeRequestController = null;
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
@@ -139,32 +143,39 @@ export default defineComponent({
     buildRange(): [moment.Moment, moment.Moment] {
       return buildTimelineRange(this.$route.query);
     },
-    goBackToReturnPage() {
-      if (!this.returnToPath) {
-        return;
-      }
-      this.$router.push(this.returnToPath).catch(() => undefined);
-    },
     async refreshTimeline() {
+      const requestId = ++this.latestRequestId;
+      this.activeRequestController?.abort();
+      const controller = new AbortController();
+      this.activeRequestController = controller;
       this.loading = true;
       this.errorMessage = '';
 
       try {
         const [start, end] = this.buildRange();
-        const timeline = await fetchTimeline({ start: start.toDate(), end: end.toDate() });
+        const timeline = await fetchTimeline({
+          start: start.toDate(),
+          end: end.toDate(),
+          signal: controller.signal,
+        });
+        if (requestId !== this.latestRequestId) return;
 
         this.daterange = [moment(timeline.range_start), moment(timeline.range_end)];
         this.statusLane = timeline.status;
         this.appFocusLane = timeline.app_focus;
         this.lastRefreshedAt = moment();
       } catch (error) {
+        if (requestId !== this.latestRequestId || controller.signal.aborted) return;
         console.error('Failed to refresh timeline:', error);
         this.errorMessage = 'Failed to load the live timeline.';
         this.statusLane = emptyLane();
         this.appFocusLane = emptyLane();
         this.daterange = this.buildRange();
       } finally {
-        this.loading = false;
+        if (requestId === this.latestRequestId) {
+          this.activeRequestController = null;
+          this.loading = false;
+        }
       }
     },
   },

@@ -1,7 +1,5 @@
 import {
-  ACTIVITY_REACTIVE_REFRESH_WATCHERS,
   buildActivityDateSelectionRoute,
-  buildCalendarSelectionLocationHash,
   buildResolvedActivityRoute,
   normalizeActivityRouteIfNeeded,
   pushActivityRouteIfChanged,
@@ -20,13 +18,12 @@ describe('activityViewNavigation', () => {
     expect(resolveCurrentActivityViewId(undefined)).toBe('');
   });
 
-  test('builds routes and calendar hashes from normalized activity state', () => {
+  test('builds routes from normalized activity state', () => {
     expect(
       buildResolvedActivityRoute({
         host: 'alpha.local',
         date: '2026-03-19',
         periodLength: 'week',
-        startOfWeek: 'Monday',
         subview: 'view',
         query: { category: 'Code' },
         requestedViewId: 'missing',
@@ -51,7 +48,6 @@ describe('activityViewNavigation', () => {
         date: '2026-03-19',
         endDate: '2026-03-23',
         periodLength: 'custom',
-        startOfWeek: 'Monday',
         subview: 'view',
         query: { category: 'Code' },
         requestedViewId: 'missing',
@@ -69,16 +65,6 @@ describe('activityViewNavigation', () => {
       },
       query: { category: 'Code' },
     });
-
-    expect(
-      buildCalendarSelectionLocationHash({
-        host: 'alpha.local',
-        date: '2026-03-19',
-        startOfWeek: 'Monday',
-        activeViewId: 'browser',
-        query: { category: 'Code>Review' },
-      })
-    ).toBe('#/activity/alpha.local/day/2026-03-19/view/browser?category=Code%3EReview');
   });
 
   test('normalizes and pushes activity routes only when navigation is needed', async () => {
@@ -94,7 +80,6 @@ describe('activityViewNavigation', () => {
       host: 'alpha.local',
       date: '2026-03-19',
       periodLength: 'day',
-      startOfWeek: 'Monday',
       subview: 'view',
       query: {},
       requestedViewId: 'summary',
@@ -129,7 +114,6 @@ describe('activityViewNavigation', () => {
       date: '2026-03-19',
       periodLength: 'month',
       normalizedPeriodLength: 'day',
-      startOfWeek: 'Monday',
       host: 'alpha.local',
       subview: 'view',
       query: { category: 'Code' },
@@ -168,7 +152,6 @@ describe('activityViewNavigation', () => {
       host: 'alpha.local',
       date: '2026-03-19',
       periodLength: 'day',
-      startOfWeek: 'Monday',
       subview: 'view',
       query: {},
       requestedViewId: 'summary',
@@ -204,7 +187,6 @@ describe('activityViewNavigation', () => {
       host: 'alpha.local',
       date: '2026-03-19',
       periodLength: 'day',
-      startOfWeek: 'Monday',
       subview: 'view',
       query: {},
       requestedViewId: 'summary',
@@ -236,14 +218,4 @@ describe('activityViewNavigation', () => {
     expect(push).toHaveBeenCalledWith(nextRoute);
   });
 
-  test('exports the expected reactive refresh watch keys', () => {
-    expect(ACTIVITY_REACTIVE_REFRESH_WATCHERS).toEqual({
-      host: 'handleReactiveRefresh',
-      timeperiod: 'handleReactiveRefresh',
-      filter_category: 'handleReactiveRefresh',
-      filter_afk: 'handleReactiveRefresh',
-      include_audible: 'handleReactiveRefresh',
-      currentViewId: 'handleReactiveRefresh',
-    });
-  });
 });

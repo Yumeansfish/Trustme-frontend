@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import { createMissingParents, annotate } from '~/features/categorization/lib/classes';
+import { arraysEqual, cloneJson } from '~/shared/lib/objects';
 import {
   loadCategoryClasses,
   saveCategoryClasses,
@@ -19,44 +19,36 @@ export const useCategoryStore = defineStore('categories', {
 
   getters: {
     all_categories(): string[][] {
-      return _.uniqBy(
-        _.flatten(
-          this.classes.map((c: Category) => {
-            const l = [];
-            for (let i = 1; i <= c.name.length; i++) {
-              l.push(c.name.slice(0, i));
-            }
-            return l;
-          })
-        ),
-        (v: string[]) => v.join('>>>>') // Can be any separator that doesn't appear in the category names themselves
+      const categories = this.classes.flatMap((category: Category) =>
+        Array.from({ length: category.name.length }, (_, index) => category.name.slice(0, index + 1))
       );
+      return [...new Map(categories.map(category => [category.join('>>>>'), category])).values()];
     },
     allCategoriesSelect(): { value: string[]; text: string }[] {
       const categories = this.all_categories;
       const entries = categories.map(c => {
         return { text: c.join(' > '), value: c };
       });
-      return _.sortBy(entries, 'text');
+      return entries.sort((left, right) => left.text.localeCompare(right.text));
     },
     get_category(this: State) {
       return (category_arr: string[]): Category => {
         if (typeof category_arr === 'string' || category_arr instanceof String)
           console.error('Passed category was string, expected array. Lookup will fail.');
 
-        const match = this.classes.find(c => _.isEqual(c.name, category_arr));
+        const match = this.classes.find(c => arraysEqual(c.name, category_arr));
         if (!match) {
-          if (!_.isEqual(category_arr, ['Uncategorized']))
+          if (!arraysEqual(category_arr, ['Uncategorized']))
             console.error("Couldn't find category: ", category_arr);
           // fallback
           return { name: ['Uncategorized'], rule: { type: 'none' } };
         }
-        return annotate(_.cloneDeep(match));
+        return annotate(cloneJson(match));
       };
     },
     get_category_color() {
       return (cat: string[]): string => {
-        return getColorFromCategory(this.get_category(cat), this.classes);
+        return getColorFromCategory(this.get_category(cat));
       };
     },
   },

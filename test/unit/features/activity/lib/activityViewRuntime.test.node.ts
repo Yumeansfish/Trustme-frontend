@@ -4,7 +4,7 @@ import {
   refreshActivityView,
   teardownActivityView,
   triggerReactiveActivityRefresh,
-} from '~/features/activity-layouts/lib/activityViewRuntime';
+} from '~/features/activity/lib/layout/activityViewRuntime';
 
 describe('activityViewRuntime', () => {
   test('builds activity query options from view/runtime state', () => {

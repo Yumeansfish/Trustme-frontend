@@ -1,7 +1,7 @@
 import { get_today } from '~/app/lib/time';
 
-import type { DashboardResolvedScopeResult } from '~/features/activity-dashboard/store/activityTypes';
-import { resolveDefaultViewId } from '~/features/activity-layouts/lib/activityViewCatalog';
+import type { ActivityScopeResult } from '~/features/activity/store/activityTypes';
+import { resolveDefaultViewId } from '~/features/activity/lib/layout/activityViewCatalog';
 
 export type ActivityRedirectOutcome =
   | {
@@ -19,7 +19,7 @@ export function resolveActivityRedirectOutcome({
   activityScope,
   date = get_today(),
 }: {
-  activityScope: DashboardResolvedScopeResult | null;
+  activityScope: ActivityScopeResult | null;
   date?: string;
 }): ActivityRedirectOutcome {
   const scope = activityScope?.group_name || null;

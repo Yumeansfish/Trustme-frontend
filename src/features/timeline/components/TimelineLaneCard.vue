@@ -1,5 +1,5 @@
 <template>
-  <article class="aw-shortcut-card aw-live-lane-card cursor-default gap-4 p-5 md:p-6">
+  <article class="aw-card aw-live-lane-card flex cursor-default flex-col gap-4 p-5 md:p-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="flex items-start gap-4">
         <span class="aw-shortcut-card-icon shrink-0">
@@ -7,10 +7,7 @@
         </span>
         <div class="space-y-1">
           <h3 class="text-foreground-strong text-xl font-semibold md:text-2xl">{{ title }}</h3>
-          <p
-            v-if="description"
-            class="text-foreground-muted text-base leading-7"
-          >
+          <p v-if="description" class="text-foreground-muted text-base leading-7">
             {{ description }}
           </p>
         </div>
@@ -38,20 +35,18 @@
           v-for="segment in decoratedSegments"
           :key="segment.key"
           class="aw-live-lane-segment"
-          :class="[
-            `aw-live-lane-segment-${segment.variant}`,
-            {
-              'aw-live-lane-segment-compact': !segment.showLabel,
-              'aw-live-lane-segment-clipped-start': segment.clipped_start,
-              'aw-live-lane-segment-clipped-end': segment.clipped_end,
-            },
-          ]"
+          :class="`aw-live-lane-segment-${segment.variant}`"
           :style="segmentStyle(segment)"
+          role="img"
+          tabindex="0"
+          :aria-label="`${segment.label}, ${segment.durationLabel}`"
           @mouseenter="showTooltip($event, segment)"
           @mousemove="moveTooltip"
           @mouseleave="hideTooltip"
+          @focus="showTooltipFromFocus($event, segment)"
+          @blur="hideTooltip"
         >
-          <span v-if="segment.showLabel" class="aw-live-lane-segment-label">{{ segment.label }}</span>
+          <span class="aw-live-lane-segment-label">{{ segment.label }}</span>
         </div>
       </div>
 
@@ -102,7 +97,7 @@
 
 <script lang="ts">
 import moment from 'moment';
-import { defineComponent } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 
 import {
   buildTimelineLaneSegmentStyle,
@@ -112,7 +107,7 @@ import {
   type TimelineDecoratedSegment,
   type TimelineTickMark,
 } from '~/features/timeline/lib/timelineLaneCardState';
-import type { TimelineSegment } from '~/shared/contracts/activity.generated';
+import type { TimelineSegment } from '~/shared/contracts/timeline.generated';
 
 export default defineComponent({
   name: 'TimelineLaneCard',
@@ -127,8 +122,8 @@ export default defineComponent({
     },
     eventCount: { type: Number, default: 0 },
     daterange: {
-      type: Array,
-      default: () => [],
+      type: Array as unknown as PropType<[moment.Moment, moment.Moment] | null>,
+      default: null,
     },
     emptyMessage: {
       type: String,
@@ -182,11 +177,22 @@ export default defineComponent({
       this.moveTooltip(event);
       this.$nextTick(() => this.moveTooltip(event));
     },
+    showTooltipFromFocus(event: FocusEvent, segment: TimelineDecoratedSegment) {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      this.hoveredSegment = segment;
+      this.positionTooltip(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      this.$nextTick(() =>
+        this.positionTooltip(rect.left + rect.width / 2, rect.top + rect.height / 2)
+      );
+    },
     moveTooltip(event: MouseEvent) {
+      this.positionTooltip(event.clientX, event.clientY);
+    },
+    positionTooltip(clientX: number, clientY: number) {
       const tooltipEl = this.$refs.tooltipCard as HTMLElement | undefined;
       const { tooltipX, tooltipY } = buildTimelineTooltipPosition({
-        clientX: event.clientX,
-        clientY: event.clientY,
+        clientX,
+        clientY,
         tooltipWidth: tooltipEl?.offsetWidth,
         tooltipHeight: tooltipEl?.offsetHeight,
         viewportWidth: window.innerWidth,

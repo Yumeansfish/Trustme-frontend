@@ -4,7 +4,7 @@ import {
   resolveMissingPrerequisiteMessage,
   resolvePluginInstallAction,
   resolvePluginInstallState,
-} from '~/features/activity-visualizations/lib/selectableVisualizationState';
+} from '~/features/activity/lib/visualization/selectableVisualizationState';
 
 describe('selectableVisualizationState', () => {
   const activityStore = {

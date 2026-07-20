@@ -7,7 +7,7 @@ import {
 type BucketLike = {
   id?: string;
   hostname?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   first_seen?: string | Date;
   last_updated?: string | Date;
   created?: string | Date;
@@ -25,7 +25,7 @@ export type BucketGroup = {
 };
 
 export function buildBucketGroupKey(bucket: BucketLike | string): string {
-  return getBucketBaseId(bucket as Record<string, any> | string);
+  return getBucketBaseId(bucket);
 }
 
 export function formatBucketGroupTitle(groupKey: string): string {
