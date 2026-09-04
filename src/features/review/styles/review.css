@@ -1,0 +1,85 @@
+@layer components {
+  .aw-review-page {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding-bottom: 1rem;
+  }
+
+  .aw-review-section {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .aw-review-highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 22rem));
+    align-items: start;
+    gap: 0.75rem;
+  }
+
+  .aw-review-highlight-card {
+    min-width: 0;
+    border: 1px solid rgb(var(--border));
+    border-radius: var(--radius-panel);
+    background: rgb(var(--surface));
+  }
+
+  .aw-review-highlight-card {
+    overflow: hidden;
+  }
+
+  .aw-review-highlight-actions {
+    display: flex;
+    padding: 0.65rem 0.8rem;
+  }
+
+  .aw-review-highlight-actions .aw-btn {
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .aw-review-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0.8rem;
+  }
+
+  .aw-review-time {
+    color: rgb(var(--foreground-strong));
+    font-size: 0.86rem;
+    font-weight: 700;
+  }
+
+  .aw-review-kind {
+    color: rgb(var(--foreground-muted));
+    font-size: 0.74rem;
+    font-weight: 650;
+  }
+
+  .aw-review-video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: rgb(0 0 0);
+    object-fit: contain;
+  }
+
+  @media (max-width: 1023px) {
+    .aw-review-highlight-grid {
+      grid-template-columns: repeat(2, minmax(0, 22rem));
+    }
+  }
+
+  @media (max-width: 639px) {
+    .aw-review-highlight-grid {
+      grid-template-columns: minmax(0, 22rem);
+    }
+  }
+}
