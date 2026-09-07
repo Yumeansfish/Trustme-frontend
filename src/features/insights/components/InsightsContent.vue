@@ -244,9 +244,7 @@ export default defineComponent({
     },
     feedbackCandidates(reports: ModelOutputReport[]): InsightFeedbackIdentity[] {
       return reports.flatMap(report => {
-        if (!report.confirmation
-          || this.nowMs >= Date.parse(report.confirmation.session_ends_at)
-          || (!report.feedback_available_at && this.nowMs >= Date.parse(report.confirmation.confirm_by))) return [];
+        if (!report.confirmation) return [];
         const resultsById = new Map<string, ModelOutputResult>(
           report.results.map(result => [result.id, result])
         );
@@ -307,14 +305,12 @@ export default defineComponent({
     feedbackIsOpen(identity: InsightFeedbackIdentity): boolean {
       const report = this.reports.find(report => report.id === identity.periodId);
       return Boolean(report?.feedback_available_at && report.confirmation
-        && this.nowMs >= Date.parse(report.feedback_available_at)
-        && this.nowMs < Date.parse(report.confirmation.session_ends_at));
+        && this.nowMs >= Date.parse(report.feedback_available_at));
     },
     confirmationIsPending(identity: InsightFeedbackIdentity): boolean {
       const report = this.reports.find(report => report.id === identity.periodId);
       const progress = report?.confirmation;
       return Boolean(progress
-        && this.nowMs < Date.parse(progress.confirm_by)
         && progress.required_targets.includes(identity.target)
         && !progress.confirmed_targets.includes(identity.target));
     },

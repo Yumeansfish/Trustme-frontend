@@ -152,6 +152,23 @@
     transform: translateX(-50%);
   }
 
+  .aw-date-cell-counted::after { display: none; }
+  .aw-date-cell-counted { position: relative; }
+  .aw-date-dots {
+    position: absolute;
+    bottom: 0.32rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.16rem;
+  }
+  .aw-date-dot {
+    width: 0.24rem;
+    height: 0.24rem;
+    border-radius: 50%;
+    background-color: currentColor;
+  }
+
   .aw-date-cell-marked:hover {
     background-color: rgb(var(--summary-vis-normal) / 0.2);
   }

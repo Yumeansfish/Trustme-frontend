@@ -18,7 +18,7 @@ function checkinResponse(day = '2026-08-31', session = 'morning', checked = fals
     checkins: checked ? [{ checkin_date: day, session, checked_at: `${day}T09:00:00+02:00`,
       inference_due_at: null, session_ends_at: null }] : [],
     current_date: day, current_session: session,
-    session_ends_at: `${day}T${session === 'morning' ? '12' : '17'}:00:00+02:00`,
+    checkin_closes_at: `${day}T${session === 'morning' ? '10' : '15'}:00:00+02:00`,
   };
 }
 
@@ -255,6 +255,7 @@ describe('Home insight calendar', () => {
   });
 
   test('prevents double check-in and permits retry after a failed save', async () => {
+    jest.setSystemTime(new Date('2026-08-31T09:00:00+02:00'));
     const wrapper = mountHome();
     await flushPromises();
     createDailyCheckIn.mockRejectedValueOnce(new Error('offline'));

@@ -109,7 +109,7 @@ export default defineComponent({
   computed: {
     feedbackOpen(): boolean {
       return Boolean(this.report.feedback_available_at && this.nowMs >= Date.parse(this.report.feedback_available_at)
-        && this.report.confirmation && this.nowMs < Date.parse(this.report.confirmation.session_ends_at));
+        && this.report.confirmation);
     },
     periodLabel(): string {
       return `${this.report.period_start.slice(11, 16)}–${this.report.period_end.slice(11, 16)}`;

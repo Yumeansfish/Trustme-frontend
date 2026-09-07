@@ -286,7 +286,7 @@ describe('InsightsContent pending feedback navigation', () => {
     wrapper.unmount();
   });
 
-  test('drops unconfirmed tasks at the session confirmation deadline', async () => {
+  test('keeps unconfirmed tasks after 11', async () => {
     jest.setSystemTime(new Date('2026-08-16T10:59:59+02:00'));
     fetchInsights.mockResolvedValue({ available_dates: [report.date], reports: [{ ...report,
       checkin_session: 'morning', feedback_available_at: null,
@@ -302,8 +302,8 @@ describe('InsightsContent pending feedback navigation', () => {
     expect(wrapper.emitted('pending-feedback-change')?.at(-1)?.[0]).toMatchObject({ count: 2 });
     jest.setSystemTime(new Date('2026-08-16T11:00:00+02:00'));
     await wrapper.vm.refreshVisibleInsights();
-    expect(wrapper.emitted('pending-feedback-change')?.at(-1)?.[0]).toMatchObject({ count: 0 });
-    expect(await wrapper.vm.drawAttentionToFirstPendingFeedback()).toBe(false);
+    expect(wrapper.emitted('pending-feedback-change')?.at(-1)?.[0]).toMatchObject({ count: 2 });
+    expect(await wrapper.vm.drawAttentionToFirstPendingFeedback()).toBe(true);
     wrapper.unmount();
   });
 

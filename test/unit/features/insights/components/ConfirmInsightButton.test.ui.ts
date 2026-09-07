@@ -35,11 +35,12 @@ test('confirms once and renders the saved progress returned by the server', asyn
   wrapper.unmount();
 });
 
-test('does not permit late confirmation', async () => {
-  const wrapper = render('2026-09-07T11:00:00+02:00');
-  expect(wrapper.text()).toBe('Session ended');
+test('permits confirmation after 11 without expiring the session', async () => {
+  confirmInsight.mockResolvedValue({ ...progress, confirmed_targets: ['productivity'] });
+  const wrapper = render('2026-09-07T11:50:00+02:00');
+  expect(wrapper.text()).toBe('Confirm');
   await wrapper.get('button').trigger('click');
-  expect(confirmInsight).not.toHaveBeenCalled();
+  expect(confirmInsight).toHaveBeenCalledTimes(1);
   wrapper.unmount();
 });
 

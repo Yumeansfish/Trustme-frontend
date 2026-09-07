@@ -156,7 +156,6 @@ test('preserves check-in confirmation and its initially unset feedback time', ()
     period_start: '2026-09-07T09:07:00+02:00', period_end: '2026-09-07T10:07:00+02:00',
     results: [], checkin_session: 'morning', suggestions_available_at: '2026-09-07T10:07:02+02:00',
     confirmation: { required_targets: ['productivity'], confirmed_targets: [],
-      confirm_by: '2026-09-07T11:00:00+02:00', session_ends_at: '2026-09-07T12:00:00+02:00',
       feedback_available_at: null }, feedback_available_at: null,
   };
   expect(normalizeInsightsReport(report)).toEqual(report);

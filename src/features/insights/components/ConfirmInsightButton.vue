@@ -1,8 +1,8 @@
 <template>
   <div class="space-y-2">
     <ui-button type="button" class="aw-btn aw-btn-sm aw-btn-secondary w-full"
-      :aria-label="`Confirm ${title}`" :disabled="confirmed || expired || saving" @click="confirm">
-      {{ confirmed ? 'Confirmed' : expired ? 'Session ended' : saving ? 'Confirming…' : 'Confirm' }}
+      :aria-label="`Confirm ${title}`" :disabled="confirmed || saving" @click="confirm">
+      {{ confirmed ? 'Confirmed' : saving ? 'Confirming…' : 'Confirm' }}
     </ui-button>
     <p v-if="error" class="text-sm text-danger" role="alert">{{ error }}</p>
   </div>
@@ -22,9 +22,8 @@ const emit = defineEmits<{ confirmed: [state: InsightConfirmationState] }>();
 const saving = ref(false);
 const error = ref('');
 const confirmed = computed(() => props.progress.confirmed_targets.includes(props.target));
-const expired = computed(() => props.nowMs >= Date.parse(props.progress.confirm_by));
 async function confirm() {
-  if (saving.value || confirmed.value || expired.value) return;
+  if (saving.value || confirmed.value) return;
   saving.value = true;
   error.value = '';
   try {

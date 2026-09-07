@@ -86,15 +86,10 @@ export default defineComponent({
   computed: {
     feedbackOpen(): boolean {
       return Boolean(this.confirmation && this.feedbackAvailableAt
-          && this.nowMs >= Date.parse(this.feedbackAvailableAt)
-          && this.nowMs < Date.parse(this.confirmation.session_ends_at));
+          && this.nowMs >= Date.parse(this.feedbackAvailableAt));
     },
     feedbackMessage(): string {
       if (!this.confirmation) return 'Preparing suggestions…';
-      if (this.nowMs >= Date.parse(this.confirmation.session_ends_at)
-        || (!this.feedbackAvailableAt && this.nowMs >= Date.parse(this.confirmation.confirm_by))) {
-        return 'Feedback for this session is closed.';
-      }
       if (!this.feedbackAvailableAt) return '';
       return `Try the suggestions. Feedback opens at ${this.feedbackTime}.`;
     },

@@ -12,5 +12,5 @@ export interface DailyCheckInListDTO {
   checkins: DailyCheckInDTO[];
   current_date: string;
   current_session: "morning" | "afternoon";
-  session_ends_at: string;
+  checkin_closes_at: string;
 }

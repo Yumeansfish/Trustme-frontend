@@ -93,15 +93,11 @@ function normalizeConfirmation(value: unknown): InsightConfirmationState | null 
     !isRecord(value) ||
     !Array.isArray(value.required_targets) || !value.required_targets.every(item => typeof item === 'string') ||
     !Array.isArray(value.confirmed_targets) || !value.confirmed_targets.every(item => typeof item === 'string') ||
-    typeof value.confirm_by !== 'string' ||
-    typeof value.session_ends_at !== 'string' ||
     (value.feedback_available_at !== null && typeof value.feedback_available_at !== 'string')
   ) throw new Error('Invalid insight confirmation');
   return {
     required_targets: value.required_targets,
     confirmed_targets: value.confirmed_targets,
-    confirm_by: value.confirm_by,
-    session_ends_at: value.session_ends_at,
     feedback_available_at: value.feedback_available_at,
   };
 }

@@ -22,6 +22,7 @@
             icon-only
             :max="today"
             :marked-dates="markedCalendarDates"
+            :marker-counts="calendarCheckInCounts"
             :disable-next="calendarDate === today"
             placeholder="Home calendar"
             latest-label="Today"
@@ -121,7 +122,7 @@ import {
   createDailyCheckIn,
   fetchDailyCheckIns,
 } from '~/features/daily-check-in/lib/dailyCheckInClient';
-import { mergeHomeCalendarDates } from '~/features/home/lib/homeCalendar';
+import { mergeHomeCalendarDates, countCalendarCheckIns } from '~/features/home/lib/homeCalendar';
 import InsightsContent from '~/features/insights/components/InsightsContent.vue';
 import type { PendingFeedbackState } from '~/features/insights/components/InsightsContent.vue';
 import OverallWellbeingCard from '~/features/insights/components/OverallWellbeingCard.vue';
@@ -157,7 +158,7 @@ export default defineComponent({
       checkInDates: [] as string[],
       checkIns: [] as DailyCheckInDTO[],
       checkInSession: 'morning' as 'morning' | 'afternoon',
-      checkInSessionEndsAt: '',
+      checkInClosesAt: '',
       checkInLoading: true,
       checkInSaving: false,
       checkInError: '',
@@ -177,11 +178,14 @@ export default defineComponent({
     markedCalendarDates(): string[] {
       return mergeHomeCalendarDates(this.checkInDates, this.insightDates);
     },
+    calendarCheckInCounts(): Record<string, number> {
+      return countCalendarCheckIns(this.checkIns);
+    },
     currentCheckIn(): DailyCheckInDTO | undefined {
       return this.checkIns.find(record => record.checkin_date === this.today && record.session === this.checkInSession);
     },
     checkInClosed(): boolean {
-      return Boolean(this.checkInSessionEndsAt && this.nowMs >= Date.parse(this.checkInSessionEndsAt));
+      return Boolean(this.checkInClosesAt && this.nowMs >= Date.parse(this.checkInClosesAt));
     },
     checkInMessage(): string {
       const record = this.currentCheckIn;
@@ -241,7 +245,9 @@ export default defineComponent({
       }
       if (this.dayRolloverTimer !== null) window.clearTimeout(this.dayRolloverTimer);
       // Use the next local midnight, not a fixed 24 hours (DST days can differ).
-      const nextBoundary = now.hour() < 12 ? now.clone().hour(12).startOf('hour')
+      const nextBoundary = now.hour() < 10 ? now.clone().hour(10).startOf('hour')
+        : now.hour() < 12 ? now.clone().hour(12).startOf('hour')
+        : now.hour() < 15 ? now.clone().hour(15).startOf('hour')
         : now.hour() < 17 ? now.clone().hour(17).startOf('hour')
         : now.clone().add(1, 'day').startOf('day');
       this.dayRolloverTimer = window.setTimeout(
@@ -258,7 +264,7 @@ export default defineComponent({
         if (requestId !== this.checkInRequestId) return;
         this.checkIns = response.checkins;
         this.checkInSession = response.current_session;
-        this.checkInSessionEndsAt = response.session_ends_at;
+        this.checkInClosesAt = response.checkin_closes_at;
         this.checkInError = '';
         this.checkInDates = response.checkins
           .map(checkin => checkin.checkin_date)
@@ -281,7 +287,6 @@ export default defineComponent({
         this.checkIns = [...this.checkIns.filter(record =>
           record.checkin_date !== checkin.checkin_date || record.session !== checkin.session), checkin];
         this.checkInSession = checkin.session;
-        this.checkInSessionEndsAt = checkin.session_ends_at ?? '';
         this.checkInDates = [...new Set([
           ...this.checkInDates,
           checkin.checkin_date,

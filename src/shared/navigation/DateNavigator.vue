@@ -89,6 +89,7 @@
               day.inMonth ? '' : 'aw-date-cell-outside',
               day.disabled ? 'aw-date-cell-disabled' : '',
               markedDates.includes(day.iso) ? 'aw-date-cell-marked' : '',
+              markerCounts !== null ? 'aw-date-cell-counted' : '',
               day.isToday ? 'aw-date-cell-today' : '',
               day.isSelected ? 'aw-date-cell-selected' : '',
             ]"
@@ -96,6 +97,9 @@
             @keydown="handleDayKeydown($event, day.iso)"
           >
             {{ day.label }}
+            <span v-if="markerCounts?.[day.iso]" class="aw-date-dots" :aria-label="`${markerCounts[day.iso]} check-ins`">
+              <span v-for="dot in markerCounts[day.iso]" :key="dot" class="aw-date-dot"></span>
+            </span>
           </button>
         </div>
 
@@ -162,6 +166,10 @@ export default defineComponent({
     markedDates: {
       type: Array as PropType<string[]>,
       default: () => [],
+    },
+    markerCounts: {
+      type: Object as PropType<Record<string, number> | null>,
+      default: null,
     },
     disablePrevious: {
       type: Boolean,

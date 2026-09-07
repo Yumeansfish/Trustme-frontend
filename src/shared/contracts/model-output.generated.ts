@@ -28,8 +28,6 @@ export interface ModelOutputResult {
 export interface InsightConfirmationState {
   required_targets: string[];
   confirmed_targets: string[];
-  confirm_by: string;
-  session_ends_at: string;
   feedback_available_at: string | null;
 }
 export interface ModelOutputReport {
