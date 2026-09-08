@@ -31,6 +31,7 @@
           :session-label="group.label"
           :attention-target-id="attentionPeriodId === report.id ? attentionTargetId : ''"
           :pending-feedback-target-ids="pendingFeedbackTargetsForReport(report)"
+          :completed-feedback-target-ids="completedFeedbackTargetsForReport(report)"
           :now-ms="nowMs"
           @feedback-submitted="handleFeedbackSubmitted"
           @confirmed="handleConfirmed(report.id, $event)"
@@ -50,7 +51,7 @@
       >
       <div class="aw-insights-empty-copy">
         <h3 class="aw-title-system">{{ emptyGreeting }}</h3>
-        <p>{{ emptyMessage }}</p>
+        <p v-if="emptyMessage">{{ emptyMessage }}</p>
       </div>
     </section>
   </div>
@@ -146,18 +147,26 @@ export default defineComponent({
     localHour(): number {
       return new Date(this.nowMs).getHours();
     },
+    currentSessionFeedbackComplete(): boolean {
+      if (this.forceEmpty || this.preferredDate !== get_today()
+        || this.pendingFeedbackLoading || this.pendingFeedbackError) return false;
+      const session = this.localHour < 12 ? 'morning' : 'afternoon';
+      const candidates = this.feedbackCandidates(
+        this.reports.filter(report => report.checkin_session === session)
+      );
+      return candidates.length > 0 && candidates.every(candidate =>
+        !this.pendingFeedback.some(pending => pending.periodId === candidate.periodId
+          && pending.target === candidate.target)
+      );
+    },
     emptyGreeting(): string {
       if (this.localHour >= 18) return 'Good evening';
-      if (this.importantOnly && this.reports.length && !this.forceEmpty) {
-        return 'No important insights';
-      }
+      if (this.currentSessionFeedbackComplete) return 'Thanks for your feedback!';
       return this.localHour < 12 ? 'Good morning' : 'Good afternoon';
     },
     emptyMessage(): string {
       if (this.localHour >= 18) return 'Time to relax!';
-      if (this.importantOnly && this.reports.length && !this.forceEmpty) {
-        return 'No insight tasks are waiting for this day. Switch to All to see every insight.';
-      }
+      if (this.currentSessionFeedbackComplete) return '';
       return this.preferredDate === get_today()
         ? 'Your insights will appear here later today.'
         : 'No insights are available for this day.';
@@ -337,6 +346,13 @@ export default defineComponent({
     pendingFeedbackTargetsForReport(report: ModelOutputReport): string[] {
       return this.pendingFeedback
         .filter(identity => identity.date === report.date && identity.periodId === report.id)
+        .map(identity => identity.target);
+    },
+    completedFeedbackTargetsForReport(report: ModelOutputReport): string[] {
+      if (this.pendingFeedbackLoading || this.pendingFeedbackError) return [];
+      const pending = this.pendingFeedbackTargetsForReport(report);
+      return this.feedbackCandidates([report])
+        .filter(identity => this.feedbackIsOpen(identity) && !pending.includes(identity.target))
         .map(identity => identity.target);
     },
     handleFeedbackSubmitted(feedback: ModelFeedbackDTO) {

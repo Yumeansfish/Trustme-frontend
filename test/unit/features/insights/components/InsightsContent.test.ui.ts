@@ -179,6 +179,28 @@ describe('InsightsContent pending feedback navigation', () => {
     wrapper.unmount();
   });
 
+  test.each([
+    [11, 'morning', 'Thanks for your feedback!'],
+    [14, 'afternoon', 'Thanks for your feedback!'],
+    [14, 'morning', 'Good afternoon'],
+    [18, 'afternoon', 'Good evening'],
+  ])('completed %s-hour feedback in %s only thanks the current session', async (hour, session, greeting) => {
+    jest.setSystemTime(new Date(2026, 7, 16, hour as number));
+    fetchInsights.mockResolvedValue({ available_dates: [report.date],
+      reports: [{ ...report, checkin_session: session }] });
+    fetchModelFeedback.mockResolvedValue({ feedback: { tried_to_follow: true, helped: true } });
+    const wrapper = mount(InsightsContent, {
+      props: { date: report.date },
+      global: { stubs: { icon: true, 'aw-alert': true, InsightSessionCard: true } },
+    });
+    await flushPromises();
+    expect(wrapper.get('.aw-insights-empty h3').text()).toBe(greeting);
+    expect(wrapper.text()).not.toContain('No insight tasks');
+    if (greeting === 'Thanks for your feedback!') expect(wrapper.find('.aw-insights-empty p').exists()).toBe(false);
+    if (hour === 18) expect(wrapper.text()).toContain('Time to relax!');
+    wrapper.unmount();
+  });
+
   test('changes the panda to relaxation after 18:00 without reloading', async () => {
     jest.setSystemTime(new Date(2026, 7, 16, 17, 59, 40));
     fetchInsights.mockResolvedValue({ available_dates: [], reports: [] });
@@ -377,7 +399,7 @@ describe('InsightsContent pending feedback navigation', () => {
     expect(wrapper.text()).toContain('Energy');
     expect(wrapper.text()).toContain('Productivity');
     expect(wrapper.findAll('[aria-label="Feedback questionnaire"]')).toHaveLength(1);
-    expect(wrapper.findAll('[aria-label="Suggestion"]')).toHaveLength(1);
+    expect(wrapper.findAll('[aria-label="Feedback completed"]')).toHaveLength(1);
     expect(fetchInsights).toHaveBeenCalledTimes(1);
     expect(fetchModelFeedback).toHaveBeenCalledTimes(2);
     expect(wrapper.emitted('pending-feedback-change')?.at(-1)?.[0]).toMatchObject({ count: 1 });
@@ -448,12 +470,13 @@ describe('InsightsContent pending feedback navigation', () => {
     await wrapper.vm.$nextTick();
     expect(wrapper.find('.aw-insights-period').exists()).toBe(false);
     expect(wrapper.find('.aw-insights-empty-panda').exists()).toBe(true);
-    expect(wrapper.text()).toContain('No important insights');
-    expect(wrapper.text()).toContain('Switch to All');
+    expect(wrapper.text()).toContain('Thanks for your feedback!');
+    expect(wrapper.text()).not.toContain('Switch to All');
     expect(wrapper.emitted('pending-feedback-change')?.at(-1)?.[0]).toMatchObject({ count: 0 });
 
     await wrapper.setProps({ importantOnly: false });
     expect(wrapper.findAll('.aw-insights-answer-card')).toHaveLength(3);
+    expect(wrapper.findAll('.aw-completed-marker')).toHaveLength(2);
     expect(wrapper.find('.aw-counterfactual-marker').exists()).toBe(false);
     expect(wrapper.find('.aw-insights-empty').exists()).toBe(false);
     wrapper.unmount();

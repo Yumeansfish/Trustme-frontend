@@ -30,7 +30,15 @@
         @click="openCounterfactual(result)"
       >
         <span
-          v-if="result.has_counterfactual && pendingFeedbackTargetIds.includes(result.id) && feedbackOpen"
+          v-if="result.has_counterfactual && completedFeedbackTargetIds.includes(result.id)"
+          class="aw-completed-marker"
+          title="Feedback completed"
+          aria-label="Feedback completed"
+        >
+          <icon name="check" class="h-4 w-4"></icon>
+        </span>
+        <span
+          v-else-if="result.has_counterfactual && pendingFeedbackTargetIds.includes(result.id) && feedbackOpen"
           class="aw-counterfactual-marker"
           title="Feedback questionnaire"
           aria-label="Feedback questionnaire"
@@ -100,6 +108,10 @@ export default defineComponent({
       default: '',
     },
     pendingFeedbackTargetIds: {
+      type: Array as PropType<string[]>,
+      default: () => [],
+    },
+    completedFeedbackTargetIds: {
       type: Array as PropType<string[]>,
       default: () => [],
     },
@@ -189,6 +201,7 @@ export default defineComponent({
 .aw-insights-card-item { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; scroll-snap-align: start; }
 
 .aw-counterfactual-marker,
+.aw-completed-marker,
 .aw-suggestion-marker {
   position: absolute;
   z-index: 2;

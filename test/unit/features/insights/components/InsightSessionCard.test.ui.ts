@@ -157,10 +157,11 @@ describe('InsightSessionCard', () => {
     await wrapper.setProps({ nowMs: Date.parse(saved.feedback_available_at) });
     expect(cards[0].find('.aw-suggestion-marker').exists()).toBe(false);
     expect(cards[0].get('.aw-counterfactual-marker').attributes('aria-label')).toBe('Feedback questionnaire');
-    // Completing the questionnaire removes ?, but the advice remains discoverable in All.
-    await wrapper.setProps({ pendingFeedbackTargetIds: [] });
+    // Completed feedback stays discoverable in All with a check mark.
+    await wrapper.setProps({ pendingFeedbackTargetIds: [], completedFeedbackTargetIds: ['mood_valence'] });
     expect(cards[0].find('.aw-counterfactual-marker').exists()).toBe(false);
-    expect(cards[0].find('.aw-suggestion-marker').exists()).toBe(true);
+    expect(cards[0].find('.aw-suggestion-marker').exists()).toBe(false);
+    expect(cards[0].get('.aw-completed-marker icon-stub').attributes('name')).toBe('check');
     wrapper.unmount();
   });
 
